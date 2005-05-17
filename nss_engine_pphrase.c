@@ -1,0 +1,327 @@
+/* Copyright 2001-2004 The Apache Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "mod_nss.h"
+#include <termios.h> /* for echo on/off */
+#include "nss_pcache.h"
+
+typedef struct {
+    SSLModConfigRec *mc;
+    PRInt32 retryCount;
+} pphrase_arg_t;
+
+static char * ssl_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg);
+static char * ssl_no_password(PK11SlotInfo *slot, PRBool retry, void *arg);
+static unsigned char * ssl_get_password(FILE *input, FILE *output, PK11SlotInfo *slot, PRBool (*ok)(unsigned char *), pphrase_arg_t * parg);
+static PRBool ssl_check_password(unsigned char *cp);
+static void echoOff(int fd);
+static void echoOn(int fd);
+
+/*
+ * Global variables defined in this file.
+ */
+static char * prompt;
+
+/*
+ * Initialize all SSL tokens. This involves authenticating the user
+ * against the token password. It is possible that some tokens may
+ *  be authenticated and others will not be.
+ */
+
+SECStatus ssl_Init_Tokens(server_rec *s)
+{
+    PK11SlotList        *slotList;
+    PK11SlotListElement *listEntry;
+    SECStatus ret, status = SECSuccess;
+    SSLModConfigRec *mc = myModConfig(s);
+    pphrase_arg_t * parg;
+
+    parg = (pphrase_arg_t*)malloc(sizeof(*parg));
+    parg->mc = mc;
+    parg->retryCount = 0;
+
+    PK11_SetPasswordFunc(ssl_password_prompt);
+
+    slotList = PK11_GetAllTokens(CKM_INVALID_MECHANISM, PR_FALSE, PR_TRUE, NULL);
+
+    for (listEntry = PK11_GetFirstSafe(slotList);
+        listEntry;
+        listEntry = listEntry->next)
+    {
+        PK11SlotInfo *slot = listEntry->slot;
+
+        if (PK11_NeedLogin(slot) && PK11_NeedUserInit(slot)) {
+            if (slot == PK11_GetInternalKeySlot()) {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "The server key database has not been initialized.");
+            } else {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "The token %s has not been initialized.", PK11_GetTokenName(slot));
+            }
+            continue;
+        }
+
+        ret = PK11_Authenticate(slot, PR_TRUE, parg);
+        if (SECSuccess != ret) {
+            status = SECFailure;
+            break;
+        }
+        parg->retryCount = 0; // reset counter to 0 for the next token
+    }
+    
+    /*
+     * reset NSS password callback to blank, so that the server won't prompt
+     * again after initialization is done.
+     */
+    PK11_SetPasswordFunc(ssl_no_password);
+
+    free(parg);
+    return status; 
+}
+
+/*
+ * Wrapper callback function that prompts the user for the token password
+ * up to 3 times.
+ */
+static char * ssl_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
+{
+    char *passwd = NULL;
+    pphrase_arg_t *parg = (pphrase_arg_t *)arg;
+
+    if (arg && retry) {
+        parg->retryCount++;
+    }
+    prompt = PR_smprintf("Please enter password for \"%s\" token:", PK11_GetTokenName(slot));
+    if (parg == NULL) {
+        // should not happen
+        passwd = ssl_get_password(stdin, stdout, slot, ssl_check_password, 0);
+    } else {
+        if (parg->retryCount > 2) {
+            passwd = NULL; // abort after 2 retries (3 failed attempts)
+        } else {
+            passwd = ssl_get_password(stdin, stdout, slot, ssl_check_password, parg);
+        }
+    }
+
+    if (parg->mc->nInitCount == 1) {
+        char buf[1024];
+        apr_status_t rv;
+        apr_size_t nBytes = 1024;
+        int res = PIN_SUCCESS;
+
+        snprintf(buf, 1024, "STOR\t%s\t%s", PK11_GetTokenName(slot), passwd);
+        rv = apr_file_write_full(parg->mc->proc.in, buf, strlen(buf), NULL);
+        if (!APR_STATUS_IS_SUCCESS(rv)) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                "Unable to write to pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
+            ssl_die();
+        }
+
+        /* Check the result. We don't really care what we got back as long
+         * as the communication was successful. If the token password was
+         * bad it will get handled later, we don't need to do anything
+         * about it here.
+         */
+        memset(buf, 0, sizeof(buf));
+        rv = apr_file_read(parg->mc->proc.out, buf, &nBytes);
+
+        if (APR_STATUS_IS_SUCCESS(rv))
+           res = atoi(buf);
+        if (!APR_STATUS_IS_SUCCESS(rv) ||
+           (res != PIN_SUCCESS && res != PIN_INCORRECTPW)) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                "Unable to read from pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
+            ssl_die();
+        }
+    }
+
+    return passwd;
+}
+
+/*
+ * Enforce basic password sanity rules on the password. We don't do
+ * any actual enforcement here but it demonstrates the sorts of things
+ * that may be done.
+ */ 
+static PRBool ssl_check_password(unsigned char *cp)
+{
+    int len;
+    unsigned char *end, ch;
+
+    len = strlen((char *)cp);
+    if (len < 8) {
+            return PR_TRUE;
+    }
+    end = cp + len;
+    while (cp < end) {
+        ch = *cp++;
+        if (!((ch >= 'A') && (ch <= 'Z')) &&
+            !((ch >= 'a') && (ch <= 'z'))) {
+            /* pass phrase has at least one non alphabetic in it */
+            return PR_TRUE;
+        }
+    }
+    return PR_TRUE;
+}
+
+/*
+ * Password callback so the user is not prompted to enter the password
+ * after the server starts.
+ */
+static char * ssl_no_password(PK11SlotInfo *slot, PRBool retry, void *arg)
+{
+   return NULL;
+}
+
+/*
+ * Password callback to prompt the user for a password. This requires
+ * twiddling with the tty. Alternatively, if the file password.conf
+ * exists then it may be used to store the token password(s).
+ */
+static unsigned char *ssl_get_password(FILE *input, FILE *output,
+                                       PK11SlotInfo *slot,
+                                       PRBool (*ok)(unsigned char *),
+                                       pphrase_arg_t *parg)
+{
+    char *pwdstr = NULL;
+    char *token_name = NULL;
+    int tmp;
+    FILE *pwd_fileptr;
+    char *ptr;
+    char line[1024];
+    unsigned char phrase[200];
+    int infd = fileno(input);
+    int isTTY = isatty(infd);
+
+    token_name = PK11_GetTokenName(slot);
+
+    if (parg->mc->pphrase_dialog_type == SSL_PPTYPE_FILE) {
+        /* Try to get the passwords from the password file if it exists.
+         * THIS IS UNSAFE and is provided for convenience only. Without this
+         * capability the server would have to be started in foreground mode.
+         */
+        if ((*parg->mc->pphrase_dialog_path != '\0') &&
+           ((pwd_fileptr = fopen(parg->mc->pphrase_dialog_path, "r")) != NULL)) {
+            while(fgets(line, 1024, pwd_fileptr)) {
+                if (PL_strstr(line, token_name) == line) {
+                    tmp = PL_strlen(line) - 1;
+                    while((line[tmp] == ' ') || (line[tmp] == '\n'))
+                        tmp--;
+                    line[tmp+1] = '\0';
+                    ptr = PL_strchr(line, ':');
+                    for(tmp=1; ptr[tmp] == ' '; tmp++) {}
+                    pwdstr = strdup(&(ptr[tmp]));
+                }
+            }
+            fclose(pwd_fileptr);
+        } else {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                 "Unable to open password file %s", parg->mc->pphrase_dialog_path);
+            ssl_die();
+        }
+    }
+
+    /* This purposely comes after the file check because that is more
+     * authoritative.
+     */
+    if (parg->mc->nInitCount > 1) {
+        char buf[1024];
+        apr_status_t rv;
+        apr_size_t nBytes = 1024;
+
+        snprintf(buf, 1024, "RETR\t%s", token_name);
+        rv = apr_file_write_full(parg->mc->proc.in, buf, strlen(buf), NULL);
+        if (!APR_STATUS_IS_SUCCESS(rv)) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                "Unable to write to pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
+            ssl_die();
+        }
+
+        /* The helper just returns a token pw or "", so we don't have much
+         * to check for.
+         */
+        memset(buf, 0, sizeof(buf));
+        rv = apr_file_read(parg->mc->proc.out, buf, &nBytes);
+        if (!APR_STATUS_IS_SUCCESS(rv)) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                "Unable to read from pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
+            ssl_die();
+        }
+
+        /* Just return what we got. If we got this far and we don't have a 
+         * PIN then I/O is already shut down, so we can't do anything really
+         * clever.
+         */
+        pwdstr = strdup(buf);
+    }
+
+    /* If we got a password we're done */ 
+    if (pwdstr)
+        return pwdstr;
+    
+    for (;;) {
+        /* Prompt for password */
+        if (isTTY) {
+            if (parg->retryCount > 0) {
+                fprintf(output, "Password incorrect. Please try again.\n");
+            }
+            fprintf(output, "%s", prompt);
+            echoOff(infd);
+        }
+        fgets((char*) phrase, sizeof(phrase), input);
+        if (isTTY) {
+            fprintf(output, "\n");
+            echoOn(infd);
+        }
+        /* stomp on newline */ 
+        phrase[strlen((char*)phrase)-1] = 0;
+
+        /* Validate password */
+        if (!(*ok)(phrase)) {
+            /* Not weird enough */
+            if (!isTTY) return 0;
+            fprintf(output, "Password must be at least 8 characters long with one or more\n");
+            fprintf(output, "non-alphabetic characters\n");
+            continue; 
+        }
+        return (unsigned char*) PORT_Strdup((char*)phrase);
+    }
+}
+
+/*
+ * Turn the echoing off on a tty.
+ */
+static void echoOff(int fd)
+{
+    if (isatty(fd)) {
+        struct termios tio;
+        tcgetattr(fd, &tio);
+        tio.c_lflag &= ~ECHO;
+        tcsetattr(fd, TCSAFLUSH, &tio);
+    }
+}
+
+/*
+ * Turn the echoing on on a tty.
+ */
+static void echoOn(int fd)
+{
+    if (isatty(fd)) {
+        struct termios tio;
+        tcgetattr(fd, &tio);
+        tio.c_lflag |= ECHO;
+        tcsetattr(fd, TCSAFLUSH, &tio);
+    }
+}

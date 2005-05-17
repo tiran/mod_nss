@@ -1,0 +1,53 @@
+SYNOPSIS
+
+ This Apache module provides strong cryptography for the Apache 2.0 webserver
+ via the Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS
+ v1) protocols by the help of the SSL/TLS implementation library NSS
+
+ This module is based heavily on the mod_ssl package. In fact, it's more
+ a conversion than anything else.
+
+BUILDING
+
+ To build this you'll need NSPR 4.4.1 and NSS 3.9.2. It may work with earlier
+ versions but these are recommended (or tested). These can be retrieved from
+ http://www.mozilla.org/. The --with-nspr and --with-nss tags require that
+ the package be installed in the same parent directory (e.g. /opt/nspr,
+ /usr/local/nspr, etc). It will look in this parent for include/ and lib/, etc.
+
+ If --with-nss or --with-nspr are not passed configure will look for the
+ mozilla-[nss|nspr]-devel packages and use the libraries with that if found.
+ It is strongly recommended that the mozilla.org version is used instead.
+
+ Build and install those packages somewhere then configure the module with
+ something like:
+
+ % ./configure --with-apxs=/path/to/apxs/ --with-nspr=/path/to/nspr/ --with-nss=/path/to/nss/
+ % gmake all install
+
+ This will install a sample configuration file nss.conf. You'll need to do
+ some hand-editing as well.
+
+ To httpd.conf add (say right before Section 3):
+
+ Include conf/nss.conf
+
+ You'll need to change the default ports in nss.conf from 443 to
+ something else if you aren't starting this as root.
+
+CONFIGURING
+
+ You'll need to create an NSS database and get a server certificate installed.
+ A script, gencerts, is included to help get things going with a self-signed
+ certificate. This is a *BAD* idea and you shouldn't use this. It is for
+ example purposes only.
+
+ When configuring a file for use with the SSLPassPhraseDialog setting
+ add the following to nss.conf:
+
+ SSLPassPhraseDialog  file:/path/to/password.conf
+
+ The format of the file for a non-hardware token is tokenname:password.
+ A sample for the internal software token is like:
+
+ internal:netscape

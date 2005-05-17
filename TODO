@@ -1,0 +1,2 @@
+- Support for mod_proxy
+- Pull the entire cert chain when requested
