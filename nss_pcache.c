@@ -297,6 +297,11 @@ int main(int argc, char ** argv)
     char * tokenName;
     char * tokenpw;
 
+    if (argc != 2) {
+        fprintf(stderr, "Usage: nss_pcache <directory>\n");
+        exit(1);
+    }
+
     /* Initialize NSPR */
     PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 256);
  
@@ -304,7 +309,7 @@ int main(int argc, char ** argv)
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
  
     /* Initialize NSS and open the certificate database read-only. */
-    rv = NSS_Initialize("/home/rcrit/redhat/apache//conf/nss/", NULL, NULL, "secmod.db", NSS_INIT_READONLY);
+    rv = NSS_Initialize(argv[1], NULL, NULL, "secmod.db", NSS_INIT_READONLY);
 
     in = PR_GetSpecialFD(PR_StandardInput);
     out = PR_GetSpecialFD(PR_StandardOutput);
