@@ -241,6 +241,7 @@ typedef struct {
     int ssl3;
     int tls;
     int tlsrollback;
+    int enforce;
     const char *nickname;
 
     CERTCertificate   *servercert;
@@ -294,7 +295,7 @@ typedef struct
 enum sslversion { SSL2=1, SSL3=2, TLS=4};
 
 /* the table itself is defined in ssl_engine_init.c */
-#define ciphernum 22
+#define ciphernum 23
 
 /*
  *  function prototypes
@@ -315,6 +316,7 @@ const char *ssl_cmd_SSLCipherSuite(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *ssl_cmd_SSLVerifyClient(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *ssl_cmd_SSLProtocol(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *ssl_cmd_SSLNickname(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *ssl_cmd_SSLEnforceValidCerts(cmd_parms *, void *, int);
 const char *ssl_cmd_SSLSessionCacheTimeout(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *ssl_cmd_SSL3SessionCacheTimeout(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *ssl_cmd_SSLSessionCacheSize(cmd_parms *cmd, void *dcfg, const char *arg);

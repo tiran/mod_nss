@@ -75,6 +75,9 @@ static const command_rec ssl_config_cmds[] = {
     SSL_CMD_SRV(Nickname, TAKE1,
                 "SSL Server Certificate nickname "
                 "(`Server-Cert'")
+    SSL_CMD_SRV(EnforceValidCerts, FLAG,
+                "Require a valid, trust, non-expired server certificate (default on)"
+                "(`on', `off'")
     SSL_CMD_ALL(UserName, TAKE1,
 		"Set user name to SSL variable value")
     /*

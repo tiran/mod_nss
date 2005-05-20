@@ -146,6 +146,7 @@ static void modnss_ctx_cfg_merge(modnss_ctx_t *base,
     cfgMerge(auth.verify_mode, SSL_CVERIFY_UNSET);
 
     cfgMerge(nickname, NULL);
+    cfgMerge(enforce, PR_TRUE);
 }
 
 static void modnss_ctx_cfg_merge_server(modnss_ctx_t *base,
@@ -363,6 +364,17 @@ const char *ssl_cmd_SSLNickname(cmd_parms *cmd,
 
     sc->server->nickname = arg;
 
+    return NULL;
+}
+
+const char *ssl_cmd_SSLEnforceValidCerts(cmd_parms *cmd,
+                                         void *dcfg,
+                                         int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->server->enforce = flag ? PR_TRUE : PR_FALSE;
+ 
     return NULL;
 }
 

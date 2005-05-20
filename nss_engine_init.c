@@ -44,6 +44,7 @@ cipher_properties ciphers_def[ciphernum] =
     {"rsa_rc4_40_md5", SSL_RSA_EXPORT_WITH_RC4_40_MD5, 0, SSL3 | TLS},
     {"rsa_rc2_40_md5", SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5, 0, SSL3 | TLS},
     {"rsa_null_md5", SSL_RSA_WITH_NULL_MD5, 0, SSL3 | TLS},
+    {"rsa_null_sha", SSL_RSA_WITH_NULL_SHA, 0, SSL3 | TLS},
     {"fips_3des_sha", SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA, 0, SSL3 | TLS},
     {"fips_des_sha", SSL_RSA_FIPS_WITH_DES_CBC_SHA, 0, SSL3 | TLS},
     {"fortezza", SSL_FORTEZZA_DMS_WITH_FORTEZZA_CBC_SHA, 1, SSL3 | TLS},
@@ -108,7 +109,7 @@ static void ssl_init_SSLLibrary(server_rec *s)
 
     /* Do we need to fire up our password helper? */
     if (mc->nInitCount == 1) {
-        const char * child_argv[2];
+        const char * child_argv[3];
         apr_status_t rv;
 
         if (mc->pphrase_dialog_helper == NULL &&
@@ -119,7 +120,8 @@ static void ssl_init_SSLLibrary(server_rec *s)
         }
 
         child_argv[0] = mc->pphrase_dialog_helper;
-        child_argv[1] = NULL;
+        child_argv[1] = mc->pCertificateDatabase;
+        child_argv[2] = NULL;
 
         rv = apr_procattr_create(&mc->procattr, mc->pPool);
 
@@ -578,7 +580,6 @@ static void ssl_init_server_certs(server_rec *s,
 {
     SECCertTimeValidity certtimestatus;
     SECStatus secstatus;
-    int enforce = 0; // not currently used
 
     PK11SlotInfo* slot = NULL;
 
@@ -599,9 +600,11 @@ static void ssl_init_server_certs(server_rec *s,
 
         if (CERT_VerifyCertificateNow(CERT_GetDefaultCertDB(), mctx->servercert, PR_TRUE, usage, NULL, NULL) != SECSuccess)  {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "Certificate not verified '%s'", mctx->nickname);
+                "Certificate not verified: '%s'", mctx->nickname);
             ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-            if (enforce) {
+            if (mctx->enforce) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "Unable to verify certificate '%s'. Add \"SSLEnforceValidCerts off\" to nss.conf so the server can start until the problem can be resolved.", mctx->nickname);
                 ssl_die();
             }
         }
@@ -610,7 +613,7 @@ static void ssl_init_server_certs(server_rec *s,
     if (NULL == mctx->servercert)
     {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "Certificate not found '%s'", mctx->nickname);
+            "Certificate not found: '%s'", mctx->nickname);
         ssl_die();
     }
 
@@ -643,7 +646,7 @@ static void ssl_init_server_certs(server_rec *s,
 
     if (mctx->serverkey == NULL) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "Key not found %s", mctx->nickname);
+            "Key not found for: '%s'", mctx->nickname);
         ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
         ssl_die();
     }
@@ -666,28 +669,28 @@ static void ssl_init_server_certs(server_rec *s,
             break;
         case secCertTimeExpired:
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                "Server certificate is expired %s", mctx->nickname);
+                "Server certificate is expired: '%s'", mctx->nickname);
             break;
         case secCertTimeNotValidYet:
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                "Certificate is not valid yet %s", mctx->nickname);
+                "Certificate is not valid yet '%s'", mctx->nickname);
         default:
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                "Unhandled Certificate time type %d for %s", certtimestatus, mctx->nickname);
+                "Unhandled Certificate time type %d for: '%s'", certtimestatus, mctx->nickname);
             break;
     }
 
     secstatus = (SECStatus)SSL_SetPKCS11PinArg(mctx->model, NULL);
     if (secstatus != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "Error setting PKCS11 pin argument: %s", mctx->nickname);
+            "Error setting PKCS11 pin argument: '%s'", mctx->nickname);
         ssl_die();
     }
     
     secstatus = SSL_ConfigSecureServer(mctx->model, mctx->servercert, mctx->serverkey, mctx->serverKEAType);
     if (secstatus != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "SSL error configuring server %s", mctx->nickname);
+            "SSL error configuring server: '%s'", mctx->nickname);
         ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
         ssl_die();
     }
@@ -696,7 +699,7 @@ static void ssl_init_server_certs(server_rec *s,
     if (secstatus != SECSuccess)
     {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "SSL error configuring handshake callback %s", mctx->nickname);
+            "SSL error configuring handshake callback: '%s'", mctx->nickname);
         ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
         ssl_die();
     }
