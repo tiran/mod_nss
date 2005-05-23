@@ -9,14 +9,54 @@ nss_pcache_SOURCES = nss_pcache.c
 libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c ssl_expr_parse.y ssl_expr_scan.l nss_util.c
 
 ## Set the includes and libraries needed
-INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@
+INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
 LIBS = @nspr_lib@ @nss_lib@ -lnspr4 -lplc4 -lplds4 -lssl3 -lsmime3 -lnss3
 
 install-libLTLIBRARIES: libmodnss.la
 	@APXS@ -i -a -n nss libmodnss.la
-	if [ ! -f @apache_conf@/nss.conf ]; then \
+	if [ -d @apache_conf@/../conf.d ]; then \
+	    if [ ! -f @apache_conf@/../conf.d/nss.conf ]; then \
+		$(INSTALL_DATA) nss.conf @apache_conf@/../conf.d/nss.conf; \
+	    fi \
+	else \
+	    if [ ! -f @apache_conf@/nss.conf ]; then \
 		$(INSTALL_DATA) nss.conf @apache_conf@/nss.conf; \
+	    fi \
 	fi
+	if [ -d @apache_conf@/../conf.d ]; then \
+	    if [ -f @apache_conf@/../conf.d/ssl.conf ]; then \
+		mv @apache_conf@/../conf.d/ssl.conf @apache_conf@/../conf.d/ssl.conf.old; \
+	    fi \
+	else \
+	    if [ ! -f @apache_conf@/ssl.conf ]; then \
+		mv @apache_conf@/ssl.confnss.conf @apache_conf@/ssl.conf.old; \
+	    fi \
+	fi
+	@echo ""
+	@echo "**********************   NOTE   **************************"
+	@echo "mod_nss and mod_ssl may not be installed at the same time."
+	@echo "An attempt has been made to rename ssl.conf to"
+	@echo "ssl.conf.old but be sure to double-check your Apache"
+	@echo "configuration."
+	@echo "**********************   NOTE   **************************"
+	@echo ""
+
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(apache_bin)
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(apache_bin)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
+	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(apache_bin)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	  else :; fi; \
+	done
+	@echo ""
+	@echo "**********************   NOTE   **************************"
+	@echo "To create a certificate database with a self-signed"
+	@echo "certificate, use the gencert program that comes with"
+	@echo "mod_nss."
+	@echo "**********************   NOTE   **************************"
+	@echo ""
 
 ssl_expr_scan.c: ssl_expr_scan.l ssl_expr_parse.h
 	$(LEX) -Pssl_expr_yy -s -B ssl_expr_scan.l
@@ -29,3 +69,10 @@ ssl_expr_parse.c ssl_expr_parse.h: ssl_expr_parse.y
 	    <y.tab.c >ssl_expr_parse.c && rm -f y.tab.c
 	sed -e 's;yy;ssl_expr_yy;g' \
 	    <y.tab.h >ssl_expr_parse.h && rm -f y.tab.h
+
+LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@

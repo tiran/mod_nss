@@ -59,6 +59,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = @host_alias@
 host_triplet = @host@
+APR_CONFIG = @APR_CONFIG@
 APXS = @APXS@
 AS = @AS@
 CC = @CC@
@@ -77,9 +78,11 @@ RANLIB = @RANLIB@
 STRIP = @STRIP@
 VERSION = @VERSION@
 YACC = @YACC@
+apache_bin = @apache_bin@
 apache_conf = @apache_conf@
 apache_inc = @apache_inc@
 apache_prefix = @apache_prefix@
+apr_inc = @apr_inc@
 nspr_inc = @nspr_inc@
 nspr_lib = @nspr_lib@
 nss_inc = @nss_inc@
@@ -93,8 +96,17 @@ nss_pcache_SOURCES = nss_pcache.c
 
 libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c ssl_expr_parse.y ssl_expr_scan.l nss_util.c
 
-INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@
+INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
 LIBS = @nspr_lib@ @nss_lib@ -lnspr4 -lplc4 -lplds4 -lssl3 -lsmime3 -lnss3
+
+LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+
+
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES =  nss.conf
@@ -121,13 +133,11 @@ LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LEXLIB = @LEXLIB@
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
-DIST_COMMON =  README AUTHORS ChangeLog INSTALL Makefile.am Makefile.in \
-NEWS aclocal.m4 config.guess config.sub configure configure.in \
-install-sh ltmain.sh missing mkinstalldirs nss.conf.in ssl_expr_parse.c \
-ssl_expr_scan.c
+DIST_COMMON =  README AUTHORS COPYING ChangeLog INSTALL Makefile.am \
+Makefile.in NEWS TODO aclocal.m4 config.guess config.sub configure \
+configure.in install-sh ltmain.sh missing mkinstalldirs nss.conf.in \
+ssl_expr_parse.c ssl_expr_scan.c
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -227,16 +237,6 @@ clean-binPROGRAMS:
 distclean-binPROGRAMS:
 
 maintainer-clean-binPROGRAMS:
-
-install-binPROGRAMS: $(bin_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
-	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
-	  else :; fi; \
-	done
 
 uninstall-binPROGRAMS:
 	@$(NORMAL_UNINSTALL)
@@ -458,9 +458,49 @@ mostlyclean distclean maintainer-clean
 
 install-libLTLIBRARIES: libmodnss.la
 	@APXS@ -i -a -n nss libmodnss.la
-	if [ ! -f @apache_conf@/nss.conf ]; then \
+	if [ -d @apache_conf@/../conf.d ]; then \
+	    if [ ! -f @apache_conf@/../conf.d/nss.conf ]; then \
+		$(INSTALL_DATA) nss.conf @apache_conf@/../conf.d/nss.conf; \
+	    fi \
+	else \
+	    if [ ! -f @apache_conf@/nss.conf ]; then \
 		$(INSTALL_DATA) nss.conf @apache_conf@/nss.conf; \
+	    fi \
 	fi
+	if [ -d @apache_conf@/../conf.d ]; then \
+	    if [ -f @apache_conf@/../conf.d/ssl.conf ]; then \
+		mv @apache_conf@/../conf.d/ssl.conf @apache_conf@/../conf.d/ssl.conf.old; \
+	    fi \
+	else \
+	    if [ ! -f @apache_conf@/ssl.conf ]; then \
+		mv @apache_conf@/ssl.confnss.conf @apache_conf@/ssl.conf.old; \
+	    fi \
+	fi
+	@echo ""
+	@echo "**********************   NOTE   **************************"
+	@echo "mod_nss and mod_ssl may not be installed at the same time."
+	@echo "An attempt has been made to rename ssl.conf to
+	@echo "ssl.conf.old but be sure to double-check your Apache
+	@echo "configuration."
+	@echo "**********************   NOTE   **************************"
+	@echo ""
+
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(apache_bin)
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(apache_bin)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
+	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(apache_bin)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	  else :; fi; \
+	done
+	@echo ""
+	@echo "**********************   NOTE   **************************"
+	@echo "To create a certificate database with a self-signed"
+	@echo "certificate, use the gencert program that comes with"
+	@echo "mod_nss."
+	@echo "**********************   NOTE   **************************"
+	@echo ""
 
 ssl_expr_scan.c: ssl_expr_scan.l ssl_expr_parse.h
 	$(LEX) -Pssl_expr_yy -s -B ssl_expr_scan.l

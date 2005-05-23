@@ -22,6 +22,20 @@ AC_PROG_YACC
 AC_PROG_LEX
 AC_DECL_YYTEXT
 
+AC_CHECKING(for apr-config)
+# check for --with-apr-config
+AC_MSG_CHECKING(for --with-apr-config)
+AC_ARG_WITH(apr-config, [--with-apr-config 	Use apr-config to determine the APR directory],
+[
+  AC_PATH_PROG(APR_CONFIG, apr-config)
+  if test -n "$APR_CONFIG"; then
+    apr_inc=`$APR_CONFIG --includes`
+  else
+    AC_MSG_ERROR([apr-config not found])
+  fi
+],
+AC_MSG_RESULT(no))
+
 AC_CHECKING(for apxs)
 
 # check for --with-apxs
@@ -63,6 +77,18 @@ fi
 # and finally
 if test -z "$APXS"; then
   AC_MSG_ERROR([apxs was not found. use --with-apxs to specifiy it.])
+fi
+
+# Get some variables we need for Makefile.in
+apache_inc=`$APXS -q INCLUDEDIR`
+apache_conf=`$APXS -q SYSCONFDIR`
+apache_prefix=`$APXS -q PREFIX`
+apache_bin=`$APXS -q SBINDIR`
+
+if ! test -f "$apache_inc/apr.h"; then
+  if test -z "$apr_inc"; then
+    AC_MSG_ERROR([apr.h is not in your Apache include dir as reported by apxs. Use --with-apr-config to have apr-config tell us where to find it.])
+  fi
 fi
 
 AC_CHECKING(for NSPR)
@@ -135,16 +161,13 @@ if test -z "$NSSDIR"; then
   fi
 fi
 
-# Get some variables we need for Makefile.in
-apache_inc=`$APXS -q INCLUDEDIR`
-apache_conf=`$APXS -q SYSCONFDIR`
-apachee_prefix=`$APXS -q PREFIX`
-
 # Substitute values 
 AC_SUBST(APXS)
+AC_SUBST(apr_inc)
 AC_SUBST(apache_inc)
 AC_SUBST(apache_conf)
 AC_SUBST(apache_prefix)
+AC_SUBST(apache_bin)
 AC_SUBST(nspr_inc)
 AC_SUBST(nspr_lib)
 AC_SUBST(nss_inc)
