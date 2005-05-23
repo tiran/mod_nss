@@ -8,8 +8,6 @@
 # consult the online docs. You have been warned.  
 #
 
-<IfDefine SSL>
-
 #
 # When we also provide SSL we have to listen to the 
 # standard HTTP port (see above) and to the HTTPS port
@@ -38,6 +36,12 @@ AddType application/x-pkcs7-crl    .crl
 #   terminal dialog) has to provide the pass phrase on stdout.
 SSLPassPhraseDialog  builtin
 
+
+#   Pass Phrase Helper:
+#   This helper program stores the token password pins between
+#   restarts of Apache.
+SSLPassPhraseHelper @apache_bin@/nss_pcache
+
 #   Configure the SSL Session Cache. 
 #   SSLSessionCacheSize is the number of entries in the cache.
 #   SSLSessionCacheTimeout is the SSL2 session timeout (in seconds).
@@ -53,9 +57,11 @@ SSL3SessionCacheTimeout 86400
 <VirtualHost _default_:443>
 
 #   General setup for the virtual host
-DocumentRoot "@apache_prefix@/htdocs"
-ServerName www.example.com:443
-ServerAdmin you@example.com
+#DocumentRoot "@apache_prefix@/htdocs"
+#ServerName www.example.com:443
+#ServerAdmin you@example.com
+
+# mod_ssl logs to separate log files, you can choose to do that if you'd like
 ErrorLog @apache_prefix@/logs/error_log
 TransferLog @apache_prefix@/logs/access_log
 
@@ -66,10 +72,9 @@ SSLEngine on
 #   SSL Cipher Suite:
 #   List the ciphers that the client is permitted to negotiate.
 #   See the mod_nss documentation for a complete list.
-SSLCipherSuite -rc4,-rc4export,-rc2,-rc2export,-des,-desede3,-fortezza,-fortezza_rc4_128_sha,+rsa_rc4_128_md5,+rsa_rc4_40_md5,+rsa_3des_sha,+rsa_des_sha,-rsa_rc2_40_md5,-fortezza_null,-fips_des_sha,+fips_3des_sha,-rsa_null_md5,-rsa_rc4_128_sha,-rsa_des_56_sha,-rsa_rc4_56_sha,-rsa_aes_128_sha,-rsa_aes_256_sha
-#SSLCipherSuite -rc4,-rc4export,-rc2,-rc2export,-des,-desede3,-fortezza,-fortezza_rc4_128_sha,-rsa_rc4_128_md5,-rsa_rc4_40_md5,-rsa_3des_sha,-rsa_des_sha,-rsa_rc2_40_md5,-fortezza_null,-fips_des_sha,-fips_3des_sha,+rsa_null_md5,-rsa_rc4_128_sha,-rsa_des_56_sha,-rsa_rc4_56_sha,-rsa_aes_128_sha,-rsa_aes_256_sha
+SSLCipherSuite -des,-desede3,-rc2,-rc2export,-rc4,-rc4export,-rsa_3des_sha,-rsa_des_56_sha,-rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,-rsa_rc4_128_md5,-rsa_rc4_128_sha,-rsa_rc4_40_md5,-rsa_rc4_56_sha,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,+fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha
 
-SSLProtocol all
+SSLProtocol SSLv3,TLSv1
 
 #   SSL Certificate Nickname:
 #   The nickname of the server certificate you are going to use.
@@ -79,12 +84,12 @@ SSLNickname Server-Cert
 #   The NSS security database directory that holds the certificates and
 #   keys. The database consists of 3 files: cert8.db, key3.db and secmod.db.
 #   Provide the directory that these files exist.
-SSLCertificateDatabase @apache_conf@/nss/
+SSLCertificateDatabase @apache_conf@
 
 #   Client Authentication (Type):
 #   Client certificate verification type.  Types are none, optional and
 #   require.
-SSLVerifyClient none
+#SSLVerifyClient none
 
 #   Access Control:
 #   With SSLRequire you can do per-directory access control based
@@ -144,4 +149,3 @@ SSLVerifyClient none
 
 </VirtualHost>                                  
 
-</IfDefine>
