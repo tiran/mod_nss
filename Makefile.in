@@ -479,8 +479,8 @@ install-libLTLIBRARIES: libmodnss.la
 	@echo ""
 	@echo "**********************   NOTE   **************************"
 	@echo "mod_nss and mod_ssl may not be installed at the same time."
-	@echo "An attempt has been made to rename ssl.conf to
-	@echo "ssl.conf.old but be sure to double-check your Apache
+	@echo "An attempt has been made to rename ssl.conf to"
+	@echo "ssl.conf.old but be sure to double-check your Apache"
 	@echo "configuration."
 	@echo "**********************   NOTE   **************************"
 	@echo ""
