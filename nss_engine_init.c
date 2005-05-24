@@ -456,7 +456,7 @@ static void ssl_init_ctx_verify(server_rec *s,
 {
     if (mctx->auth.verify_mode == SSL_CVERIFY_REQUIRE) {
         SSL_OptionSet(mctx->model, SSL_REQUEST_CERTIFICATE, PR_TRUE);
-        SSL_OptionSet(mctx->model, SSL_REQUIRE_CERTIFICATE, SSL_REQUIRE_NO_ERROR);
+        SSL_OptionSet(mctx->model, SSL_REQUIRE_CERTIFICATE, SSL_REQUIRE_ALWAYS);
     } else if (mctx->auth.verify_mode == SSL_CVERIFY_OPTIONAL) {
         SSL_OptionSet(mctx->model, SSL_REQUEST_CERTIFICATE, PR_TRUE);
         SSL_OptionSet(mctx->model, SSL_REQUIRE_CERTIFICATE, SSL_REQUIRE_NEVER);
