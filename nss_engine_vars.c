@@ -29,8 +29,9 @@
 static char *ssl_var_lookup_header(apr_pool_t *p, request_rec *r, const char *name);
 static char *ssl_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var);
 static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *var, conn_rec *c);
-static char *ssl_var_lookup_ssl_cert_dn(apr_pool_t *p, CERTCertificate *cert, char *var);
+static char *ssl_var_lookup_ssl_cert_dn(apr_pool_t *p, CERTName *cert, char *var);
 static char *ssl_var_lookup_ssl_cert_valid(apr_pool_t *p, CERTCertificate *xs, int type);
+static char *ssl_var_lookup_ssl_cert_chain(apr_pool_t *p, CERTCertificate *cert,char *var);
 static char *ssl_var_lookup_ssl_cert_PEM(apr_pool_t *p, CERTCertificate *xs);
 static char *ssl_var_lookup_ssl_cert_verify(apr_pool_t *p, conn_rec *c);
 static char *ssl_var_lookup_ssl_cipher(apr_pool_t *p, conn_rec *c, char *var);
@@ -259,6 +260,13 @@ static char *ssl_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
     else if (ssl != NULL && strlen(var) >= 6 && strcEQn(var, "CIPHER", 6)) {
         result = ssl_var_lookup_ssl_cipher(p, c, var+6);
     }
+    else if (ssl != NULL && strlen(var) > 18 && strcEQn(var, "CLIENT_CERT_CHAIN_", 18)) {
+        xs = SSL_PeerCertificate(ssl);
+        if (xs != NULL) {
+            result = ssl_var_lookup_ssl_cert_chain(p, xs, var+18);
+            CERT_DestroyCertificate(xs);
+        }
+    }
     else if (ssl != NULL && strcEQ(var, "CLIENT_VERIFY")) {
         result = ssl_var_lookup_ssl_cert_verify(p, c);
     }
@@ -308,7 +316,7 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *v
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "S_DN_", 5)) {
-        result = ssl_var_lookup_ssl_cert_dn(p, xs, var+5);
+        result = ssl_var_lookup_ssl_cert_dn(p, &xs->subject, var+5);
         resdup = FALSE;
     }
     else if (strcEQ(var, "I_DN")) {
@@ -318,7 +326,7 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *v
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "I_DN_", 5)) {
-        result = ssl_var_lookup_ssl_cert_dn(p, xs, var+5);
+        result = ssl_var_lookup_ssl_cert_dn(p, &xs->issuer, var+5);
         resdup = FALSE;
     }
     else if (strcEQ(var, "A_SIG")) {
@@ -367,7 +375,7 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *v
     return result;
 }
 
-static char *ssl_var_lookup_ssl_cert_dn(apr_pool_t *p, CERTCertificate *cert, char *var)
+static char *ssl_var_lookup_ssl_cert_dn(apr_pool_t *p, CERTName *cert, char *var)
 {
     char *result;
     char *rv;
@@ -376,23 +384,23 @@ static char *ssl_var_lookup_ssl_cert_dn(apr_pool_t *p, CERTCertificate *cert, ch
     rv = NULL;
 
     if (strcEQ(var, "C")) {
-        rv = CERT_GetCountryName(&cert->subject);
+        rv = CERT_GetCountryName(cert);
     } else if (strcEQ(var, "ST")) {
-        rv = CERT_GetStateName(&cert->subject);
+        rv = CERT_GetStateName(cert);
     } else if (strcEQ(var, "SP")) { // for compatibility
-        rv = CERT_GetStateName(&cert->subject);
+        rv = CERT_GetStateName(cert);
     } else if (strcEQ(var, "L")) {
-        rv = CERT_GetLocalityName(&cert->subject);
+        rv = CERT_GetLocalityName(cert);
     } else if (strcEQ(var, "O")) {
-        rv = CERT_GetOrgName(&cert->subject);
+        rv = CERT_GetOrgName(cert);
     } else if (strcEQ(var, "OU")) {
-        rv = CERT_GetOrgUnitName(&cert->subject);
+        rv = CERT_GetOrgUnitName(cert);
     } else if (strcEQ(var, "CN")) {
-        rv = CERT_GetCommonName(&cert->subject);
+        rv = CERT_GetCommonName(cert);
     } else if (strcEQ(var, "UID")) {
-        rv = CERT_GetCertUid(&cert->subject);
+        rv = CERT_GetCertUid(cert);
     } else if (strcEQ(var, "EMAIL")) {
-        rv = CERT_GetCertEmailAddress(&cert->subject);
+        rv = CERT_GetCertEmailAddress(cert);
     } else {
         rv = NULL; // catch any values we don't support
     }
@@ -428,15 +436,59 @@ static char *ssl_var_lookup_ssl_cert_valid(apr_pool_t *p, CERTCertificate *xs, i
     return result;
 }
 
+static char *ssl_var_lookup_ssl_cert_chain(apr_pool_t *p, CERTCertificate *cert, char *var)
+{
+    char *result;
+    CERTCertificateList *chain = NULL;
+    int n;
+
+    result = NULL;
+
+    chain = CERT_CertChainFromCert(cert, certUsageSSLClient, PR_TRUE);
+
+    if (!chain)
+        return NULL;
+
+    if (strspn(var, "0123456789") == strlen(var)) {
+        n = atoi(var);
+        if (n <= chain->len-1) {
+            CERTCertificate *c;
+            c = CERT_FindCertByDERCert(CERT_GetDefaultCertDB(), &chain->certs[n]);
+            result = ssl_var_lookup_ssl_cert_PEM(p, c);
+            CERT_DestroyCertificate(c);
+        }
+    }
+
+    CERT_DestroyCertificateList(chain);
+
+    return result;
+}
+
 #define CERT_HEADER  "-----BEGIN CERTIFICATE-----\n"
 #define CERT_TRAILER "\n-----END CERTIFICATE-----\n"
 static char *ssl_var_lookup_ssl_cert_PEM(apr_pool_t *p, CERTCertificate *xs)
 {
     char * result = NULL;
     char * tmp = NULL;
+    int i, len;
+
+    /* should never happen but we'll crash if it does */
+    if (!xs)
+        return NULL;
 
     tmp = BTOA_DataToAscii(xs->derCert.data,
                            xs->derCert.len);
+
+    /* NSS uses \r\n as the line terminator. Remove \r so the output is
+     * similar to mod_ssl. */
+    i=0;
+    len = strlen(tmp);
+    while (tmp[i] != '\0') {
+        if (tmp[i] == '\r') {
+            memmove(&tmp[i], &tmp[i+1], 1+(len - i));
+        }
+        i++;
+    }
 
     /* Allocate the size of the cert + header + footer + 1 */
     result = apr_palloc(p, strlen(tmp) + 29 + 27 + 1);

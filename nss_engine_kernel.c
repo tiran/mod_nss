@@ -809,6 +809,8 @@ int ssl_hook_Fixup(request_rec *r)
     apr_table_t *env = r->subprocess_env;
     char *var, *val = "";
     int i;
+    CERTCertificate *cert;
+    CERTCertificateList *chain = NULL;
 
     /*
      * Check to see if SSL is on
@@ -863,6 +865,29 @@ int ssl_hook_Fixup(request_rec *r)
         /* Need to fetch the entire SSL cert chain and add it to the 
          * variable SSL_CLIENT_CERT_CHAIN_[0..n]
          */
+        cert = SSL_PeerCertificate(ssl);
+
+        if (cert)
+            chain = CERT_CertChainFromCert(cert, certUsageSSLClient, PR_TRUE);
+
+        if (cert && chain) {
+            int n;
+
+            n = chain->len;
+
+            CERT_DestroyCertificateList(chain);
+
+            for (i = 0; i < n; i++) {
+                var = apr_psprintf(r->pool, "SSL_CLIENT_CERT_CHAIN_%d", i);
+                val = ssl_var_lookup(r->pool, r->server, r->connection,
+                                     r, var);
+                if (val) {
+                    apr_table_setn(env, var, val);
+                }
+            }
+        }
+        if (cert)
+            CERT_DestroyCertificate(cert);
     }
 
     return DECLINED;
