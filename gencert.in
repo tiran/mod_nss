@@ -1,13 +1,28 @@
 #!/bin/ksh
 
+# Copyright 2001-2004 The Apache Software Foundation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # $Header$
 #
 # gencert - generate new CA, server and user certificates for NSS testing.
 #
 # Note that this script requires the Korn shell.
 
-NSSDIR=/path/to/NSS_3_9_RTM/
-NSPRDIR=/path/to/nspr4.4.1/
+NSSDIR=@nss_dir@
+NSPRDIR=@nspr_dir@
 
 export LD_LIBRARY_PATH=$NSPRDIR/lib:$NSSDIR/lib
 CERTUTIL=$NSSDIR/bin/certutil
@@ -17,9 +32,29 @@ CERTUTIL=$NSSDIR/bin/certutil
 # the server is the same as your domain. Otherwise you will get an error message
 # like -12776 (requested domain name does not match the server's certificate).
 
-CA_CERTDN="CN=Certificate Shack, O=TestCentral, C=US"
-SERVER_CERTDN="CN=www.testcentral.com, O=TestCentral, C=US"
-ALPHA_CERTDN="E=alpha@testcentral.com, CN=Frank Alpha, UID=alpha, OU=People, O=TestCentral, C=US"
+getFQDN() {
+        max=0
+        maxhost=
+        defhost=`hostname` 
+        hosthost=`host $defhost | grep -v "not found" | awk '{print $1}'`
+        for host in $defhost $hosthost `hostname -f` `hostname -a` ; do
+                len=`echo $host | wc -c` 
+                if [ $len -gt $max ]; then
+                        max=$len 
+                        maxhost=$host
+                fi
+        done
+        echo $maxhost
+}
+
+FQDN=`getFQDN`
+if [ "x${FQDN}" = "x" ]; then
+   FQDN=localhost.localdomain
+fi
+
+CA_CERTDN="CN=Certificate Shack, O=example.com, C=US"
+SERVER_CERTDN="CN=${FQDN}, O=example.com, C=US"
+ALPHA_CERTDN="E=alpha@${FQDN}, CN=Frank Alpha, UID=alpha, OU=People, O=example.com, C=US"
 
 # size of the keys - this needs to be 512 for export servers
 KEYSIZE=1024

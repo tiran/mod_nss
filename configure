@@ -5782,7 +5782,12 @@ fi
   fi
 fi
 
+nspr_dir=`echo "$nspr_lib" | sed 's/\/lib[/]*$//' | sed 's/-L//'`
+nss_dir=`echo "$nss_lib" | sed 's/\/lib[/]*$//' | sed 's/-L//'`
+
 # Substitute values 
+
+
 
 
 
@@ -5908,7 +5913,7 @@ done
 ac_given_srcdir=$srcdir
 ac_given_INSTALL="$INSTALL"
 
-trap 'rm -fr `echo "Makefile nss.conf" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
+trap 'rm -fr `echo "Makefile nss.conf gencert" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
 cat >> $CONFIG_STATUS <<EOF
 
@@ -5986,6 +5991,8 @@ s%@nspr_inc@%$nspr_inc%g
 s%@nspr_lib@%$nspr_lib%g
 s%@nss_inc@%$nss_inc%g
 s%@nss_lib@%$nss_lib%g
+s%@nspr_dir@%$nspr_dir%g
+s%@nss_dir@%$nss_dir%g
 
 CEOF
 EOF
@@ -6027,7 +6034,7 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"Makefile nss.conf"}
+CONFIG_FILES=\${CONFIG_FILES-"Makefile nss.conf gencert"}
 EOF
 cat >> $CONFIG_STATUS <<\EOF
 for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
@@ -6098,3 +6105,5 @@ chmod +x $CONFIG_STATUS
 rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS || exit 1
 
+
+chmod +x gencert
