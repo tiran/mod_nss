@@ -13,19 +13,6 @@
  * limitations under the License.
  */
 
-/*                      _             _
- *  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
- * | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
- * | | | | | | (_) | (_| |   \__ \__ \ |
- * |_| |_| |_|\___/ \__,_|___|___/___/_|
- *                      |_____|
- *  ssl_expr.c
- *  Expression Handling
- */
-                             /* ``It is hard to fly with
-                                  the eagles when you work
-                                  with the turkeys.''
-                                          -- Unknown  */
 #include "mod_nss.h"
 
 /*  _________________________________________________________________
@@ -34,47 +21,47 @@
 **  _________________________________________________________________
 */
 
-ssl_expr_info_type ssl_expr_info;
-char              *ssl_expr_error;
+nss_expr_info_type nss_expr_info;
+char              *nss_expr_error;
 
-ssl_expr *ssl_expr_comp(apr_pool_t *p, char *expr)
+nss_expr *nss_expr_comp(apr_pool_t *p, char *expr)
 {
-    ssl_expr_info.pool       = p;
-    ssl_expr_info.inputbuf   = expr;
-    ssl_expr_info.inputlen   = strlen(expr);
-    ssl_expr_info.inputptr   = ssl_expr_info.inputbuf;
-    ssl_expr_info.expr       = FALSE;
+    nss_expr_info.pool       = p;
+    nss_expr_info.inputbuf   = expr;
+    nss_expr_info.inputlen   = strlen(expr);
+    nss_expr_info.inputptr   = nss_expr_info.inputbuf;
+    nss_expr_info.expr       = FALSE;
 
-    ssl_expr_error = NULL;
-    if (ssl_expr_yyparse())
+    nss_expr_error = NULL;
+    if (nss_expr_yyparse())
         return NULL;
-    return ssl_expr_info.expr;
+    return nss_expr_info.expr;
 }
 
-char *ssl_expr_get_error(void)
+char *nss_expr_get_error(void)
 {
-    if (ssl_expr_error == NULL)
+    if (nss_expr_error == NULL)
         return "";
-    return ssl_expr_error;
+    return nss_expr_error;
 }
 
-ssl_expr *ssl_expr_make(ssl_expr_node_op op, void *a1, void *a2)
+nss_expr *nss_expr_make(nss_expr_node_op op, void *a1, void *a2)
 {
-    ssl_expr *node;
+    nss_expr *node;
 
-    node = (ssl_expr *)apr_palloc(ssl_expr_info.pool, sizeof(ssl_expr));
+    node = (nss_expr *)apr_palloc(nss_expr_info.pool, sizeof(nss_expr));
     node->node_op   = op;
     node->node_arg1 = (char *)a1;
     node->node_arg2 = (char *)a2;
     return node;
 }
 
-int ssl_expr_exec(request_rec *r, ssl_expr *expr)
+int nss_expr_exec(request_rec *r, nss_expr *expr)
 {
     BOOL rc;
 
-    rc = ssl_expr_eval(r, expr);
-    if (ssl_expr_error != NULL)
+    rc = nss_expr_eval(r, expr);
+    if (nss_expr_error != NULL)
         return (-1);
     else
         return (rc ? 1 : 0);

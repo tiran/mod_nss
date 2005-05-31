@@ -96,7 +96,7 @@ bin_PROGRAMS = nss_pcache
 
 nss_pcache_SOURCES = nss_pcache.c
 
-libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c ssl_expr_parse.y ssl_expr_scan.l nss_util.c
+libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c
 
 INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
 LIBS = @nspr_lib@ @nss_lib@ -lnspr4 -lplc4 -lplds4 -lssl3 -lsmime3 -lnss3
@@ -123,7 +123,7 @@ libmodnss_la_LIBADD =
 libmodnss_la_OBJECTS =  mod_nss.lo nss_engine_config.lo \
 nss_engine_init.lo nss_engine_io.lo nss_engine_kernel.lo \
 nss_engine_log.lo nss_engine_pphrase.lo nss_engine_vars.lo nss_expr.lo \
-nss_expr_eval.lo ssl_expr_parse.lo ssl_expr_scan.lo nss_util.lo
+nss_expr_eval.lo nss_expr_parse.lo nss_expr_scan.lo nss_util.lo
 bin_PROGRAMS =  nss_pcache$(EXEEXT)
 PROGRAMS =  $(bin_PROGRAMS)
 
@@ -139,7 +139,7 @@ CCLD = $(CC)
 DIST_COMMON =  README AUTHORS COPYING ChangeLog INSTALL Makefile.am \
 Makefile.in NEWS TODO aclocal.m4 config.guess config.sub configure \
 configure.in gencert.in install-sh ltmain.sh missing mkinstalldirs \
-nss.conf.in ssl_expr_parse.c ssl_expr_scan.c
+nss.conf.in nss_expr_parse.c nss_expr_scan.c
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -150,8 +150,8 @@ DEP_FILES =  .deps/mod_nss.P .deps/nss_engine_config.P \
 .deps/nss_engine_init.P .deps/nss_engine_io.P .deps/nss_engine_kernel.P \
 .deps/nss_engine_log.P .deps/nss_engine_pphrase.P \
 .deps/nss_engine_vars.P .deps/nss_expr.P .deps/nss_expr_eval.P \
-.deps/nss_pcache.P .deps/nss_util.P .deps/ssl_expr_parse.P \
-.deps/ssl_expr_scan.P
+.deps/nss_expr_parse.P .deps/nss_expr_scan.P .deps/nss_pcache.P \
+.deps/nss_util.P
 SOURCES = $(libmodnss_la_SOURCES) $(nss_pcache_SOURCES)
 OBJECTS = $(libmodnss_la_OBJECTS) $(nss_pcache_OBJECTS)
 
@@ -258,7 +258,7 @@ nss_pcache$(EXEEXT): $(nss_pcache_OBJECTS) $(nss_pcache_DEPENDENCIES)
 	if test -f y.tab.h; then \
 	if cmp -s y.tab.h $*.h; then rm -f y.tab.h; else mv y.tab.h $*.h; fi; \
 	else :; fi
-ssl_expr_parse.h: ssl_expr_parse.c
+nss_expr_parse.h: nss_expr_parse.c
 
 
 tags: TAGS
@@ -411,7 +411,7 @@ distclean-generic:
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
 
 maintainer-clean-generic:
-	-test -z "ssl_expr_scanlssl_expr_parsehssl_expr_parsec" || rm -f ssl_expr_scanl ssl_expr_parseh ssl_expr_parsec
+	-test -z "nss_expr_scanlnss_expr_parsehnss_expr_parsec" || rm -f nss_expr_scanl nss_expr_parseh nss_expr_parsec
 mostlyclean-am:  mostlyclean-libLTLIBRARIES mostlyclean-compile \
 		mostlyclean-libtool mostlyclean-binPROGRAMS \
 		mostlyclean-tags mostlyclean-depend mostlyclean-generic
@@ -506,17 +506,17 @@ install-binPROGRAMS: $(bin_PROGRAMS)
 	@echo "**********************   NOTE   **************************"
 	@echo ""
 
-ssl_expr_scan.c: ssl_expr_scan.l ssl_expr_parse.h
-	$(LEX) -Pssl_expr_yy -s -B ssl_expr_scan.l
-	sed -e '/$$Header:/d' <lex.ssl_expr_yy.c >ssl_expr_scan.c && rm -f lex.ssl_expr_yy.c
+nss_expr_scan.c: nss_expr_scan.l nss_expr_parse.h
+	$(LEX) -Pnss_expr_yy -s -B nss_expr_scan.l
+	sed -e '/$$Header:/d' <lex.nss_expr_yy.c >nss_expr_scan.c && rm -f lex.nss_expr_yy.c
 
-ssl_expr_parse.c ssl_expr_parse.h: ssl_expr_parse.y
-	$(YACC) -d ssl_expr_parse.y
-	sed -e 's;yy;ssl_expr_yy;g' \
+nss_expr_parse.c nss_expr_parse.h: nss_expr_parse.y
+	$(YACC) -d nss_expr_parse.y
+	sed -e 's;yy;nss_expr_yy;g' \
 	    -e '/#if defined(c_plusplus) || defined(__cplusplus)/,/#endif/d' \
-	    <y.tab.c >ssl_expr_parse.c && rm -f y.tab.c
-	sed -e 's;yy;ssl_expr_yy;g' \
-	    <y.tab.h >ssl_expr_parse.h && rm -f y.tab.h
+	    <y.tab.c >nss_expr_parse.c && rm -f y.tab.c
+	sed -e 's;yy;nss_expr_yy;g' \
+	    <y.tab.h >nss_expr_parse.h && rm -f y.tab.h
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

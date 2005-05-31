@@ -13,18 +13,6 @@
  * limitations under the License.
  */
 
-/*                      _             _
- *  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
- * | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
- * | | | | | | (_) | (_| |   \__ \__ \ |
- * |_| |_| |_|\___/ \__,_|___|___/___/_|
- *                      |_____|
- *  ssl_expr_eval.c
- *  Expression Evaluation
- */
-                             /* ``Make love,
-                                  not software!''
-                                        -- Unknown */
 #include "mod_nss.h"
 
 /*  _________________________________________________________________
@@ -33,12 +21,12 @@
 **  _________________________________________________________________
 */
 
-static BOOL  ssl_expr_eval_comp(request_rec *, ssl_expr *);
-static char *ssl_expr_eval_word(request_rec *, ssl_expr *);
-static char *ssl_expr_eval_func_file(request_rec *, char *);
-static int   ssl_expr_eval_strcmplex(char *, char *);
+static BOOL  nss_expr_eval_comp(request_rec *, nss_expr *);
+static char *nss_expr_eval_word(request_rec *, nss_expr *);
+static char *nss_expr_eval_func_file(request_rec *, char *);
+static int   nss_expr_eval_strcmplex(char *, char *);
 
-BOOL ssl_expr_eval(request_rec *r, ssl_expr *node)
+BOOL nss_expr_eval(request_rec *r, nss_expr *node)
 {
     switch (node->node_op) {
         case op_True: {
@@ -48,73 +36,73 @@ BOOL ssl_expr_eval(request_rec *r, ssl_expr *node)
             return FALSE;
         }
         case op_Not: {
-            ssl_expr *e = (ssl_expr *)node->node_arg1;
-            return (!ssl_expr_eval(r, e));
+            nss_expr *e = (nss_expr *)node->node_arg1;
+            return (!nss_expr_eval(r, e));
         }
         case op_Or: {
-            ssl_expr *e1 = (ssl_expr *)node->node_arg1;
-            ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (ssl_expr_eval(r, e1) || ssl_expr_eval(r, e2));
+            nss_expr *e1 = (nss_expr *)node->node_arg1;
+            nss_expr *e2 = (nss_expr *)node->node_arg2;
+            return (nss_expr_eval(r, e1) || nss_expr_eval(r, e2));
         }
         case op_And: {
-            ssl_expr *e1 = (ssl_expr *)node->node_arg1;
-            ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (ssl_expr_eval(r, e1) && ssl_expr_eval(r, e2));
+            nss_expr *e1 = (nss_expr *)node->node_arg1;
+            nss_expr *e2 = (nss_expr *)node->node_arg2;
+            return (nss_expr_eval(r, e1) && nss_expr_eval(r, e2));
         }
         case op_Comp: {
-            ssl_expr *e = (ssl_expr *)node->node_arg1;
-            return ssl_expr_eval_comp(r, e);
+            nss_expr *e = (nss_expr *)node->node_arg1;
+            return nss_expr_eval_comp(r, e);
         }
         default: {
-            ssl_expr_error = "Internal evaluation error: Unknown expression node";
+            nss_expr_error = "Internal evaluation error: Unknown expression node";
             return FALSE;
         }
     }
 }
 
-static BOOL ssl_expr_eval_comp(request_rec *r, ssl_expr *node)
+static BOOL nss_expr_eval_comp(request_rec *r, nss_expr *node)
 {
     switch (node->node_op) {
         case op_EQ: {
-            ssl_expr *e1 = (ssl_expr *)node->node_arg1;
-            ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (strcmp(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) == 0);
+            nss_expr *e1 = (nss_expr *)node->node_arg1;
+            nss_expr *e2 = (nss_expr *)node->node_arg2;
+            return (strcmp(nss_expr_eval_word(r, e1), nss_expr_eval_word(r, e2)) == 0);
         }
         case op_NE: {
-            ssl_expr *e1 = (ssl_expr *)node->node_arg1;
-            ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (strcmp(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) != 0);
+            nss_expr *e1 = (nss_expr *)node->node_arg1;
+            nss_expr *e2 = (nss_expr *)node->node_arg2;
+            return (strcmp(nss_expr_eval_word(r, e1), nss_expr_eval_word(r, e2)) != 0);
         }
         case op_LT: {
-            ssl_expr *e1 = (ssl_expr *)node->node_arg1;
-            ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (ssl_expr_eval_strcmplex(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) <  0);
+            nss_expr *e1 = (nss_expr *)node->node_arg1;
+            nss_expr *e2 = (nss_expr *)node->node_arg2;
+            return (nss_expr_eval_strcmplex(nss_expr_eval_word(r, e1), nss_expr_eval_word(r, e2)) <  0);
         }
         case op_LE: {
-            ssl_expr *e1 = (ssl_expr *)node->node_arg1;
-            ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (ssl_expr_eval_strcmplex(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) <= 0);
+            nss_expr *e1 = (nss_expr *)node->node_arg1;
+            nss_expr *e2 = (nss_expr *)node->node_arg2;
+            return (nss_expr_eval_strcmplex(nss_expr_eval_word(r, e1), nss_expr_eval_word(r, e2)) <= 0);
         }
         case op_GT: {
-            ssl_expr *e1 = (ssl_expr *)node->node_arg1;
-            ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (ssl_expr_eval_strcmplex(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) >  0);
+            nss_expr *e1 = (nss_expr *)node->node_arg1;
+            nss_expr *e2 = (nss_expr *)node->node_arg2;
+            return (nss_expr_eval_strcmplex(nss_expr_eval_word(r, e1), nss_expr_eval_word(r, e2)) >  0);
         }
         case op_GE: {
-            ssl_expr *e1 = (ssl_expr *)node->node_arg1;
-            ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            return (ssl_expr_eval_strcmplex(ssl_expr_eval_word(r, e1), ssl_expr_eval_word(r, e2)) >= 0);
+            nss_expr *e1 = (nss_expr *)node->node_arg1;
+            nss_expr *e2 = (nss_expr *)node->node_arg2;
+            return (nss_expr_eval_strcmplex(nss_expr_eval_word(r, e1), nss_expr_eval_word(r, e2)) >= 0);
         }
         case op_IN: {
-            ssl_expr *e1 = (ssl_expr *)node->node_arg1;
-            ssl_expr *e2 = (ssl_expr *)node->node_arg2;
-            ssl_expr *e3;
-            char *w1 = ssl_expr_eval_word(r, e1);
+            nss_expr *e1 = (nss_expr *)node->node_arg1;
+            nss_expr *e2 = (nss_expr *)node->node_arg2;
+            nss_expr *e3;
+            char *w1 = nss_expr_eval_word(r, e1);
             BOOL found = FALSE;
             do {
-                e3 = (ssl_expr *)e2->node_arg1;
-                e2 = (ssl_expr *)e2->node_arg2;
-                if (strcmp(w1, ssl_expr_eval_word(r, e3)) == 0) {
+                e3 = (nss_expr *)e2->node_arg1;
+                e2 = (nss_expr *)e2->node_arg2;
+                if (strcmp(w1, nss_expr_eval_word(r, e3)) == 0) {
                     found = TRUE;
                     break;
                 }
@@ -122,37 +110,37 @@ static BOOL ssl_expr_eval_comp(request_rec *r, ssl_expr *node)
             return found;
         }
         case op_REG: {
-            ssl_expr *e1;
-            ssl_expr *e2;
+            nss_expr *e1;
+            nss_expr *e2;
             char *word;
             regex_t *regex;
 
-            e1 = (ssl_expr *)node->node_arg1;
-            e2 = (ssl_expr *)node->node_arg2;
-            word = ssl_expr_eval_word(r, e1);
+            e1 = (nss_expr *)node->node_arg1;
+            e2 = (nss_expr *)node->node_arg2;
+            word = nss_expr_eval_word(r, e1);
             regex = (regex_t *)(e2->node_arg1);
             return (ap_regexec(regex, word, 0, NULL, 0) == 0);
         }
         case op_NRE: {
-            ssl_expr *e1;
-            ssl_expr *e2;
+            nss_expr *e1;
+            nss_expr *e2;
             char *word;
             regex_t *regex;
 
-            e1 = (ssl_expr *)node->node_arg1;
-            e2 = (ssl_expr *)node->node_arg2;
-            word = ssl_expr_eval_word(r, e1);
+            e1 = (nss_expr *)node->node_arg1;
+            e2 = (nss_expr *)node->node_arg2;
+            word = nss_expr_eval_word(r, e1);
             regex = (regex_t *)(e2->node_arg1);
             return !(ap_regexec(regex, word, 0, NULL, 0) == 0);
         }
         default: {
-            ssl_expr_error = "Internal evaluation error: Unknown expression node";
+            nss_expr_error = "Internal evaluation error: Unknown expression node";
             return FALSE;
         }
     }
 }
 
-static char *ssl_expr_eval_word(request_rec *r, ssl_expr *node)
+static char *nss_expr_eval_word(request_rec *r, nss_expr *node)
 {
     switch (node->node_op) {
         case op_Digit: {
@@ -165,27 +153,27 @@ static char *ssl_expr_eval_word(request_rec *r, ssl_expr *node)
         }
         case op_Var: {
             char *var = (char *)node->node_arg1;
-            char *val = ssl_var_lookup(r->pool, r->server, r->connection, r, var);
+            char *val = nss_var_lookup(r->pool, r->server, r->connection, r, var);
             return (val == NULL ? "" : val);
         }
         case op_Func: {
             char *name = (char *)node->node_arg1;
-            ssl_expr *args = (ssl_expr *)node->node_arg2;
+            nss_expr *args = (nss_expr *)node->node_arg2;
             if (strEQ(name, "file"))
-                return ssl_expr_eval_func_file(r, (char *)(args->node_arg1));
+                return nss_expr_eval_func_file(r, (char *)(args->node_arg1));
             else {
-                ssl_expr_error = "Internal evaluation error: Unknown function name";
+                nss_expr_error = "Internal evaluation error: Unknown function name";
                 return "";
             }
         }
         default: {
-            ssl_expr_error = "Internal evaluation error: Unknown expression node";
+            nss_expr_error = "Internal evaluation error: Unknown expression node";
             return FALSE;
         }
     }
 }
 
-static char *ssl_expr_eval_func_file(request_rec *r, char *filename)
+static char *nss_expr_eval_func_file(request_rec *r, char *filename)
 {
     apr_file_t *fp;
     char *buf;
@@ -195,12 +183,12 @@ static char *ssl_expr_eval_func_file(request_rec *r, char *filename)
 
     if (apr_file_open(&fp, filename, APR_READ|APR_BUFFERED, 
                       APR_OS_DEFAULT, r->pool) != APR_SUCCESS) {
-        ssl_expr_error = "Cannot open file";
+        nss_expr_error = "Cannot open file";
         return "";
     }
     apr_file_info_get(&finfo, APR_FINFO_SIZE, fp);
     if ((finfo.size + 1) != ((apr_size_t)finfo.size + 1)) {
-        ssl_expr_error = "Huge file cannot be read";
+        nss_expr_error = "Huge file cannot be read";
         apr_file_close(fp);
         return "";
     }
@@ -211,14 +199,14 @@ static char *ssl_expr_eval_func_file(request_rec *r, char *filename)
     }
     else {
         if ((buf = (char *)apr_palloc(r->pool, sizeof(char)*(len+1))) == NULL) {
-            ssl_expr_error = "Cannot allocate memory";
+            nss_expr_error = "Cannot allocate memory";
             apr_file_close(fp);
             return "";
         }
         offset = 0;
         apr_file_seek(fp, APR_SET, &offset);
         if (apr_file_read(fp, buf, &len) != APR_SUCCESS) {
-            ssl_expr_error = "Cannot read from file";
+            nss_expr_error = "Cannot read from file";
             apr_file_close(fp);
             return "";
         }
@@ -229,7 +217,7 @@ static char *ssl_expr_eval_func_file(request_rec *r, char *filename)
 }
 
 /* a variant of strcmp(3) which works correctly also for number strings */
-static int ssl_expr_eval_strcmplex(char *cpNum1, char *cpNum2)
+static int nss_expr_eval_strcmplex(char *cpNum1, char *cpNum2)
 {
     int i, n1, n2;
 

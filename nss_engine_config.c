@@ -23,7 +23,7 @@
 
 #define SSL_MOD_CONFIG_KEY "nss_module"
 
-SSLModConfigRec *ssl_config_global_create(server_rec *s)
+SSLModConfigRec *nss_config_global_create(server_rec *s)
 {
     apr_pool_t *pool = s->process->pool;
     SSLModConfigRec *mc;
@@ -66,9 +66,6 @@ SSLModConfigRec *ssl_config_global_create(server_rec *s)
 
 static void modnss_ctx_init(modnss_ctx_t *mctx)
 {
-
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, NULL, "modnss_ctx_init");
-
     mctx->sc                  = NULL; /* set during module init */
 
     mctx->ssl2                = PR_FALSE;
@@ -98,7 +95,7 @@ static void modnss_ctx_init_server(SSLSrvConfigRec *sc,
     modnss_ctx_init(mctx);
 }
 
-static SSLSrvConfigRec *ssl_config_server_new(apr_pool_t *p)
+static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
 {
     SSLSrvConfigRec *sc = apr_palloc(p, sizeof(*sc));
     
@@ -111,7 +108,7 @@ static SSLSrvConfigRec *ssl_config_server_new(apr_pool_t *p)
     sc->server                      = NULL;
 
 #ifdef PROXY
-    modssl_ctx_init_proxy(sc, p);
+    modnss_ctx_init_proxy(sc, p);
 #endif
 
     modnss_ctx_init_server(sc, p);
@@ -122,11 +119,10 @@ static SSLSrvConfigRec *ssl_config_server_new(apr_pool_t *p)
 /*
  *  Create per-server SSL configuration
  */
-void *ssl_config_server_create(apr_pool_t *p, server_rec *s) {
-    SSLSrvConfigRec *sc = ssl_config_server_new(p);
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, NULL, "ssl_config_server_create");
+void *nss_config_server_create(apr_pool_t *p, server_rec *s) {
+    SSLSrvConfigRec *sc = nss_config_server_new(p);
 
-    sc->mc = ssl_config_global_create(s);
+    sc->mc = nss_config_global_create(s);
 
     return sc;
 }
@@ -159,19 +155,17 @@ static void modnss_ctx_cfg_merge_server(modnss_ctx_t *base,
 /*
  *  Merge per-server SSL configurations
  */
-void *ssl_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
+void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
     SSLSrvConfigRec *base = (SSLSrvConfigRec *)basev;
     SSLSrvConfigRec *add  = (SSLSrvConfigRec *)addv;
-    SSLSrvConfigRec *mrg  = ssl_config_server_new(p);
-
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, NULL, "ssl_config_server_merge");
+    SSLSrvConfigRec *mrg  = nss_config_server_new(p);
 
     cfgMerge(mc, NULL);
     cfgMergeBool(enabled);
     cfgMergeBool(proxy_enabled);
 
 #ifdef PROXY 
-    modssl_ctx_cfg_merge_proxy(base->proxy, add->proxy, mrg->proxy);
+    modnss_ctx_cfg_merge_proxy(base->proxy, add->proxy, mrg->proxy);
 #endif
 
     modnss_ctx_cfg_merge_server(base->server, add->server, mrg->server);
@@ -182,12 +176,11 @@ void *ssl_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
 /*
  *  Create per-directory SSL configuration
  */
-void *ssl_config_perdir_create(apr_pool_t *p, char *dir) {
+void *nss_config_perdir_create(apr_pool_t *p, char *dir) {
     SSLDirConfigRec *dc = apr_palloc(p, sizeof(*dc));
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, NULL, "ssl_config_perdir_create");
 
     dc->bSSLRequired  = FALSE;
-    dc->aRequirement  = apr_array_make(p, 4, sizeof(ssl_require_t));
+    dc->aRequirement  = apr_array_make(p, 4, sizeof(nss_require_t));
     dc->nOptions      = SSL_OPT_NONE|SSL_OPT_RELSET;
     dc->nOptionsAdd   = SSL_OPT_NONE;
     dc->nOptionsDel   = SSL_OPT_NONE;
@@ -200,7 +193,7 @@ void *ssl_config_perdir_create(apr_pool_t *p, char *dir) {
     return dc;
 }
  
-const char *ssl_cmd_SSLRequireSSL(cmd_parms *cmd, void *dcfg)
+const char *nss_cmd_NSSRequireSSL(cmd_parms *cmd, void *dcfg)
 {
     SSLDirConfigRec *dc = (SSLDirConfigRec *)dcfg;
 
@@ -209,17 +202,17 @@ const char *ssl_cmd_SSLRequireSSL(cmd_parms *cmd, void *dcfg)
     return NULL;
 }
 
-const char *ssl_cmd_SSLRequire(cmd_parms *cmd,
+const char *nss_cmd_NSSRequire(cmd_parms *cmd,
                                void *dcfg,
                                const char *arg)
 {
     SSLDirConfigRec *dc = (SSLDirConfigRec *)dcfg;
-    ssl_expr *expr;
-    ssl_require_t *require;
+    nss_expr *expr;
+    nss_require_t *require;
 
-    if (!(expr = ssl_expr_comp(cmd->pool, (char *)arg))) {
-        return apr_pstrcat(cmd->pool, "SSLRequire: ",
-                           ssl_expr_get_error(), NULL);
+    if (!(expr = nss_expr_comp(cmd->pool, (char *)arg))) {
+        return apr_pstrcat(cmd->pool, "NSSRequire: ",
+                           nss_expr_get_error(), NULL);
     }
 
     require = apr_array_push(dc->aRequirement);
@@ -229,7 +222,7 @@ const char *ssl_cmd_SSLRequire(cmd_parms *cmd,
     return NULL;
 }
 
-void *ssl_config_perdir_merge(apr_pool_t *p, void *basev, void *addv) {
+void *nss_config_perdir_merge(apr_pool_t *p, void *basev, void *addv) {
     SSLDirConfigRec *base = (SSLDirConfigRec *)basev;
     SSLDirConfigRec *add  = (SSLDirConfigRec *)addv;
     SSLDirConfigRec *mrg  = (SSLDirConfigRec *)apr_palloc(p, sizeof(*mrg));
@@ -259,7 +252,7 @@ void *ssl_config_perdir_merge(apr_pool_t *p, void *basev, void *addv) {
     return mrg;
 }
 
-const char *ssl_cmd_SSLEngine(cmd_parms *cmd, void *dcfg, int flag)
+const char *nss_cmd_NSSEngine(cmd_parms *cmd, void *dcfg, int flag)
 {
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
@@ -268,7 +261,7 @@ const char *ssl_cmd_SSLEngine(cmd_parms *cmd, void *dcfg, int flag)
     return NULL;
 }
 
-const char *ssl_cmd_SSLCertificateDatabase(cmd_parms *cmd,
+const char *nss_cmd_NSSCertificateDatabase(cmd_parms *cmd,
                                            void *dcfg,
                                            const char *arg)
 {
@@ -279,7 +272,7 @@ const char *ssl_cmd_SSLCertificateDatabase(cmd_parms *cmd,
     return NULL;
 }
 
-const char *ssl_cmd_SSLCipherSuite(cmd_parms *cmd,
+const char *nss_cmd_NSSCipherSuite(cmd_parms *cmd,
                                    void *dcfg,
                                    const char *arg)
 {
@@ -296,9 +289,9 @@ const char *ssl_cmd_SSLCipherSuite(cmd_parms *cmd,
     return NULL;
 }
 
-static const char *ssl_cmd_verify_parse(cmd_parms *parms,
+static const char *nss_cmd_verify_parse(cmd_parms *parms,
                                         const char *arg,
-                                        ssl_verify_t *id)
+                                        nss_verify_t *id)
 {
     if (strcEQ(arg, "none") || strcEQ(arg, "off")) {
         *id = SSL_CVERIFY_NONE;
@@ -322,16 +315,16 @@ static const char *ssl_cmd_verify_parse(cmd_parms *parms,
     return NULL;
 }
 
-const char *ssl_cmd_SSLVerifyClient(cmd_parms *cmd,
+const char *nss_cmd_NSSVerifyClient(cmd_parms *cmd,
                                     void *dcfg,
                                     const char *arg)
 {
     SSLDirConfigRec *dc = (SSLDirConfigRec *)dcfg;
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
-    ssl_verify_t mode;
+    nss_verify_t mode;
     const char *err;
 
-    if ((err = ssl_cmd_verify_parse(cmd, arg, &mode))) {
+    if ((err = nss_cmd_verify_parse(cmd, arg, &mode))) {
         return err;
     }
 
@@ -345,7 +338,7 @@ const char *ssl_cmd_SSLVerifyClient(cmd_parms *cmd,
     return NULL;
 }
 
-const char *ssl_cmd_SSLProtocol(cmd_parms *cmd,
+const char *nss_cmd_NSSProtocol(cmd_parms *cmd,
                                 void *dcfg,
                                 const char *arg)
 {
@@ -356,7 +349,7 @@ const char *ssl_cmd_SSLProtocol(cmd_parms *cmd,
     return NULL;
 }
 
-const char *ssl_cmd_SSLNickname(cmd_parms *cmd,
+const char *nss_cmd_NSSNickname(cmd_parms *cmd,
                                 void *dcfg,
                                 const char *arg)
 {
@@ -367,7 +360,7 @@ const char *ssl_cmd_SSLNickname(cmd_parms *cmd,
     return NULL;
 }
 
-const char *ssl_cmd_SSLEnforceValidCerts(cmd_parms *cmd,
+const char *nss_cmd_NSSEnforceValidCerts(cmd_parms *cmd,
                                          void *dcfg,
                                          int flag)
 {
@@ -378,7 +371,7 @@ const char *ssl_cmd_SSLEnforceValidCerts(cmd_parms *cmd,
     return NULL;
 }
 
-const char *ssl_cmd_SSLSessionCacheTimeout(cmd_parms *cmd,
+const char *nss_cmd_NSSSessionCacheTimeout(cmd_parms *cmd,
                                            void *dcfg,
                                            const char *arg)
 {
@@ -387,13 +380,13 @@ const char *ssl_cmd_SSLSessionCacheTimeout(cmd_parms *cmd,
     mc->session_cache_timeout = atoi(arg);
 
     if (mc->session_cache_timeout < 0) {
-        return "SSLSessionCacheTimeout: Invalid argument";
+        return "NSSSessionCacheTimeout: Invalid argument";
     }
 
     return NULL;
 }
 
-const char *ssl_cmd_SSL3SessionCacheTimeout(cmd_parms *cmd,
+const char *nss_cmd_NSSSession3CacheTimeout(cmd_parms *cmd,
                                            void *dcfg,
                                            const char *arg)
 {
@@ -401,14 +394,14 @@ const char *ssl_cmd_SSL3SessionCacheTimeout(cmd_parms *cmd,
 
     mc->ssl3_session_cache_timeout = atoi(arg);
 
-    if (mc->session_cache_timeout < 0) {
-        return "SSLSessionCacheTimeout: Invalid argument";
+    if (mc->ssl3_session_cache_timeout < 0) {
+        return "NSSSession3CacheTimeout: Invalid argument";
     }
 
     return NULL;
 }
 
-const char *ssl_cmd_SSLSessionCacheSize(cmd_parms *cmd,
+const char *nss_cmd_NSSSessionCacheSize(cmd_parms *cmd,
                                         void *dcfg,
                                         const char *arg)
 {
@@ -417,13 +410,13 @@ const char *ssl_cmd_SSLSessionCacheSize(cmd_parms *cmd,
     mc->session_cache_size = atoi(arg);
 
     if (mc->session_cache_size < 0) {
-        return "SSLSessionCacheTimeout: Invalid argument";
+        return "NSSSessionCacheTimeout: Invalid argument";
     }
 
     return NULL;
 }
 
-const char *ssl_cmd_SSLPassPhraseDialog(cmd_parms *cmd,
+const char *nss_cmd_NSSPassPhraseDialog(cmd_parms *cmd,
                                         void *dcfg,
                                         const char *arg)
 {
@@ -442,13 +435,13 @@ const char *ssl_cmd_SSLPassPhraseDialog(cmd_parms *cmd,
         mc->pphrase_dialog_path = ap_server_root_relative(cmd->pool, arg+5);
         if (!mc->pphrase_dialog_path)
             return apr_pstrcat(cmd->pool,
-                              "Invalid SSLPassPhraseDialog file: path ",
+                              "Invalid NSSPassPhraseDialog file: path ",
                                arg+5, NULL);
         rc = apr_stat(&finfo, mc->pphrase_dialog_path,
              APR_FINFO_TYPE|APR_FINFO_SIZE, cmd->pool);
         if ((rc != APR_SUCCESS) || (finfo.filetype != APR_REG)) {
             return apr_pstrcat(cmd->pool,
-                               "SSLPassPhraseDialog: file '",
+                               "NSSPassPhraseDialog: file '",
                                mc->pphrase_dialog_path,
                                "' does not exist", NULL);
         }
@@ -457,7 +450,7 @@ const char *ssl_cmd_SSLPassPhraseDialog(cmd_parms *cmd,
     return NULL;
 }
 
-const char *ssl_cmd_SSLPassPhraseHelper(cmd_parms *cmd,
+const char *nss_cmd_NSSPassPhraseHelper(cmd_parms *cmd,
                                         void *dcfg,
                                         const char *arg)
 {
@@ -467,14 +460,14 @@ const char *ssl_cmd_SSLPassPhraseHelper(cmd_parms *cmd,
         mc->pphrase_dialog_helper = arg;
     } else {
         return apr_pstrcat(cmd->pool,
-                           "SSLPassPhraseHelper: ", mc->pphrase_dialog_path,
+                           "NSSPassPhraseHelper: ", mc->pphrase_dialog_path,
                            "does not exist or is not executable.", NULL);
     }
 
     return NULL;
 }
 
-const char *ssl_cmd_SSLUserName(cmd_parms *cmd, void *dcfg,
+const char *nss_cmd_NSSUserName(cmd_parms *cmd, void *dcfg,
                                 const char *arg)
 {
     SSLDirConfigRec *dc = (SSLDirConfigRec *)dcfg;
@@ -482,12 +475,12 @@ const char *ssl_cmd_SSLUserName(cmd_parms *cmd, void *dcfg,
     return NULL;
 }
 
-const char *ssl_cmd_SSLOptions(cmd_parms *cmd,
+const char *nss_cmd_NSSOptions(cmd_parms *cmd,
                                void *dcfg,
                                const char *arg)
 {
     SSLDirConfigRec *dc = (SSLDirConfigRec *)dcfg;
-    ssl_opt_t opt;   
+    nss_opt_t opt;   
     int first = TRUE; 
     char action, *w; 
  
@@ -523,7 +516,7 @@ const char *ssl_cmd_SSLOptions(cmd_parms *cmd,
         }
         else {
             return apr_pstrcat(cmd->pool,
-                               "SSLOptions: Illegal option '", w, "'",
+                               "NSSOptions: Illegal option '", w, "'",
                                NULL);
         }
         if (action == '-') {

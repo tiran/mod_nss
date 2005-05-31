@@ -13,19 +13,6 @@
  * limitations under the License.
  */
 
-/*                      _             _ 
- *  _ __ ___   ___   __| |    ___ ___| |  
- * | '_ ` _ \ / _ \ / _` |   / __/ __| |  
- * | | | | | | (_) | (_| |   \__ \__ \ | mod_ssl - Apache Interface to OpenSSL
- * |_| |_| |_|\___/ \__,_|___|___/___/_| http://www.modssl.org/
- *                      |_____|         
- *  ssl_expr_scan.l
- *  Expression Scanner
- */
-                             /* ``Killing for peace is 
-                                  like fucking for virginity.''
-                                             -- Unknown  */
-
 /*  _________________________________________________________________
 **
 **  Expression Scanner
@@ -35,7 +22,7 @@
 %{
 #include "mod_nss.h"
 
-#include "ssl_expr_parse.h"
+#include "nss_expr_parse.h"
 
 #define YY_NO_UNPUT 1
 int yyinput(char *buf, int max_size);
@@ -79,7 +66,7 @@ int yyinput(char *buf, int max_size);
 <str>\" {
     BEGIN(INITIAL);
     *cpStr = NUL;
-    yylval.cpVal = apr_pstrdup(ssl_expr_info.pool, caStr);
+    yylval.cpVal = apr_pstrdup(nss_expr_info.pool, caStr);
     return T_STRING;
 }
 <str>\n {
@@ -132,18 +119,18 @@ int yyinput(char *buf, int max_size);
     }
 }
 <regex_flags>i {
-    yylval.cpVal = apr_pstrdup(ssl_expr_info.pool, caRegex);
+    yylval.cpVal = apr_pstrdup(nss_expr_info.pool, caRegex);
     BEGIN(INITIAL);
     return T_REGEX_I;
 }
 <regex_flags>.|\n {
-    yylval.cpVal = apr_pstrdup(ssl_expr_info.pool, caRegex);
+    yylval.cpVal = apr_pstrdup(nss_expr_info.pool, caRegex);
     yyless(0);
     BEGIN(INITIAL);
     return T_REGEX;
 }
 <regex_flags><<EOF>> {
-    yylval.cpVal = apr_pstrdup(ssl_expr_info.pool, caRegex);
+    yylval.cpVal = apr_pstrdup(nss_expr_info.pool, caRegex);
     BEGIN(INITIAL);
     return T_REGEX;
 }
@@ -188,7 +175,7 @@ int yyinput(char *buf, int max_size);
   * Digits
   */
 [0-9]+ {
-    yylval.cpVal = apr_pstrdup(ssl_expr_info.pool, yytext);
+    yylval.cpVal = apr_pstrdup(nss_expr_info.pool, yytext);
     return T_DIGIT;
 }
 
@@ -196,7 +183,7 @@ int yyinput(char *buf, int max_size);
   * Identifiers
   */
 [a-zA-Z][a-zA-Z0-9_:-]* {
-    yylval.cpVal = apr_pstrdup(ssl_expr_info.pool, yytext);
+    yylval.cpVal = apr_pstrdup(nss_expr_info.pool, yytext);
     return T_ID;
 }
 
@@ -213,12 +200,12 @@ int yyinput(char *buf, int max_size)
 {
     int n;
 
-    if ((n = MIN(max_size, ssl_expr_info.inputbuf
-                         + ssl_expr_info.inputlen 
-                         - ssl_expr_info.inputptr)) <= 0)
+    if ((n = MIN(max_size, nss_expr_info.inputbuf
+                         + nss_expr_info.inputlen 
+                         - nss_expr_info.inputptr)) <= 0)
         return YY_NULL;
-    memcpy(buf, ssl_expr_info.inputptr, n);
-    ssl_expr_info.inputptr += n;
+    memcpy(buf, nss_expr_info.inputptr, n);
+    nss_expr_info.inputptr += n;
     return n;
 }
 

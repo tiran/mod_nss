@@ -21,20 +21,20 @@
  */
 
 #define SSL_CMD_ALL(name, args, desc) \
-        AP_INIT_##args("SSL"#name, ssl_cmd_SSL##name, \
+        AP_INIT_##args("NSS"#name, nss_cmd_NSS##name, \
                        NULL, RSRC_CONF|OR_AUTHCFG, desc),
 
 #define SSL_CMD_SRV(name, args, desc) \
-        AP_INIT_##args("SSL"#name, ssl_cmd_SSL##name, \
+        AP_INIT_##args("NSS"#name, nss_cmd_NSS##name, \
                        NULL, RSRC_CONF, desc),
 
 #define SSL_CMD_DIR(name, type, args, desc) \
-        AP_INIT_##args("SSL"#name, ssl_cmd_SSL##name, \
+        AP_INIT_##args("NSS"#name, nss_cmd_NSS##name, \
                        NULL, OR_##type, desc),
 
 #define AP_END_CMD { NULL }
 
-static const command_rec ssl_config_cmds[] = {
+static const command_rec nss_config_cmds[] = {
     /*
      * Global (main-server) context configuration directives
      */
@@ -44,7 +44,7 @@ static const command_rec ssl_config_cmds[] = {
     SSL_CMD_SRV(SessionCacheTimeout, TAKE1,
                 "SSL 2 Session Cache object lifetime "
                 "(`N' - number of seconds)")
-    SSL_CMD_SRV(3SessionCacheTimeout, TAKE1,
+    SSL_CMD_SRV(Session3CacheTimeout, TAKE1,
                 "SSL 3/TLS Session Cache object lifetime "
                 "(`N' - number of seconds)")
     SSL_CMD_SRV(SessionCacheSize, TAKE1,
@@ -144,18 +144,17 @@ static const command_rec ssl_config_cmds[] = {
  *  the various processing hooks
  */
 
-static int ssl_hook_pre_config(apr_pool_t *pconf,
+static int nss_hook_pre_config(apr_pool_t *pconf,
                                apr_pool_t *plog,
                                apr_pool_t *ptemp)
 {
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, NULL, "ssl_hook_pre_config");
     /* Register us to handle mod_log_config %c/%x variables */
-    ssl_var_log_config_register(pconf);
+    nss_var_log_config_register(pconf);
 
     return OK;
 }
 
-static SSLConnRec *ssl_init_connection_ctx(conn_rec *c)
+static SSLConnRec *nss_init_connection_ctx(conn_rec *c)
 {
     SSLConnRec *sslconn = myConnConfig(c);
 
@@ -167,7 +166,7 @@ static SSLConnRec *ssl_init_connection_ctx(conn_rec *c)
 
     sslconn->is_proxy = 0;
     sslconn->disabled = 0;
-    sslconn->non_ssl_request = 0;
+    sslconn->non_nss_request = 0;
     sslconn->ssl = NULL;
 
     myConnConfigSet(c, sslconn);
@@ -176,11 +175,11 @@ static SSLConnRec *ssl_init_connection_ctx(conn_rec *c)
 }
 
 #ifdef PROXY
-int ssl_proxy_enable(conn_rec *c)
+int nss_proxy_enable(conn_rec *c)
 {
     SSLSrvConfigRec *sc = mySrvConfig(c->base_server);
 
-    SSLConnRec *sslconn = ssl_init_connection_ctx(c);
+    SSLConnRec *sslconn = nss_init_connection_ctx(c);
 
     if (!sc->proxy_enabled) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, c->base_server,
@@ -197,7 +196,7 @@ int ssl_proxy_enable(conn_rec *c)
 }
 #endif
 
-int ssl_engine_disable(conn_rec *c)
+int nss_engine_disable(conn_rec *c)
 {
     SSLSrvConfigRec *sc = mySrvConfig(c->base_server);
 
@@ -207,14 +206,14 @@ int ssl_engine_disable(conn_rec *c)
         return 0;
     }
 
-    sslconn = ssl_init_connection_ctx(c);
+    sslconn = nss_init_connection_ctx(c);
 
     sslconn->disabled = 1;
 
     return 1;
 }
 
-static int ssl_hook_pre_connection(conn_rec *c, void *csd)
+static int nss_hook_pre_connection(conn_rec *c, void *csd)
 {
     SSLSrvConfigRec *sc = mySrvConfig(c->base_server);
     PRFileDesc *ssl;
@@ -234,7 +233,7 @@ static int ssl_hook_pre_connection(conn_rec *c, void *csd)
      * Create SSL context
      */
     if (!sslconn) {
-        sslconn = ssl_init_connection_ctx(c);
+        sslconn = nss_init_connection_ctx(c);
     }
 
     if (sslconn->disabled) {
@@ -258,14 +257,14 @@ static int ssl_hook_pre_connection(conn_rec *c, void *csd)
      * attach this to the socket. Additionally we register this attachment
      * so we can detach later.
      */
-    ssl = ssl_io_new_fd();
+    ssl = nss_io_new_fd();
     ssl = SSL_ImportFD(mctx->model, ssl);
 
     if (!(ssl)) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, c->base_server,
                      "Unable to create a new SSL connection from the SSL "
                      "context");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, c->base_server);
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, c->base_server);
 
         c->aborted = 1;
 
@@ -275,14 +274,14 @@ static int ssl_hook_pre_connection(conn_rec *c, void *csd)
     sslconn->ssl = ssl;
     sslconn->client_socket = csd;
 
-    ssl_io_filter_init(c, ssl);
+    nss_io_filter_init(c, ssl);
 
     SSL_ResetHandshake(ssl, PR_TRUE);
 
     return APR_SUCCESS;
 }
 
-static const char *ssl_hook_http_method(const request_rec *r)
+static const char *nss_hook_http_method(const request_rec *r)
 {
     SSLSrvConfigRec *sc = mySrvConfig(r->server);
 
@@ -293,7 +292,7 @@ static const char *ssl_hook_http_method(const request_rec *r)
     return "https";
 }
 
-static apr_port_t ssl_hook_default_port(const request_rec *r)
+static apr_port_t nss_hook_default_port(const request_rec *r)
 {
     SSLSrvConfigRec *sc = mySrvConfig(r->server);
 
@@ -308,38 +307,37 @@ static apr_port_t ssl_hook_default_port(const request_rec *r)
  *  the module registration phase
  */
 
-static void ssl_register_hooks(apr_pool_t *p)
+static void nss_register_hooks(apr_pool_t *p)
 {
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, NULL, "ssl_register_hooks");
-    ssl_io_filter_register(p);
+    nss_io_filter_register(p);
 
-    ap_hook_pre_connection(ssl_hook_pre_connection,NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_post_config   (ssl_init_Module,        NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_http_method   (ssl_hook_http_method,   NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_default_port  (ssl_hook_default_port,  NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_pre_config    (ssl_hook_pre_config,    NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_child_init    (ssl_init_Child,         NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_translate_name(ssl_hook_Translate,     NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_check_user_id (ssl_hook_UserCheck,     NULL,NULL, APR_HOOK_FIRST);
-    ap_hook_fixups        (ssl_hook_Fixup,         NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_access_checker(ssl_hook_Access,        NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_auth_checker  (ssl_hook_Auth,          NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_post_read_request(ssl_hook_ReadReq,    NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_pre_connection(nss_hook_pre_connection,NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_post_config   (nss_init_Module,        NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_http_method   (nss_hook_http_method,   NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_default_port  (nss_hook_default_port,  NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_pre_config    (nss_hook_pre_config,    NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_child_init    (nss_init_Child,         NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_translate_name(nss_hook_Translate,     NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_check_user_id (nss_hook_UserCheck,     NULL,NULL, APR_HOOK_FIRST);
+    ap_hook_fixups        (nss_hook_Fixup,         NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_access_checker(nss_hook_Access,        NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_auth_checker  (nss_hook_Auth,          NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_post_read_request(nss_hook_ReadReq,    NULL,NULL, APR_HOOK_MIDDLE);
 
-    ssl_var_register();
+    nss_var_register();
 
 #ifdef PROXY
-    APR_REGISTER_OPTIONAL_FN(ssl_proxy_enable);
+    APR_REGISTER_OPTIONAL_FN(nss_proxy_enable);
 #endif
-    APR_REGISTER_OPTIONAL_FN(ssl_engine_disable);
+    APR_REGISTER_OPTIONAL_FN(nss_engine_disable);
 }
 
 module AP_MODULE_DECLARE_DATA nss_module = {
     STANDARD20_MODULE_STUFF,
-    ssl_config_perdir_create,   /* create per-dir    config structures */
-    ssl_config_perdir_merge,    /* merge  per-dir    config structures */
-    ssl_config_server_create,   /* create per-server config structures */
-    ssl_config_server_merge,    /* merge  per-server config structures */
-    ssl_config_cmds,            /* table of configuration directives   */
-    ssl_register_hooks          /* register hooks */
+    nss_config_perdir_create,   /* create per-dir    config structures */
+    nss_config_perdir_merge,    /* merge  per-dir    config structures */
+    nss_config_server_create,   /* create per-server config structures */
+    nss_config_server_merge,    /* merge  per-server config structures */
+    nss_config_cmds,            /* table of configuration directives   */
+    nss_register_hooks          /* register hooks */
 };

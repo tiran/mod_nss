@@ -1,2 +1,3 @@
 - Support for mod_proxy
-- Pull the entire cert chain when requested
+- Offer to automatically generate a self-signed cert using gencert during
+  install?

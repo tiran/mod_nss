@@ -8,9 +8,11 @@ use Getopt::Std;
 BEGIN {
    $NSSDir = cwd();
 
-   $CACertificatePath = "";
-   $CACertificateFile = "";
+   $SSLCACertificatePath = "";
+   $SSLCACertificateFile = "";
    $SSLCertificateFile = "";
+   $SSLCARevocationPath = "";
+   $SSLCARevocationFile = "";
    $SSLCertificateKeyFile = "";
    $passphrase = 0;
 }
@@ -19,14 +21,12 @@ BEGIN {
           "SSLSessionCache" => "",
           "SSLMutex" => "",
           "SSLCertificateChainFile" => "",
-          "SSLCARevocationPath" => "",
-          "SSLCARevocationFile" => "",
           "SSLVerifyDepth" => "" ,
           "SSLCryptoDevice" => "" ,
           "LoadModule" => "" ,
          );
 
-%insert =  ( "SSLSessionCacheTimeout", "SSLSessionCacheSize 10000\nSSL3SessionCacheTimeout 86400\n",);
+%insert =  ( "NSSSessionCacheTimeout", "NSSSessionCacheSize 10000\nNSSSession3CacheTimeout 86400\n",);
 
 getopts('ch');
 
@@ -60,25 +60,31 @@ while (<SSL>) {
     }
 
     if ($stmt eq "SSLCipherSuite") {
-       print NSS "SSLCipherSuite ", get_ciphers($val), "\n";
-       print NSS "SSLProtocol SSLv3,TLSv1\n";
+       print NSS "NSSCipherSuite ", get_ciphers($val), "\n";
+       print NSS "NSSProtocol SSLv3,TLSv1\n";
        $comment = 1;
     } elsif ($stmt eq "SSLCACertificatePath") {
-       $CACertificatePath = $value;
+       $SSLCACertificatePath = $value;
        $comment = 1;
     } elsif ($stmt eq "SSLCACertificateFile") {
-       $CACertificateFile = $value;
+       $SSLCACertificateFile = $value;
        $comment = 1;
     } elsif ($stmt eq "SSLCertificateFile") {
-       print NSS "SSLCertificateDatabase $NSSDir\n";
-       print NSS "SSLNickName Server-Cert\n";
+       print NSS "NSSCertificateDatabase $NSSDir\n";
+       print NSS "NSSNickName Server-Cert\n";
        $SSLCertificateFile = $value;
        $comment = 1;
     } elsif ($stmt eq "SSLCertificateKeyFile") {
        $SSLCertificateKeyFile = $value;
        $comment = 1;
+    } elsif ($stmt eq "SSLCARevocationPath") {
+       $SSLCARevocationPath = $value;
+       $comment = 1;
+    } elsif ($stmt eq "SSLCARevocationFile") {
+       $SSLCARevocationFile = $value;
+       $comment = 1;
     } elsif ($stmt eq "SSLPassPhraseDialog") {
-       print NSS "SSLPassPhraseHelper /usr/local/bin/nss_pcache\n";
+       print NSS "NSSPassPhraseHelper /usr/local/bin/nss_pcache\n";
        $passphrase = 1;
        $comment = 1;
     }
@@ -88,6 +94,9 @@ while (<SSL>) {
         print NSS "##$_";
         next;
     }
+
+    # Fix up any remaining directive names
+    s/^SSL/NSS/;
 
     if (exists($insert{$stmt})) {
         print NSS "$_";
@@ -106,7 +115,7 @@ while (<SSL>) {
 }
 
 if ($passphrase == 0) {
-    print NSS "SSLPassPhraseHelper /usr/sbin/nss_pcache\n";
+    print NSS "NSSPassPhraseHelper /usr/sbin/nss_pcache\n";
 }
 
 close(NSS);
@@ -128,26 +137,55 @@ if ($opt_c) {
         run_command("pk12util -i server.p12 -d $NSSDir -W foo");
     }
 
-    if ($CACertificateFile ne "") {
-        my $subject = get_cert_subject($CACertificateFile);
+    if ($SSLCACertificateFile ne "") {
+        my $subject = get_cert_subject($SSLCACertificateFile);
         if ($subject ne "") {
             print "Importing CA certificate $subject\n";
-            run_command("certutil -A -n \"$subject\" -t \"CT,,\" -d $NSSDir -a -i $CACertificateFile");
+            run_command("certutil -A -n \"$subject\" -t \"CT,,\" -d $NSSDir -a -i $SSLCACertificateFile");
         }
     }
 
-    if ($CACertificatePath ne "") {
-        opendir(DIR, $CACertificatePath) or die "can't opendir $CACertificatePath: $!";
+    if ($SSLCACertificatePath ne "") {
+        opendir(DIR, $SSLCACertificatePath) or die "can't opendir $SSLCACertificatePath: $!";
         while (defined($file = readdir(DIR))) {
             next if -d $file;
 
             # we can operate directly on the hash files so don't have to worry
             # about any SKIPME's.
             if ($file =~ /hash.*/) {
-                my $subject = get_cert_subject("$CACertificatePath/$file");
+                my $subject = get_cert_subject("$SSLCACertificatePath/$file");
                 if ($subject ne "") {
                     print "Importing CA certificate $subject\n";
-                    run_command("certutil -A -n \"$subject\" -t \"CT,,\" -d $NSSDir -a -i $CACertificatePath/$file");
+                    run_command("certutil -A -n \"$subject\" -t \"CT,,\" -d $NSSDir -a -i $SSLCACertificatePath/$file");
+                }
+            }
+        }
+        closedir(DIR);
+    }
+
+    if ($SSLCARevocationFile ne "") {
+        print "Importing CRL file $CARevocationFile\n";
+            # Convert to DER format
+            run_command("openssl crl -in $SSLCARevocationFile -out /tmp/crl.tmp -inform PEM -outform DER");
+            run_command("crlutil -I -t 1 -d $NSSDir -i /tmp/crl.tmp");
+            unlink("/tmp/crl.tmp");
+    }
+
+    if ($SSLCARevocationPath ne "") {
+        opendir(DIR, $SSLCARevocationPath) or die "can't opendir $SSLCARevocationPath: $!";
+        while (defined($file = readdir(DIR))) {
+            next if -d $file;
+
+            # we can operate directly on the hash files so don't have to worry
+            # about any SKIPME's.
+            if ($file =~ /hash.*/) {
+                my $subject = get_cert_subject("$SSLCARevocationPath/$file");
+                if ($subject ne "") {
+                    print "Importing CRL file $file\n";
+                    # Convert to DER format
+                    run_command("openssl crl -in $SSLCARevocationPath/$file -out /tmp/crl.tmp -inform PEM -outform DER");
+                    run_command("crlutil -I -t 1 -d $NSSDir -i /tmp/crl.tmp");
+                    unlink("/tmp/crl.tmp");
                 }
             }
         }

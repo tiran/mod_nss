@@ -20,7 +20,7 @@ static SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket);
 static SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg);
 static SECStatus NSSHandshakeCallback(PRFileDesc *socket, void *arg);
 static CERTCertificate* FindServerCertFromNickname(const char* name);
-SECStatus ssl_AuthCertificate(void *arg, PRFileDesc *socket, PRBool checksig, PRBool isServer);
+SECStatus nss_AuthCertificate(void *arg, PRFileDesc *socket, PRBool checksig, PRBool isServer);
 
 /*
  * Global variables defined in this file.
@@ -65,11 +65,11 @@ static char *version_components[] = {
     NULL
 }; 
 
-static char *ssl_add_version_component(apr_pool_t *p,
+static char *nss_add_version_component(apr_pool_t *p,
                                        server_rec *s,
                                        char *name)
 {   
-    char *val = ssl_var_lookup(p, s, NULL, NULL, name);
+    char *val = nss_var_lookup(p, s, NULL, NULL, name);
 
     if (val && *val) {
         ap_add_version_component(p, val);
@@ -78,14 +78,14 @@ static char *ssl_add_version_component(apr_pool_t *p,
     return val;
 }
  
-static void ssl_add_version_components(apr_pool_t *p,
+static void nss_add_version_components(apr_pool_t *p,
                                        server_rec *s)
 {
     char *vals[sizeof(version_components)/sizeof(char *)];
     int i;
 
     for (i=0; version_components[i]; i++) {
-        vals[i] = ssl_add_version_component(p, s,
+        vals[i] = nss_add_version_component(p, s,
                                             version_components[i]);
     }
 
@@ -99,7 +99,7 @@ static void ssl_add_version_components(apr_pool_t *p,
 /*
  *  Initialize SSL library
  */
-static void ssl_init_SSLLibrary(server_rec *s)
+static void nss_init_SSLLibrary(server_rec *s)
 {
     SECStatus rv;
     SSLModConfigRec *mc = myModConfig(s);
@@ -115,8 +115,8 @@ static void ssl_init_SSLLibrary(server_rec *s)
         if (mc->pphrase_dialog_helper == NULL &&
             mc->pphrase_dialog_path == NULL) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "Neither SSLPassPhraseHelper nor SSLPassPhraseDialog is not set. One or the other is required.");
-            ssl_die();
+                "Neither NSSPassPhraseHelper nor NSSPassPhraseDialog is not set. One or the other is required.");
+            nss_die();
         }
 
         child_argv[0] = mc->pphrase_dialog_helper;
@@ -128,7 +128,7 @@ static void ssl_init_SSLLibrary(server_rec *s)
         if (rv != APR_SUCCESS) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "apr_procattr_create() failed APR err: %d.", rv);
-            ssl_die();
+            nss_die();
         }
 
 #if 0
@@ -151,7 +151,7 @@ static void ssl_init_SSLLibrary(server_rec *s)
         if (rv != APR_SUCCESS) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "apr_proc_create failed to launch %s APR err: %d.", child_argv[0], rv);
-            ssl_die();
+            nss_die();
         }
         /* Set a 30-second read/write timeout */
         apr_file_pipe_timeout_set(mc->proc.in, apr_time_from_sec(30));
@@ -168,20 +168,20 @@ static void ssl_init_SSLLibrary(server_rec *s)
     rv = NSS_Initialize(mc->pCertificateDatabase, NULL, NULL, "secmod.db", NSS_INIT_READONLY);
 
     /* Assuming everything is ok so far, check the cert database password(s). */
-    if (rv != SECSuccess || ssl_Init_Tokens(s) != SECSuccess) {
+    if (rv != SECSuccess || nss_Init_Tokens(s) != SECSuccess) {
         NSS_Shutdown();
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "NSS initialization failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
 
     if (NSS_SetDomesticPolicy() != SECSuccess) {
         NSS_Shutdown();
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                  "NSS set domestic policy failed on certificate database %s.", mc->pCertificateDatabase);
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
 
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
@@ -190,7 +190,7 @@ static void ssl_init_SSLLibrary(server_rec *s)
 
 }
 
-int ssl_init_Module(apr_pool_t *p, apr_pool_t *plog,
+int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
                     apr_pool_t *ptemp,
                     server_rec *base_server)
 {
@@ -204,13 +204,13 @@ int ssl_init_Module(apr_pool_t *p, apr_pool_t *plog,
      * Let us cleanup on restarts and exists
      */
     apr_pool_cleanup_register(p, base_server,
-                              ssl_init_ModuleKill,
+                              nss_init_ModuleKill,
                               apr_pool_cleanup_null);
 
     /*
      * Any init round fixes the global config
      */
-    ssl_config_global_create(base_server); /* just to avoid problems */
+    nss_config_global_create(base_server); /* just to avoid problems */
 
     /*
      * Fix up any global settings that aren't in the configuration
@@ -251,7 +251,7 @@ int ssl_init_Module(apr_pool_t *p, apr_pool_t *plog,
         /*
          * Create the server host:port string because we need it a lot
          */
-        sc->vhost_id = ssl_util_vhostid(p, s);
+        sc->vhost_id = nss_util_vhostid(p, s);
         sc->vhost_id_len = strlen(sc->vhost_id);
 
         /* Fix up stuff that may not have been set */
@@ -264,12 +264,12 @@ int ssl_init_Module(apr_pool_t *p, apr_pool_t *plog,
         }
     }
 
-    ssl_init_SSLLibrary(base_server);
+    nss_init_SSLLibrary(base_server);
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                  "done Init: Initializing NSS library");
 
     /* Load our layer */
-    ssl_io_layer_init();
+    nss_io_layer_init();
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                  "done layer");
 
@@ -291,52 +291,52 @@ int ssl_init_Module(apr_pool_t *p, apr_pool_t *plog,
         /*
          * Read the server certificate and key
          */
-        ssl_init_ConfigureServer(s, p, ptemp, sc);
+        nss_init_ConfigureServer(s, p, ptemp, sc);
     }
 
     /*
      *  Announce mod_ssl and SSL library in HTTP Server field
      *  as ``mod_ssl/X.X.X OpenSSL/X.X.X''
      */
-    ssl_add_version_components(p, base_server);
+    nss_add_version_components(p, base_server);
 
     return OK;
 }
 
-static void ssl_init_ctx_socket(server_rec *s,
+static void nss_init_ctx_socket(server_rec *s,
                                 apr_pool_t *p,
                                 apr_pool_t *ptemp,
                                 modnss_ctx_t *mctx)
 {
     /* Setup a socket in the context that will be used to model all
      * client connections. */
-    mctx->model = ssl_io_new_fd();
+    mctx->model = nss_io_new_fd();
     mctx->model = SSL_ImportFD(NULL, mctx->model);
 
     if (SSL_OptionSet(mctx->model, SSL_SECURITY, PR_TRUE) != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                 "Unable to enable security.");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
 
     if (SSL_OptionSet(mctx->model, SSL_HANDSHAKE_AS_SERVER, PR_TRUE)
             != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                 "Unable to set SSL server handshake mode.");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
     if (SSL_OptionSet(mctx->model, SSL_HANDSHAKE_AS_CLIENT, PR_FALSE)
             != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                 "Unable to disable handshake as client");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
 }
 
-static void ssl_init_ctx_protocol(server_rec *s,
+static void nss_init_ctx_protocol(server_rec *s,
                                   apr_pool_t *p,
                                   apr_pool_t *ptemp,
                                   modnss_ctx_t *mctx)
@@ -349,8 +349,8 @@ static void ssl_init_ctx_protocol(server_rec *s,
 
     if (mctx->auth.protocols == NULL) {
         ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-            "SSLProtocols not set; using all protocols: SSLv2, SSLv3 and TLSv1");
-        ssl2 = ssl3 = tls = 1;
+            "SSLProtocols not set; using: SSLv3 and TLSv1");
+        ssl3 = tls = 1;
     } else {
         lprotocols = strdup(mctx->auth.protocols);
         ap_str_tolower(lprotocols);
@@ -402,8 +402,8 @@ static void ssl_init_ctx_protocol(server_rec *s,
     if (stat != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "SSL protocol initialization failed.");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
 
     mctx->ssl2 = ssl2;
@@ -411,45 +411,45 @@ static void ssl_init_ctx_protocol(server_rec *s,
     mctx->tls = tls;
 }
 
-static void ssl_init_ctx_session_cache(server_rec *s,
+static void nss_init_ctx_session_cache(server_rec *s,
                                        apr_pool_t *p,
                                        apr_pool_t *ptemp,
                                        modnss_ctx_t *mctx)
 {
 }
 
-static void ssl_init_ctx_callbacks(server_rec *s,
+static void nss_init_ctx_callbacks(server_rec *s,
                                    apr_pool_t *p,
                                    apr_pool_t *ptemp,
                                    modnss_ctx_t *mctx)
 {
-    if (SSL_AuthCertificateHook(mctx->model, ssl_AuthCertificate, (void *)CERT_GetDefaultCertDB()) != SECSuccess) {
+    if (SSL_AuthCertificateHook(mctx->model, nss_AuthCertificate, (void *)CERT_GetDefaultCertDB()) != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                 "SSL_AuthCertificateHook failed.");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
     if (SSL_BadCertHook(mctx->model, (SSLBadCertHandler) ownBadCertHandler, NULL) != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                 "SSL_BadCertHook failed");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
     if (SSL_HandshakeCallback(mctx->model, (SSLHandshakeCallback) ownHandshakeCallback, NULL) != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                 "SSL_HandshakeCallback failed");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
     if (SSL_GetClientAuthDataHook(mctx->model, NSS_GetClientAuthData, (void *)mctx->nickname) != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                 "SSL_GetClientAuthDataHook failed");
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
 }
 
-static void ssl_init_ctx_verify(server_rec *s,
+static void nss_init_ctx_verify(server_rec *s,
                                 apr_pool_t *p,
                                 apr_pool_t *ptemp,
                                 modnss_ctx_t *mctx)
@@ -481,7 +481,7 @@ static int countciphers(PRBool cipher_state[ciphernum], int version) {
     return ciphercount;
 }
 
-static void ssl_init_ctx_cipher_suite(server_rec *s,
+static void nss_init_ctx_cipher_suite(server_rec *s,
                                       apr_pool_t *p,
                                       apr_pool_t *ptemp,
                                       modnss_ctx_t *mctx)
@@ -496,8 +496,8 @@ static void ssl_init_ctx_cipher_suite(server_rec *s,
      */
     if (!suite) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                     "Required value SSLCipherSuite not set.");
-        ssl_die();
+                     "Required value NSSCipherSuite not set.");
+        nss_die();
     }
     ciphers = strdup(suite);
 
@@ -523,8 +523,8 @@ static void ssl_init_ctx_cipher_suite(server_rec *s,
         cipher_state[i] = PR_FALSE;
     }
 
-    if (ssl_parse_ciphers(s, ciphers, cipher_state) == -1) {
-        ssl_die();
+    if (nss_parse_ciphers(s, ciphers, cipher_state) == -1) {
+        nss_die();
     }
 
     free(ciphers);
@@ -533,19 +533,19 @@ static void ssl_init_ctx_cipher_suite(server_rec *s,
     if (mctx->ssl2 && countciphers(cipher_state, SSL2) == 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "SSL2 is enabled but no SSL2 ciphers are enabled.");
-        ssl_die();
+        nss_die();
     }
 
     if (mctx->ssl3 && countciphers(cipher_state, SSL3) == 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "SSL3 is enabled but no SSL3 ciphers are enabled.");
-        ssl_die();
+        nss_die();
     }
 
     if (mctx->tls && countciphers(cipher_state, TLS) == 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "TLS is enabled but no TLS ciphers are enabled.");
-        ssl_die();
+        nss_die();
     }
 
     /* Finally actually enable the selected ciphers */
@@ -554,26 +554,26 @@ static void ssl_init_ctx_cipher_suite(server_rec *s,
     }
 }
 
-static void ssl_init_ctx(server_rec *s,
+static void nss_init_ctx(server_rec *s,
                          apr_pool_t *p,
                          apr_pool_t *ptemp,
                          modnss_ctx_t *mctx) 
 {
 
-    ssl_init_ctx_socket(s, p, ptemp, mctx);
+    nss_init_ctx_socket(s, p, ptemp, mctx);
 
-    ssl_init_ctx_protocol(s, p, ptemp, mctx);
+    nss_init_ctx_protocol(s, p, ptemp, mctx);
     
-    ssl_init_ctx_session_cache(s, p, ptemp, mctx);
+    nss_init_ctx_session_cache(s, p, ptemp, mctx);
     
-    ssl_init_ctx_callbacks(s, p, ptemp, mctx);
+    nss_init_ctx_callbacks(s, p, ptemp, mctx);
     
-    ssl_init_ctx_verify(s, p, ptemp, mctx);
+    nss_init_ctx_verify(s, p, ptemp, mctx);
 
-    ssl_init_ctx_cipher_suite(s, p, ptemp, mctx);
+    nss_init_ctx_cipher_suite(s, p, ptemp, mctx);
 }
 
-static void ssl_init_server_certs(server_rec *s,
+static void nss_init_server_certs(server_rec *s,
                                   apr_pool_t *p,
                                   apr_pool_t *ptemp,
                                   modnss_ctx_t *mctx)
@@ -590,8 +590,11 @@ static void ssl_init_server_certs(server_rec *s,
     if (mctx->nickname == NULL) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "No certificate nickname provided.");
-        ssl_die();
+        nss_die();
     }
+    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+         "Using nickname %s.", mctx->nickname);
+
     mctx->servercert = FindServerCertFromNickname(mctx->nickname);
 
     /* Verify the certificate chain. */
@@ -601,11 +604,11 @@ static void ssl_init_server_certs(server_rec *s,
         if (CERT_VerifyCertificateNow(CERT_GetDefaultCertDB(), mctx->servercert, PR_TRUE, usage, NULL, NULL) != SECSuccess)  {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "Certificate not verified: '%s'", mctx->nickname);
-            ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
             if (mctx->enforce) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "Unable to verify certificate '%s'. Add \"SSLEnforceValidCerts off\" to nss.conf so the server can start until the problem can be resolved.", mctx->nickname);
-                ssl_die();
+                nss_die();
             }
         }
     }
@@ -614,7 +617,7 @@ static void ssl_init_server_certs(server_rec *s,
     {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
             "Certificate not found: '%s'", mctx->nickname);
-        ssl_die();
+        nss_die();
     }
 
     if (strchr(mctx->nickname, ':'))
@@ -631,9 +634,9 @@ static void ssl_init_server_certs(server_rec *s,
                  */
                 ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                     "Slot not found");
-                ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
+                nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
                 free(token);
-                ssl_die();
+                nss_die();
             }
         }
         free(token);
@@ -647,8 +650,8 @@ static void ssl_init_server_certs(server_rec *s,
     if (mctx->serverkey == NULL) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
             "Key not found for: '%s'", mctx->nickname);
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
 
     mctx->serverKEAType = NSS_FindCertKEAType(mctx->servercert);
@@ -684,15 +687,15 @@ static void ssl_init_server_certs(server_rec *s,
     if (secstatus != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
             "Error setting PKCS11 pin argument: '%s'", mctx->nickname);
-        ssl_die();
+        nss_die();
     }
     
     secstatus = SSL_ConfigSecureServer(mctx->model, mctx->servercert, mctx->serverkey, mctx->serverKEAType);
     if (secstatus != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
             "SSL error configuring server: '%s'", mctx->nickname);
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
 
     secstatus = (SECStatus)SSL_HandshakeCallback(mctx->model, (SSLHandshakeCallback)NSSHandshakeCallback, NULL);
@@ -700,25 +703,25 @@ static void ssl_init_server_certs(server_rec *s,
     {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
             "SSL error configuring handshake callback: '%s'", mctx->nickname);
-        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, s);
-        ssl_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
     }
 }
 
-static void ssl_init_server_ctx(server_rec *s,
+static void nss_init_server_ctx(server_rec *s,
                                 apr_pool_t *p,
                                 apr_pool_t *ptemp,
                                 SSLSrvConfigRec *sc)
 {
-    ssl_init_ctx(s, p, ptemp, sc->server);
+    nss_init_ctx(s, p, ptemp, sc->server);
 
-    ssl_init_server_certs(s, p, ptemp, sc->server);
+    nss_init_server_certs(s, p, ptemp, sc->server);
 }
 
 /*
  * Configure a particular server
  */
-void ssl_init_ConfigureServer(server_rec *s,
+void nss_init_ConfigureServer(server_rec *s,
                               apr_pool_t *p,
                               apr_pool_t *ptemp,
                               SSLSrvConfigRec *sc)
@@ -726,23 +729,23 @@ void ssl_init_ConfigureServer(server_rec *s,
     if (sc->enabled) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                      "Configuring server for SSL protocol");
-        ssl_init_server_ctx(s, p, ptemp, sc);
+        nss_init_server_ctx(s, p, ptemp, sc);
     }
 
 #ifdef PROXY
     if (sc->proxy_enabled) {
-        ssl_init_proxy_ctx(s, p, ptemp, sc);
+        nss_init_proxy_ctx(s, p, ptemp, sc);
     }
 #endif
 }
 
-void ssl_init_Child(apr_pool_t *p, server_rec *s)
+void nss_init_Child(apr_pool_t *p, server_rec *s)
 {
     SSLModConfigRec *mc = myModConfig(s);
     mc->pid = getpid(); /* only call getpid() once per-process */
 }
 
-apr_status_t ssl_init_ModuleKill(void *data)
+apr_status_t nss_init_ModuleKill(void *data)
 {
     /* 
      * There is nothing stored at the server level to kill at the moment.
@@ -931,7 +934,7 @@ SECStatus NSSHandshakeCallback(PRFileDesc *socket, void *arg)
     return SECSuccess;
 }
 
-int ssl_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum])
+int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum])
 {
     char * cipher;
     PRBool found, active;

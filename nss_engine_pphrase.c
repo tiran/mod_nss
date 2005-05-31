@@ -22,10 +22,10 @@ typedef struct {
     PRInt32 retryCount;
 } pphrase_arg_t;
 
-static char * ssl_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg);
-static char * ssl_no_password(PK11SlotInfo *slot, PRBool retry, void *arg);
-static unsigned char * ssl_get_password(FILE *input, FILE *output, PK11SlotInfo *slot, PRBool (*ok)(unsigned char *), pphrase_arg_t * parg);
-static PRBool ssl_check_password(unsigned char *cp);
+static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg);
+static char * nss_no_password(PK11SlotInfo *slot, PRBool retry, void *arg);
+static unsigned char * nss_get_password(FILE *input, FILE *output, PK11SlotInfo *slot, PRBool (*ok)(unsigned char *), pphrase_arg_t * parg);
+static PRBool nss_check_password(unsigned char *cp);
 static void echoOff(int fd);
 static void echoOn(int fd);
 
@@ -40,7 +40,7 @@ static char * prompt;
  *  be authenticated and others will not be.
  */
 
-SECStatus ssl_Init_Tokens(server_rec *s)
+SECStatus nss_Init_Tokens(server_rec *s)
 {
     PK11SlotList        *slotList;
     PK11SlotListElement *listEntry;
@@ -52,7 +52,7 @@ SECStatus ssl_Init_Tokens(server_rec *s)
     parg->mc = mc;
     parg->retryCount = 0;
 
-    PK11_SetPasswordFunc(ssl_password_prompt);
+    PK11_SetPasswordFunc(nss_password_prompt);
 
     slotList = PK11_GetAllTokens(CKM_INVALID_MECHANISM, PR_FALSE, PR_TRUE, NULL);
 
@@ -85,7 +85,7 @@ SECStatus ssl_Init_Tokens(server_rec *s)
      * reset NSS password callback to blank, so that the server won't prompt
      * again after initialization is done.
      */
-    PK11_SetPasswordFunc(ssl_no_password);
+    PK11_SetPasswordFunc(nss_no_password);
 
     free(parg);
     return status; 
@@ -95,7 +95,7 @@ SECStatus ssl_Init_Tokens(server_rec *s)
  * Wrapper callback function that prompts the user for the token password
  * up to 3 times.
  */
-static char * ssl_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
+static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
     char *passwd = NULL;
     pphrase_arg_t *parg = (pphrase_arg_t *)arg;
@@ -106,12 +106,12 @@ static char * ssl_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
     prompt = PR_smprintf("Please enter password for \"%s\" token:", PK11_GetTokenName(slot));
     if (parg == NULL) {
         // should not happen
-        passwd = ssl_get_password(stdin, stdout, slot, ssl_check_password, 0);
+        passwd = nss_get_password(stdin, stdout, slot, nss_check_password, 0);
     } else {
         if (parg->retryCount > 2) {
             passwd = NULL; // abort after 2 retries (3 failed attempts)
         } else {
-            passwd = ssl_get_password(stdin, stdout, slot, ssl_check_password, parg);
+            passwd = nss_get_password(stdin, stdout, slot, nss_check_password, parg);
         }
     }
 
@@ -126,7 +126,7 @@ static char * ssl_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
         if (!APR_STATUS_IS_SUCCESS(rv)) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "Unable to write to pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
-            ssl_die();
+            nss_die();
         }
 
         /* Check the result. We don't really care what we got back as long
@@ -143,7 +143,7 @@ static char * ssl_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
            (res != PIN_SUCCESS && res != PIN_INCORRECTPW)) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "Unable to read from pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
-            ssl_die();
+            nss_die();
         }
     }
 
@@ -155,7 +155,7 @@ static char * ssl_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
  * any actual enforcement here but it demonstrates the sorts of things
  * that may be done.
  */ 
-static PRBool ssl_check_password(unsigned char *cp)
+static PRBool nss_check_password(unsigned char *cp)
 {
     int len;
     unsigned char *end, ch;
@@ -180,7 +180,7 @@ static PRBool ssl_check_password(unsigned char *cp)
  * Password callback so the user is not prompted to enter the password
  * after the server starts.
  */
-static char * ssl_no_password(PK11SlotInfo *slot, PRBool retry, void *arg)
+static char * nss_no_password(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
    return NULL;
 }
@@ -190,7 +190,7 @@ static char * ssl_no_password(PK11SlotInfo *slot, PRBool retry, void *arg)
  * twiddling with the tty. Alternatively, if the file password.conf
  * exists then it may be used to store the token password(s).
  */
-static unsigned char *ssl_get_password(FILE *input, FILE *output,
+static unsigned char *nss_get_password(FILE *input, FILE *output,
                                        PK11SlotInfo *slot,
                                        PRBool (*ok)(unsigned char *),
                                        pphrase_arg_t *parg)
@@ -229,7 +229,7 @@ static unsigned char *ssl_get_password(FILE *input, FILE *output,
         } else {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                  "Unable to open password file %s", parg->mc->pphrase_dialog_path);
-            ssl_die();
+            nss_die();
         }
     }
 
@@ -246,7 +246,7 @@ static unsigned char *ssl_get_password(FILE *input, FILE *output,
         if (!APR_STATUS_IS_SUCCESS(rv)) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "Unable to write to pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
-            ssl_die();
+            nss_die();
         }
 
         /* The helper just returns a token pw or "", so we don't have much
@@ -257,7 +257,7 @@ static unsigned char *ssl_get_password(FILE *input, FILE *output,
         if (!APR_STATUS_IS_SUCCESS(rv)) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "Unable to read from pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
-            ssl_die();
+            nss_die();
         }
 
         /* Just return what we got. If we got this far and we don't have a 

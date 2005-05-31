@@ -20,7 +20,7 @@ static void HandshakeDone(PRFileDesc *fd, void *doneflag);
 /*
  *  Post Read Request Handler
  */
-int ssl_hook_ReadReq(request_rec *r)
+int nss_hook_ReadReq(request_rec *r)
 {
     SSLConnRec *sslconn = myConnConfig(r->connection);
 
@@ -28,7 +28,7 @@ int ssl_hook_ReadReq(request_rec *r)
         return DECLINED;
     }
 
-    if (sslconn->non_ssl_request) {
+    if (sslconn->non_nss_request) {
         const char *errmsg;
         char *thisurl;
         char *thisport = "";
@@ -56,7 +56,7 @@ int ssl_hook_ReadReq(request_rec *r)
         /* Now that we have caught this error, forget it. we are done
          * with using SSL on this request.
          */
-        sslconn->non_ssl_request = 0;
+        sslconn->non_nss_request = 0;
 
 
         return HTTP_BAD_REQUEST;
@@ -68,7 +68,7 @@ int ssl_hook_ReadReq(request_rec *r)
 /* 
  *  URL Translation Handler
  */
-int ssl_hook_Translate(request_rec *r)
+int nss_hook_Translate(request_rec *r)
 {
     SSLConnRec *sslconn = myConnConfig(r->connection);
  
@@ -86,7 +86,7 @@ int ssl_hook_Translate(request_rec *r)
                      apr_psprintf(r->pool, "Subsequent (No.%d)",
                                   r->connection->keepalives+1)),
                      r->connection->id,
-                     ssl_util_vhostid(r->pool, r->server));
+                     nss_util_vhostid(r->pool, r->server));
     }
 
     return DECLINED;
@@ -96,14 +96,14 @@ int ssl_hook_Translate(request_rec *r)
 /*
  *  Access Handler
  */
-int ssl_hook_Access(request_rec *r)
+int nss_hook_Access(request_rec *r)
 {
     SSLDirConfigRec *dc = myDirConfig(r);
     SSLSrvConfigRec *sc = mySrvConfig(r->server);
     SSLConnRec *sslconn = myConnConfig(r->connection);
     PRFileDesc *ssl     = sslconn ? sslconn->ssl : NULL;
     apr_array_header_t *requires; 
-    ssl_require_t *ssl_requires; 
+    nss_require_t *nss_requires; 
     char *cp;
     int ok, i;
     BOOL renegotiate = FALSE, renegotiate_quick = FALSE;
@@ -159,7 +159,7 @@ int ssl_hook_Access(request_rec *r)
      */
     
     /*
-     * Override of SSLCipherSuite
+     * Override of NSSCipherSuite
      *
      * We provide two options here:
      *
@@ -176,7 +176,7 @@ int ssl_hook_Access(request_rec *r)
      *   cipher suite we're happy. Because we can assume we would have
      *   selected it again even when other (better) ciphers exists now in the
      *   new cipher suite. This approach is fine because the user explicitly
-     *   has to enable this via ``SSLOptions +OptRenegotiate''. So we do no
+     *   has to enable this via ``NSSOptions +OptRenegotiate''. So we do no
      *   implicit optimizations.
      */
     if (dc->szCipherSuite) {
@@ -197,12 +197,12 @@ int ssl_hook_Access(request_rec *r)
         /* configure new state */
 
         ciphers = strdup(dc->szCipherSuite);
-        if (ssl_parse_ciphers(r->server, ciphers, ciphers_new) < 0) {
+        if (nss_parse_ciphers(r->server, ciphers, ciphers_new) < 0) {
             ap_log_error(APLOG_MARK, APLOG_WARNING, 0,
                          r->server,
                          "Unable to reconfigure (per-directory) "
                          "permitted SSL ciphers");
-            ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, r->server);
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, r->server);
             free(ciphers);
     
             return HTTP_FORBIDDEN;
@@ -382,7 +382,7 @@ int ssl_hook_Access(request_rec *r)
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
                      "SSL Re-negotiation in conjunction "
                      "with POST method not supported!"
-                     "hint: try SSLOptions +OptRenegotiate");
+                     "hint: try NSSOptions +OptRenegotiate");
 
         return HTTP_METHOD_NOT_ALLOWED;
     }
@@ -525,7 +525,7 @@ int ssl_hook_Access(request_rec *r)
      * we need to postpone setting the username until later.
      */
     if ((dc->nOptions & SSL_OPT_FAKEBASICAUTH) == 0 && dc->szUserName) {
-        char *val = ssl_var_lookup(r->pool, r->server, r->connection,
+        char *val = nss_var_lookup(r->pool, r->server, r->connection,
                                    r, (char *)dc->szUserName);
         if (val && val[0])
             r->user = val;
@@ -535,17 +535,17 @@ int ssl_hook_Access(request_rec *r)
      * Check SSLRequire boolean expressions
      */
     requires = dc->aRequirement;
-    ssl_requires = (ssl_require_t *)requires->elts;
+    nss_requires = (nss_require_t *)requires->elts;
 
     for (i = 0; i < requires->nelts; i++) {
-        ssl_require_t *req = &ssl_requires[i];
-        ok = ssl_expr_exec(r, req->mpExpr);
+        nss_require_t *req = &nss_requires[i];
+        ok = nss_expr_exec(r, req->mpExpr);
 
         if (ok < 0) {
             cp = apr_psprintf(r->pool,
                               "Failed to execute "
                               "SSL requirement expression: %s",
-                              ssl_expr_get_error());
+                              nss_expr_get_error());
 
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
                           "access to %s failed, reason: %s",
@@ -598,7 +598,7 @@ int ssl_hook_Access(request_rec *r)
  *  authenticates a user.  This means that the Module statement for this
  *  module should be LAST in the Configuration file.
  */
-int ssl_hook_UserCheck(request_rec *r)
+int nss_hook_UserCheck(request_rec *r)
 {
     SSLConnRec *sslconn = myConnConfig(r->connection);
     SSLSrvConfigRec *sc = mySrvConfig(r->server);
@@ -650,7 +650,7 @@ int ssl_hook_UserCheck(request_rec *r)
 
     /* 
      * We decline operation in various situations...
-     * - SSLOptions +FakeBasicAuth not configured
+     * - NSSOptions +FakeBasicAuth not configured
      * - r->user already authenticated
      * - ssl not enabled
      * - client did not present a certificate
@@ -697,11 +697,11 @@ int ssl_hook_UserCheck(request_rec *r)
 }
 
 /* authorization phase */
-int ssl_hook_Auth(request_rec *r)
+int nss_hook_Auth(request_rec *r)
 {
     SSLDirConfigRec *dc = myDirConfig(r);
 
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server, "ssl_hook_Auth");
+    ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server, "nss_hook_Auth");
     /*
      * Additionally forbid access (again) 
      * when strict require option is used.
@@ -719,7 +719,7 @@ int ssl_hook_Auth(request_rec *r)
  *   Fixup Handler
  */ 
     
-static const char *ssl_hook_Fixup_vars[] = {
+static const char *nss_hook_Fixup_vars[] = {
     "SSL_VERSION_INTERFACE",
     "SSL_VERSION_LIBRARY",
     "SSL_PROTOCOL",
@@ -800,7 +800,7 @@ static const char *ssl_hook_Fixup_vars[] = {
     NULL
 };
 
-int ssl_hook_Fixup(request_rec *r)
+int nss_hook_Fixup(request_rec *r)
 {
     SSLConnRec *sslconn = myConnConfig(r->connection);
     SSLSrvConfigRec *sc = mySrvConfig(r->server);
@@ -823,7 +823,7 @@ int ssl_hook_Fixup(request_rec *r)
      * Set r->user if requested
      */
     if (dc->szUserName) {
-        val = ssl_var_lookup(r->pool, r->server, r->connection,
+        val = nss_var_lookup(r->pool, r->server, r->connection,
                              r, (char *)dc->szUserName);
         if (val && val[0]) {
             r->user = val;
@@ -838,9 +838,9 @@ int ssl_hook_Fixup(request_rec *r)
 
     /* standard SSL environment variables */
     if (dc->nOptions & SSL_OPT_STDENVVARS) {
-        for (i = 0; ssl_hook_Fixup_vars[i]; i++) {
-            var = (char *)ssl_hook_Fixup_vars[i];
-            val = ssl_var_lookup(r->pool, r->server, r->connection, r, var);
+        for (i = 0; nss_hook_Fixup_vars[i]; i++) {
+            var = (char *)nss_hook_Fixup_vars[i];
+            val = nss_var_lookup(r->pool, r->server, r->connection, r, var);
             if (!strIsEmpty(val)) {
                 apr_table_setn(env, var, val);
             }
@@ -851,12 +851,12 @@ int ssl_hook_Fixup(request_rec *r)
      * On-demand bloat up the SSI/CGI environment with certificate data
      */
     if (dc->nOptions & SSL_OPT_EXPORTCERTDATA) {
-        val = ssl_var_lookup(r->pool, r->server, r->connection,
+        val = nss_var_lookup(r->pool, r->server, r->connection,
                              r, "SSL_SERVER_CERT");
 
         apr_table_setn(env, "SSL_SERVER_CERT", val);
 
-        val = ssl_var_lookup(r->pool, r->server, r->connection,
+        val = nss_var_lookup(r->pool, r->server, r->connection,
                              r, "SSL_CLIENT_CERT");
 
         apr_table_setn(env, "SSL_CLIENT_CERT", val);
@@ -879,7 +879,7 @@ int ssl_hook_Fixup(request_rec *r)
 
             for (i = 0; i < n; i++) {
                 var = apr_psprintf(r->pool, "SSL_CLIENT_CERT_CHAIN_%d", i);
-                val = ssl_var_lookup(r->pool, r->server, r->connection,
+                val = nss_var_lookup(r->pool, r->server, r->connection,
                                      r, var);
                 if (val) {
                     apr_table_setn(env, var, val);

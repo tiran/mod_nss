@@ -182,7 +182,7 @@ l_error_t libsec_errors[] = {
     { 144, "SEC_ERROR_OCSP_INVALID_SIGNING_CERT - OCSP signer certificate not found, not trusted or invalid." }
 };
 
-l_error_t libssl_errors[] = {
+l_error_t libnss_errors[] = {
     {  0, "Client does not support high-grade encryption" },
     {  1, "Client requires high-grade encryption which is not supported" },
     {  2, "No common encryption algorithm(s) with client" },
@@ -288,7 +288,7 @@ l_error_t libssl_errors[] = {
     { 102, "Peer does not permit renegotiation of SSL security parameters" }
 };
 
-void ssl_die(void) 
+void nss_die(void) 
 {
     /*
      * This is used for fatal errors and here
@@ -298,7 +298,7 @@ void ssl_die(void)
     exit(1); 
 }
 
-void ssl_log_ssl_error(const char *file, int line, int level, server_rec *s)
+void nss_log_nss_error(const char *file, int line, int level, server_rec *s)
 {
     const char *err;
     PRInt32 error;
@@ -312,7 +312,7 @@ void ssl_log_ssl_error(const char *file, int line, int level, server_rec *s)
         err = libsec_errors[error-LIBSEC_ERROR_BASE].errorString;
     } else if ((error >= LIBSSL_ERROR_BASE) &&
         (error <= LIBSSL_MAX_ERROR)) {
-        err = libssl_errors[error-LIBSSL_ERROR_BASE].errorString;
+        err = libnss_errors[error-LIBSSL_ERROR_BASE].errorString;
     } else {
          err = "Unknown";
     }

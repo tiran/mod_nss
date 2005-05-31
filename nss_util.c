@@ -24,7 +24,7 @@
 **  _________________________________________________________________
 */
 
-char *ssl_util_vhostid(apr_pool_t *p, server_rec *s)
+char *nss_util_vhostid(apr_pool_t *p, server_rec *s)
 {
     char *id;
     SSLSrvConfigRec *sc;
@@ -45,24 +45,24 @@ char *ssl_util_vhostid(apr_pool_t *p, server_rec *s)
     return id;
 }
 
-void ssl_util_strupper(char *s)
+void nss_util_strupper(char *s)
 {
     for (; *s; ++s)
         *s = apr_toupper(*s);
     return;
 }
 
-static const char ssl_util_uuencode_six2pr[64+1] =
+static const char nss_util_uuencode_six2pr[64+1] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-void ssl_util_uuencode(char *szTo, const char *szFrom, BOOL bPad)
+void nss_util_uuencode(char *szTo, const char *szFrom, BOOL bPad)
 {
-    ssl_util_uuencode_binary((unsigned char *)szTo,
+    nss_util_uuencode_binary((unsigned char *)szTo,
                              (const unsigned char *)szFrom,
                              strlen(szFrom), bPad);
 }
 
-void ssl_util_uuencode_binary(unsigned char *szTo,
+void nss_util_uuencode_binary(unsigned char *szTo,
                               const unsigned char *szFrom,
                               int nLength, BOOL bPad)
 {
@@ -70,18 +70,18 @@ void ssl_util_uuencode_binary(unsigned char *szTo,
     int nPad = 0;
 
     for (s = szFrom; nLength > 0; s += 3) {
-        *szTo++ = ssl_util_uuencode_six2pr[s[0] >> 2];
-        *szTo++ = ssl_util_uuencode_six2pr[(s[0] << 4 | s[1] >> 4) & 0x3f];
+        *szTo++ = nss_util_uuencode_six2pr[s[0] >> 2];
+        *szTo++ = nss_util_uuencode_six2pr[(s[0] << 4 | s[1] >> 4) & 0x3f];
         if (--nLength == 0) {
             nPad = 2;
             break;
         }
-        *szTo++ = ssl_util_uuencode_six2pr[(s[1] << 2 | s[2] >> 6) & 0x3f];
+        *szTo++ = nss_util_uuencode_six2pr[(s[1] << 2 | s[2] >> 6) & 0x3f];
         if (--nLength == 0) {
             nPad = 1;
             break;
         }
-        *szTo++ = ssl_util_uuencode_six2pr[s[2] & 0x3f];
+        *szTo++ = nss_util_uuencode_six2pr[s[2] & 0x3f];
         --nLength;
     }
     while(bPad && nPad--) {
@@ -91,7 +91,7 @@ void ssl_util_uuencode_binary(unsigned char *szTo,
     return;
 }
 
-apr_file_t *ssl_util_ppopen(server_rec *s, apr_pool_t *p, const char *cmd,
+apr_file_t *nss_util_ppopen(server_rec *s, apr_pool_t *p, const char *cmd,
                             const char * const *argv)
 {
     apr_procattr_t *procattr;
@@ -114,7 +114,7 @@ apr_file_t *ssl_util_ppopen(server_rec *s, apr_pool_t *p, const char *cmd,
     return proc->out;
 }
 
-void ssl_util_ppclose(server_rec *s, apr_pool_t *p, apr_file_t *fp)
+void nss_util_ppclose(server_rec *s, apr_pool_t *p, apr_file_t *fp)
 {
     apr_file_close(fp);
     return;
@@ -123,7 +123,7 @@ void ssl_util_ppclose(server_rec *s, apr_pool_t *p, apr_file_t *fp)
 /*
  * Run a filter program and read the first line of its stdout output
  */
-char *ssl_util_readfilter(server_rec *s, apr_pool_t *p, const char *cmd,
+char *nss_util_readfilter(server_rec *s, apr_pool_t *p, const char *cmd,
                           const char * const *argv)
 {
     static char buf[MAX_STRING_LEN];
@@ -132,7 +132,7 @@ char *ssl_util_readfilter(server_rec *s, apr_pool_t *p, const char *cmd,
     char c;
     int k;
 
-    if ((fp = ssl_util_ppopen(s, p, cmd, argv)) == NULL)
+    if ((fp = nss_util_ppopen(s, p, cmd, argv)) == NULL)
         return NULL;
     /* XXX: we are reading 1 byte at a time here */
     for (k = 0; apr_file_read(fp, &c, &nbytes) == APR_SUCCESS
@@ -142,7 +142,7 @@ char *ssl_util_readfilter(server_rec *s, apr_pool_t *p, const char *cmd,
         buf[k++] = c;
     }
     buf[k] = NUL;
-    ssl_util_ppclose(s, p, fp);
+    nss_util_ppclose(s, p, fp);
 
     return buf;
 }

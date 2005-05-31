@@ -26,33 +26,33 @@
 #define CERT_NOTBEFORE 0
 #define CERT_NOTAFTER  1
 
-static char *ssl_var_lookup_header(apr_pool_t *p, request_rec *r, const char *name);
-static char *ssl_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var);
-static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *var, conn_rec *c);
-static char *ssl_var_lookup_ssl_cert_dn(apr_pool_t *p, CERTName *cert, char *var);
-static char *ssl_var_lookup_ssl_cert_valid(apr_pool_t *p, CERTCertificate *xs, int type);
-static char *ssl_var_lookup_ssl_cert_chain(apr_pool_t *p, CERTCertificate *cert,char *var);
-static char *ssl_var_lookup_ssl_cert_PEM(apr_pool_t *p, CERTCertificate *xs);
-static char *ssl_var_lookup_ssl_cert_verify(apr_pool_t *p, conn_rec *c);
-static char *ssl_var_lookup_ssl_cipher(apr_pool_t *p, conn_rec *c, char *var);
-static char *ssl_var_lookup_ssl_version(apr_pool_t *p, char *var);
-static char *ssl_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c);
+static char *nss_var_lookup_header(apr_pool_t *p, request_rec *r, const char *name);
+static char *nss_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var);
+static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *var, conn_rec *c);
+static char *nss_var_lookup_nss_cert_dn(apr_pool_t *p, CERTName *cert, char *var);
+static char *nss_var_lookup_nss_cert_valid(apr_pool_t *p, CERTCertificate *xs, int type);
+static char *nss_var_lookup_nss_cert_chain(apr_pool_t *p, CERTCertificate *cert,char *var);
+static char *nss_var_lookup_nss_cert_PEM(apr_pool_t *p, CERTCertificate *xs);
+static char *nss_var_lookup_nss_cert_verify(apr_pool_t *p, conn_rec *c);
+static char *nss_var_lookup_nss_cipher(apr_pool_t *p, conn_rec *c, char *var);
+static char *nss_var_lookup_nss_version(apr_pool_t *p, char *var);
+static char *nss_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c);
 
-static int ssl_is_https(conn_rec *c)
+static int nss_is_https(conn_rec *c)
 {
     SSLConnRec *sslconn = myConnConfig(c);
     return sslconn && sslconn->ssl;
 }
 
-void ssl_var_register(void)
+void nss_var_register(void)
 {
-    APR_REGISTER_OPTIONAL_FN(ssl_is_https);
-    APR_REGISTER_OPTIONAL_FN(ssl_var_lookup);
+    APR_REGISTER_OPTIONAL_FN(nss_is_https);
+    APR_REGISTER_OPTIONAL_FN(nss_var_lookup);
     return;
 }
 
 /* This function must remain safe to use for a non-SSL connection. */
-char *ssl_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, char *var)
+char *nss_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, char *var)
 {
     SSLModConfigRec *mc = myModConfig(s);
     char *result;
@@ -79,22 +79,22 @@ char *ssl_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
      */
     if (r != NULL) {
         if (strcEQ(var, "HTTP_USER_AGENT"))
-            result = ssl_var_lookup_header(p, r, "User-Agent");
+            result = nss_var_lookup_header(p, r, "User-Agent");
         else if (strcEQ(var, "HTTP_REFERER"))
-            result = ssl_var_lookup_header(p, r, "Referer");
+            result = nss_var_lookup_header(p, r, "Referer");
         else if (strcEQ(var, "HTTP_COOKIE"))
-            result = ssl_var_lookup_header(p, r, "Cookie");
+            result = nss_var_lookup_header(p, r, "Cookie");
         else if (strcEQ(var, "HTTP_FORWARDED"))
-            result = ssl_var_lookup_header(p, r, "Forwarded");
+            result = nss_var_lookup_header(p, r, "Forwarded");
         else if (strcEQ(var, "HTTP_HOST"))
-            result = ssl_var_lookup_header(p, r, "Host");
+            result = nss_var_lookup_header(p, r, "Host");
         else if (strcEQ(var, "HTTP_PROXY_CONNECTION"))
-            result = ssl_var_lookup_header(p, r, "Proxy-Connection");
+            result = nss_var_lookup_header(p, r, "Proxy-Connection");
         else if (strcEQ(var, "HTTP_ACCEPT"))
-            result = ssl_var_lookup_header(p, r, "Accept");
+            result = nss_var_lookup_header(p, r, "Accept");
         else if (strlen(var) > 5 && strcEQn(var, "HTTP:", 5))
             /* all other headers from which we are still not know about */
-            result = ssl_var_lookup_header(p, r, var+5);
+            result = nss_var_lookup_header(p, r, var+5);
         else if (strcEQ(var, "THE_REQUEST"))
             result = r->the_request;
         else if (strcEQ(var, "REQUEST_METHOD"))
@@ -142,7 +142,7 @@ char *ssl_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
             result = r->ap_auth_type;
         else if (strlen(var) > 4 && strcEQn(var, "SSL_", 4) 
                  && sslconn && sslconn->ssl)
-            result = ssl_var_lookup_ssl(p, c, var+4);
+            result = nss_var_lookup_ssl(p, c, var+4);
         else if (strcEQ(var, "HTTPS")) {
             if (sslconn && sslconn->ssl)
                 result = "on";
@@ -156,7 +156,7 @@ char *ssl_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
      */
     if (result == NULL) {
         if (strlen(var) > 12 && strcEQn(var, "SSL_VERSION_", 12))
-            result = ssl_var_lookup_ssl_version(p, var+12);
+            result = nss_var_lookup_nss_version(p, var+12);
         else if (strcEQ(var, "SERVER_SOFTWARE"))
             result = (char *)ap_get_server_version();
         else if (strcEQ(var, "API_VERSION")) {
@@ -216,7 +216,7 @@ char *ssl_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
     return result;
 }
 
-static char *ssl_var_lookup_header(apr_pool_t *p, request_rec *r, const char *name)
+static char *nss_var_lookup_header(apr_pool_t *p, request_rec *r, const char *name)
 {
     char *hdr = NULL;
 
@@ -225,7 +225,7 @@ static char *ssl_var_lookup_header(apr_pool_t *p, request_rec *r, const char *na
     return hdr;
 }
 
-static char *ssl_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
+static char *nss_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
 {
     SSLConnRec *sslconn = myConnConfig(c);
     char *result;
@@ -236,10 +236,10 @@ static char *ssl_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
 
     ssl = sslconn->ssl;
     if (strlen(var) > 8 && strcEQn(var, "VERSION_", 8)) {
-        result = ssl_var_lookup_ssl_version(p, var+8);
+        result = nss_var_lookup_nss_version(p, var+8);
     }
     else if (ssl != NULL && strcEQ(var, "PROTOCOL")) {
-        result = (char *)ssl_var_lookup_protocol_version(p, c);
+        result = (char *)nss_var_lookup_protocol_version(p, c);
     }
     else if (ssl != NULL && strcEQ(var, "SESSION_ID")) {
         char *idstr;
@@ -258,27 +258,27 @@ static char *ssl_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
         SECITEM_FreeItem(iditem, PR_TRUE);
     }
     else if (ssl != NULL && strlen(var) >= 6 && strcEQn(var, "CIPHER", 6)) {
-        result = ssl_var_lookup_ssl_cipher(p, c, var+6);
+        result = nss_var_lookup_nss_cipher(p, c, var+6);
     }
     else if (ssl != NULL && strlen(var) > 18 && strcEQn(var, "CLIENT_CERT_CHAIN_", 18)) {
         xs = SSL_PeerCertificate(ssl);
         if (xs != NULL) {
-            result = ssl_var_lookup_ssl_cert_chain(p, xs, var+18);
+            result = nss_var_lookup_nss_cert_chain(p, xs, var+18);
             CERT_DestroyCertificate(xs);
         }
     }
     else if (ssl != NULL && strcEQ(var, "CLIENT_VERIFY")) {
-        result = ssl_var_lookup_ssl_cert_verify(p, c);
+        result = nss_var_lookup_nss_cert_verify(p, c);
     }
     else if (ssl != NULL && strlen(var) > 7 && strcEQn(var, "CLIENT_", 7)) {
         if ((xs = SSL_PeerCertificate(ssl)) != NULL) {
-            result = ssl_var_lookup_ssl_cert(p, xs, var+7, c);
+            result = nss_var_lookup_nss_cert(p, xs, var+7, c);
             CERT_DestroyCertificate(xs);
         }
     }
     else if (ssl != NULL && strlen(var) > 7 && strcEQn(var, "SERVER_", 7)) {
         if ((xs = SSL_LocalCertificate(ssl)) != NULL) {
-            result = ssl_var_lookup_ssl_cert(p, xs, var+7, c);
+            result = nss_var_lookup_nss_cert(p, xs, var+7, c);
             CERT_DestroyCertificate(xs);
         }
     }
@@ -286,7 +286,7 @@ static char *ssl_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
     return result;
 }
 
-static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *var, conn_rec *c)
+static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *var, conn_rec *c)
 {
     char *result;
     BOOL resdup;
@@ -304,10 +304,10 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *v
         resdup = FALSE;
     }
     else if (strcEQ(var, "V_START")) {
-        result = ssl_var_lookup_ssl_cert_valid(p, xs, CERT_NOTBEFORE);
+        result = nss_var_lookup_nss_cert_valid(p, xs, CERT_NOTBEFORE);
     }
     else if (strcEQ(var, "V_END")) {
-        result = ssl_var_lookup_ssl_cert_valid(p, xs, CERT_NOTAFTER);
+        result = nss_var_lookup_nss_cert_valid(p, xs, CERT_NOTAFTER);
     }
     else if (strcEQ(var, "S_DN")) {
         xsname = CERT_NameToAscii(&xs->subject);
@@ -316,7 +316,7 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *v
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "S_DN_", 5)) {
-        result = ssl_var_lookup_ssl_cert_dn(p, &xs->subject, var+5);
+        result = nss_var_lookup_nss_cert_dn(p, &xs->subject, var+5);
         resdup = FALSE;
     }
     else if (strcEQ(var, "I_DN")) {
@@ -326,7 +326,7 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *v
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "I_DN_", 5)) {
-        result = ssl_var_lookup_ssl_cert_dn(p, &xs->issuer, var+5);
+        result = nss_var_lookup_nss_cert_dn(p, &xs->issuer, var+5);
         resdup = FALSE;
     }
     else if (strcEQ(var, "A_SIG")) {
@@ -367,7 +367,7 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *v
         resdup = FALSE;
     }
     else if (strcEQ(var, "CERT")) {
-        result = ssl_var_lookup_ssl_cert_PEM(p, xs);
+        result = nss_var_lookup_nss_cert_PEM(p, xs);
     }
 
     if (result != NULL && resdup)
@@ -375,7 +375,7 @@ static char *ssl_var_lookup_ssl_cert(apr_pool_t *p, CERTCertificate *xs, char *v
     return result;
 }
 
-static char *ssl_var_lookup_ssl_cert_dn(apr_pool_t *p, CERTName *cert, char *var)
+static char *nss_var_lookup_nss_cert_dn(apr_pool_t *p, CERTName *cert, char *var)
 {
     char *result;
     char *rv;
@@ -413,7 +413,7 @@ static char *ssl_var_lookup_ssl_cert_dn(apr_pool_t *p, CERTName *cert, char *var
     return result;
 }
 
-static char *ssl_var_lookup_ssl_cert_valid(apr_pool_t *p, CERTCertificate *xs, int type)
+static char *nss_var_lookup_nss_cert_valid(apr_pool_t *p, CERTCertificate *xs, int type)
 {
     char *result;
     PRExplodedTime   printableTime;
@@ -436,7 +436,7 @@ static char *ssl_var_lookup_ssl_cert_valid(apr_pool_t *p, CERTCertificate *xs, i
     return result;
 }
 
-static char *ssl_var_lookup_ssl_cert_chain(apr_pool_t *p, CERTCertificate *cert, char *var)
+static char *nss_var_lookup_nss_cert_chain(apr_pool_t *p, CERTCertificate *cert, char *var)
 {
     char *result;
     CERTCertificateList *chain = NULL;
@@ -454,7 +454,7 @@ static char *ssl_var_lookup_ssl_cert_chain(apr_pool_t *p, CERTCertificate *cert,
         if (n <= chain->len-1) {
             CERTCertificate *c;
             c = CERT_FindCertByDERCert(CERT_GetDefaultCertDB(), &chain->certs[n]);
-            result = ssl_var_lookup_ssl_cert_PEM(p, c);
+            result = nss_var_lookup_nss_cert_PEM(p, c);
             CERT_DestroyCertificate(c);
         }
     }
@@ -466,7 +466,7 @@ static char *ssl_var_lookup_ssl_cert_chain(apr_pool_t *p, CERTCertificate *cert,
 
 #define CERT_HEADER  "-----BEGIN CERTIFICATE-----\n"
 #define CERT_TRAILER "\n-----END CERTIFICATE-----\n"
-static char *ssl_var_lookup_ssl_cert_PEM(apr_pool_t *p, CERTCertificate *xs)
+static char *nss_var_lookup_nss_cert_PEM(apr_pool_t *p, CERTCertificate *xs)
 {
     char * result = NULL;
     char * tmp = NULL;
@@ -503,7 +503,7 @@ static char *ssl_var_lookup_ssl_cert_PEM(apr_pool_t *p, CERTCertificate *xs)
     return result;
 }
 
-static char *ssl_var_lookup_ssl_cert_verify(apr_pool_t *p, conn_rec *c)
+static char *nss_var_lookup_nss_cert_verify(apr_pool_t *p, conn_rec *c)
 {
     SSLConnRec *sslconn = myConnConfig(c);
     char *result;
@@ -538,7 +538,7 @@ static char *ssl_var_lookup_ssl_cert_verify(apr_pool_t *p, conn_rec *c)
     return result;
 }
 
-static char *ssl_var_lookup_ssl_cipher(apr_pool_t *p, conn_rec *c, char *var)
+static char *nss_var_lookup_nss_cipher(apr_pool_t *p, conn_rec *c, char *var)
 {
     SSLConnRec *sslconn = myConnConfig(c);    
     char *result;
@@ -588,7 +588,7 @@ static char *ssl_var_lookup_ssl_cipher(apr_pool_t *p, conn_rec *c, char *var)
     return result;
 }
 
-static char *ssl_var_lookup_ssl_version(apr_pool_t *p, char *var)
+static char *nss_var_lookup_nss_version(apr_pool_t *p, char *var)
 {
     char *result;
 
@@ -610,7 +610,7 @@ static char *ssl_var_lookup_ssl_version(apr_pool_t *p, char *var)
     return result;
 }
 
-static char *ssl_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c) 
+static char *nss_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c) 
 {
     char *result;
     SSLChannelInfo      channel;
@@ -651,22 +651,22 @@ static char *ssl_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c)
 
 #include "mod_log_config.h"
 
-static const char *ssl_var_log_handler_c(request_rec *r, char *a);
-static const char *ssl_var_log_handler_x(request_rec *r, char *a);
+static const char *nss_var_log_handler_c(request_rec *r, char *a);
+static const char *nss_var_log_handler_x(request_rec *r, char *a);
 
 /*
  * register us for the mod_log_config function registering phase
  * to establish %{...}c and to be able to expand %{...}x variables.
  */
-void ssl_var_log_config_register(apr_pool_t *p)
+void nss_var_log_config_register(apr_pool_t *p)
 {
     static APR_OPTIONAL_FN_TYPE(ap_register_log_handler) *log_pfn_register;
 
     log_pfn_register = APR_RETRIEVE_OPTIONAL_FN(ap_register_log_handler);
 
     if (log_pfn_register) {
-        log_pfn_register(p, "c", ssl_var_log_handler_c, 0);
-        log_pfn_register(p, "x", ssl_var_log_handler_x, 0);
+        log_pfn_register(p, "c", nss_var_log_handler_c, 0);
+        log_pfn_register(p, "x", nss_var_log_handler_x, 0);
     }
     return;
 }
@@ -675,7 +675,7 @@ void ssl_var_log_config_register(apr_pool_t *p)
  * implement the %{..}c log function
  * (we are the only function)
  */
-static const char *ssl_var_log_handler_c(request_rec *r, char *a)
+static const char *nss_var_log_handler_c(request_rec *r, char *a)
 {
     SSLConnRec *sslconn = myConnConfig(r->connection);
     char *result; 
@@ -684,13 +684,13 @@ static const char *ssl_var_log_handler_c(request_rec *r, char *a)
         return NULL;
     result = NULL;
     if (strEQ(a, "version"))
-        result = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_PROTOCOL");
+        result = nss_var_lookup(r->pool, r->server, r->connection, r, "SSL_PROTOCOL");
     else if (strEQ(a, "cipher"))
-        result = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_CIPHER");
+        result = nss_var_lookup(r->pool, r->server, r->connection, r, "SSL_CIPHER");
     else if (strEQ(a, "subjectdn") || strEQ(a, "clientcert"))
-        result = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_CLIENT_S_DN");
+        result = nss_var_lookup(r->pool, r->server, r->connection, r, "SSL_CLIENT_S_DN");
     else if (strEQ(a, "issuerdn") || strEQ(a, "cacert"))
-        result = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_CLIENT_I_DN");
+        result = nss_var_lookup(r->pool, r->server, r->connection, r, "SSL_CLIENT_I_DN");
     else if (strEQ(a, "errcode"))
         result = "-";
     if (result != NULL && result[0] == NUL)
@@ -702,11 +702,11 @@ static const char *ssl_var_log_handler_c(request_rec *r, char *a)
  * extend the implementation of the %{..}x log function
  * (there can be more functions)
  */
-static const char *ssl_var_log_handler_x(request_rec *r, char *a)
+static const char *nss_var_log_handler_x(request_rec *r, char *a)
 {
     char *result;
 
-    result = ssl_var_lookup(r->pool, r->server, r->connection, r, a);
+    result = nss_var_lookup(r->pool, r->server, r->connection, r, a);
     if (result != NULL && result[0] == NUL)
         result = NULL;
     return result;

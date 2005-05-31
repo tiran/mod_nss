@@ -1,6 +1,6 @@
 typedef union {
     char     *cpVal;
-    ssl_expr *exVal;
+    nss_expr *exVal;
 } YYSTYPE;
 #define	T_TRUE	257
 #define	T_FALSE	258
@@ -24,4 +24,4 @@ typedef union {
 #define	T_OP_NOT	276
 
 
-extern YYSTYPE ssl_expr_yylval;
+extern YYSTYPE nss_expr_yylval;

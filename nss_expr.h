@@ -13,19 +13,8 @@
  * limitations under the License.
  */
 
-/*                      _             _
- *  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
- * | '_ ` _ \ / _ \ / _` |   / __/ __| |  Apache Interface to OpenSSL
- * | | | | | | (_) | (_| |   \__ \__ \ |
- * |_| |_| |_|\___/ \__,_|___|___/___/_|
- *                      |_____|
- *  ssl_expr.h
- *  Expression Handling (Header)
- */
-                             /* ``May all your PUSHes be POPed.'' */
-
-#ifndef __SSL_EXPR_H__
-#define __SSL_EXPR_H__
+#ifndef __NSS_EXPR_H__
+#define __NSS_EXPR_H__
 
 #ifndef FALSE
 #define FALSE 0
@@ -64,40 +53,40 @@ typedef enum {
     op_True, op_False, op_Not, op_Or, op_And, op_Comp,
     op_EQ, op_NE, op_LT, op_LE, op_GT, op_GE, op_IN, op_REG, op_NRE,
     op_Digit, op_String, op_Regex, op_Var, op_Func
-} ssl_expr_node_op;
+} nss_expr_node_op;
 
 typedef struct {
-    ssl_expr_node_op node_op;
+    nss_expr_node_op node_op;
     void *node_arg1;
     void *node_arg2;
     apr_pool_t *p;
-} ssl_expr_node;
+} nss_expr_node;
 
-typedef ssl_expr_node ssl_expr;
+typedef nss_expr_node nss_expr;
 
 typedef struct {
 	apr_pool_t *pool;
     char     *inputbuf;
     int       inputlen;
     char     *inputptr;
-    ssl_expr *expr;
-} ssl_expr_info_type;
+    nss_expr *expr;
+} nss_expr_info_type;
 
-extern ssl_expr_info_type ssl_expr_info;
-extern char *ssl_expr_error;
+extern nss_expr_info_type nss_expr_info;
+extern char *nss_expr_error;
 
-#define yylval  ssl_expr_yylval
-#define yyerror ssl_expr_yyerror
-#define yyinput ssl_expr_yyinput
+#define yylval  nss_expr_yylval
+#define yyerror nss_expr_yyerror
+#define yyinput nss_expr_yyinput
 
-extern int ssl_expr_yyparse(void);
-extern int ssl_expr_yyerror(char *);
-extern int ssl_expr_yylex(void);
+extern int nss_expr_yyparse(void);
+extern int nss_expr_yyerror(char *);
+extern int nss_expr_yylex(void);
 
-extern ssl_expr *ssl_expr_comp(apr_pool_t *, char *);
-extern int       ssl_expr_exec(request_rec *, ssl_expr *);
-extern char     *ssl_expr_get_error(void);
-extern ssl_expr *ssl_expr_make(ssl_expr_node_op, void *, void *);
-extern BOOL      ssl_expr_eval(request_rec *, ssl_expr *);
+extern nss_expr *nss_expr_comp(apr_pool_t *, char *);
+extern int       nss_expr_exec(request_rec *, nss_expr *);
+extern char     *nss_expr_get_error(void);
+extern nss_expr *nss_expr_make(nss_expr_node_op, void *, void *);
+extern BOOL      nss_expr_eval(request_rec *, nss_expr *);
 
-#endif /* __SSL_EXPR_H__ */
+#endif /* __NSS_EXPR_H__ */

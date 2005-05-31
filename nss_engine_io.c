@@ -26,15 +26,15 @@
  * remember what is in this file.  So, first, a quick overview.
  *
  * In this file, you will find:
- * - ssl_io_filter_input    (Apache input filter)
- * - ssl_io_filter_output   (Apache output filter)
+ * - nss_io_filter_input    (Apache input filter)
+ * - nss_io_filter_output   (Apache output filter)
  *
  * - bio_filter_in_*        (OpenSSL input filter)
  * - nspr_filter_out_*       (OpenSSL output filter)
  *
  * The input chain is roughly:
  *
- * ssl_io_filter_input->ssl_io_input_read->SSL_read->...
+ * nss_io_filter_input->nss_io_input_read->SSL_read->...
  * ...->bio_filter_in_read->ap_get_brigade/next-httpd-filter
  *
  * In mortal terminology, we do the following:
@@ -45,21 +45,21 @@
  * - bio_filter_in_read will then try to fetch data from the next httpd filter
  * - bio_filter_in_read will flatten that data and return it to SSL_read
  * - SSL_read will then decrypt the data
- * - ssl_io_input_read will then receive decrypted data as a char* and
+ * - nss_io_input_read will then receive decrypted data as a char* and
  *   ensure that there were no read errors
  * - The char* is placed in a brigade and returned
  *
  * Since connection-level input filters in httpd need to be able to
  * handle AP_MODE_GETLINE calls (namely identifying LF-terminated strings),
- * ssl_io_input_getline which will handle this special case.
+ * nss_io_input_getline which will handle this special case.
  *
  * Due to AP_MODE_GETLINE and AP_MODE_SPECULATIVE, we may sometimes have
  * 'leftover' decoded data which must be setaside for the next read.  That
  * is currently handled by the char_buffer_{read|write} functions.  So,
- * ssl_io_input_read may be able to fulfill reads without invoking
+ * nss_io_input_read may be able to fulfill reads without invoking
  * SSL_read().
  *
- * Note that the filter context of ssl_io_filter_input and bio_filter_in_*
+ * Note that the filter context of nss_io_filter_input and bio_filter_in_*
  * are shared as bio_filter_in_ctx_t.
  *
  * Note that the filter is by choice limited to reading at most
@@ -79,7 +79,7 @@ typedef struct {
     nspr_filter_in_ctx_t *inctx;
     nspr_filter_out_ctx_t *outctx;
     int                nobuffer; /* non-zero to prevent buffering */
-} ssl_filter_ctx_t;
+} nss_filter_ctx_t;
 
 typedef struct {
     int length;
@@ -87,7 +87,7 @@ typedef struct {
 } char_buffer_t;
 
 struct nspr_filter_out_ctx_t {
-    ssl_filter_ctx_t *filter_ctx;
+    nss_filter_ctx_t *filter_ctx;
     apr_bucket_brigade *bb;
     apr_size_t length;
     char buffer[AP_IOBUFSIZE];
@@ -104,7 +104,7 @@ struct nspr_filter_in_ctx_t {
     char_buffer_t cbuf;
     apr_pool_t *pool;
     char buffer[AP_IOBUFSIZE];
-    ssl_filter_ctx_t *filter_ctx;
+    nss_filter_ctx_t *filter_ctx;
 };
 
 /* Global variables for the NSPR I/O layer */
@@ -235,7 +235,7 @@ static PRInt32 PR_CALLBACK
 nspr_filter_in_read(PRFileDesc *fd, void *in, PRInt32 inlen)
 {
     apr_size_t inl = inlen;
-    ssl_filter_ctx_t *filter_ctx = (ssl_filter_ctx_t *)(fd->secret);
+    nss_filter_ctx_t *filter_ctx = (nss_filter_ctx_t *)(fd->secret);
     nspr_filter_in_ctx_t *inctx = filter_ctx->inctx;
     apr_read_type_e block = inctx->block;
 
@@ -296,7 +296,7 @@ nspr_filter_in_read(PRFileDesc *fd, void *in, PRInt32 inlen)
     return -1;
 }
 
-static apr_status_t ssl_io_input_read(nspr_filter_in_ctx_t *inctx,
+static apr_status_t nss_io_input_read(nspr_filter_in_ctx_t *inctx,
                                       char *buf,
                                       apr_size_t *len)
 {
@@ -386,9 +386,9 @@ static apr_status_t ssl_io_input_read(nspr_filter_in_ctx_t *inctx,
             }
         }
         else /* (rc < 0) */ {
-            int ssl_err = PR_GetError();
+            int nss_err = PR_GetError();
 
-            if (ssl_err == PR_WOULD_BLOCK_ERROR) {
+            if (nss_err == PR_WOULD_BLOCK_ERROR) {
                 /*
                  * If NSPR wants to read more, and we were nonblocking,
                  * report as an EAGAIN.  Otherwise loop, pulling more
@@ -408,7 +408,7 @@ static apr_status_t ssl_io_input_read(nspr_filter_in_ctx_t *inctx,
                 }
                 continue;  /* Blocking and nothing yet?  Try again. */
             }
-            else if (ssl_err != 0) {
+            else if (nss_err != 0) {
                 if (APR_STATUS_IS_EAGAIN(inctx->rc)
                         || APR_STATUS_IS_EINTR(inctx->rc)) {
                     /* Already read something, return APR_SUCCESS instead. */
@@ -425,7 +425,7 @@ static apr_status_t ssl_io_input_read(nspr_filter_in_ctx_t *inctx,
                     ap_log_error(APLOG_MARK, APLOG_INFO, inctx->rc, c->base_server,
                                 "SSL input filter read failed.");
                     if (inctx->rc == 0)
-                        ssl_log_ssl_error(APLOG_MARK, APLOG_ERR, c->base_server);
+                        nss_log_nss_error(APLOG_MARK, APLOG_ERR, c->base_server);
                 }
             }
             if (inctx->rc == APR_SUCCESS) {
@@ -437,7 +437,7 @@ static apr_status_t ssl_io_input_read(nspr_filter_in_ctx_t *inctx,
     return inctx->rc;
 }
 
-static apr_status_t ssl_io_input_getline(nspr_filter_in_ctx_t *inctx,
+static apr_status_t nss_io_input_getline(nspr_filter_in_ctx_t *inctx,
                                          char *buf,
                                          apr_size_t *len)
 {
@@ -454,7 +454,7 @@ static apr_status_t ssl_io_input_getline(nspr_filter_in_ctx_t *inctx,
      */
 
     while (tmplen > 0) {
-        status = ssl_io_input_read(inctx, buf + offset, &tmplen);
+        status = nss_io_input_read(inctx, buf + offset, &tmplen);
      
         if (status != APR_SUCCESS) {
             return status;
@@ -488,11 +488,11 @@ static apr_status_t ssl_io_input_getline(nspr_filter_in_ctx_t *inctx,
     return APR_SUCCESS;
 }
 
-static apr_status_t ssl_filter_write(ap_filter_t *f,
+static apr_status_t nss_filter_write(ap_filter_t *f,
                                      const char *data,
                                      apr_size_t len)
 {
-    ssl_filter_ctx_t *filter_ctx = f->ctx;
+    nss_filter_ctx_t *filter_ctx = f->ctx;
     nspr_filter_out_ctx_t *outctx;
     int res;
 
@@ -508,9 +508,9 @@ static apr_status_t ssl_filter_write(ap_filter_t *f,
           "Sent returned %d", res);
 
     if (res < 0) {
-        int ssl_err = PR_GetError();
+        int nss_err = PR_GetError();
 
-        if (ssl_err == PR_WOULD_BLOCK_ERROR) {
+        if (nss_err == PR_WOULD_BLOCK_ERROR) {
             /*
              * If NSS wants to write more, and we were nonblocking,
              * report as an EAGAIN.  Otherwise loop, pushing more
@@ -527,8 +527,8 @@ static apr_status_t ssl_filter_write(ap_filter_t *f,
              * Log SSL errors
              */
             ap_log_error(APLOG_MARK, APLOG_INFO, outctx->rc, c->base_server,
-                         "SSL library error %d writing data", ssl_err);
-            ssl_log_ssl_error(APLOG_MARK, APLOG_INFO, c->base_server);
+                         "SSL library error %d writing data", nss_err);
+            nss_log_nss_error(APLOG_MARK, APLOG_INFO, c->base_server);
         }
         if (outctx->rc == APR_SUCCESS) {
             outctx->rc = APR_EGENERAL;
@@ -563,14 +563,14 @@ static apr_status_t ssl_filter_write(ap_filter_t *f,
                                alloc)
 
 
-static void ssl_io_filter_disable(SSLConnRec *sslconn, ap_filter_t *f)
+static void nss_io_filter_disable(SSLConnRec *sslconn, ap_filter_t *f)
 {
     nspr_filter_in_ctx_t *inctx = f->ctx;
     sslconn->ssl = NULL;
     inctx->filter_ctx->pssl = NULL;
 }   
 
-static apr_status_t ssl_io_filter_error(ap_filter_t *f,
+static apr_status_t nss_io_filter_error(ap_filter_t *f,
                                         apr_bucket_brigade *bb,
                                         apr_status_t status)
 {   
@@ -585,8 +585,8 @@ static apr_status_t ssl_io_filter_error(ap_filter_t *f,
                          "SSL handshake failed: HTTP spoken on HTTPS port; "
                          "trying to send HTML error page");
 
-            sslconn->non_ssl_request = 1;
-            ssl_io_filter_disable(sslconn, f);
+            sslconn->non_nss_request = 1;
+            nss_io_filter_disable(sslconn, f);
 
             /* fake the request line */
             bucket = HTTP_ON_HTTPS_PORT_BUCKET(f->c->bucket_alloc);
@@ -603,9 +603,9 @@ static apr_status_t ssl_io_filter_error(ap_filter_t *f,
     return APR_SUCCESS;
 }
 
-static const char ssl_io_filter[] = "NSS SSL/TLS Filter";
+static const char nss_io_filter[] = "NSS SSL/TLS Filter";
 
-static apr_status_t ssl_filter_io_shutdown(ssl_filter_ctx_t *filter_ctx,
+static apr_status_t nss_filter_io_shutdown(nss_filter_ctx_t *filter_ctx,
                                            conn_rec *c,
                                            int abortive)
 {
@@ -625,7 +625,7 @@ static apr_status_t ssl_filter_io_shutdown(ssl_filter_ctx_t *filter_ctx,
                      "Connection to child %ld closed "
                      "(server %s, client %s)",
                      c->id,
-                     ssl_util_vhostid(c->pool, c->base_server),
+                     nss_util_vhostid(c->pool, c->base_server),
                      c->remote_ip ? c->remote_ip : "unknown");
     }
 
@@ -646,9 +646,9 @@ static apr_status_t ssl_filter_io_shutdown(ssl_filter_ctx_t *filter_ctx,
     return APR_SUCCESS;
 }
 
-static apr_status_t ssl_io_filter_cleanup(void *data)
+static apr_status_t nss_io_filter_cleanup(void *data)
 {
-    ssl_filter_ctx_t *filter_ctx = data;
+    nss_filter_ctx_t *filter_ctx = data;
 
     if (filter_ctx->pssl) {
         conn_rec *c = filter_ctx->c;
@@ -664,7 +664,7 @@ static apr_status_t ssl_io_filter_cleanup(void *data)
     return APR_SUCCESS;
 }
 
-static apr_status_t ssl_io_filter_input(ap_filter_t *f,
+static apr_status_t nss_io_filter_input(ap_filter_t *f,
                                         apr_bucket_brigade *bb,
                                         ap_input_mode_t mode,
                                         apr_read_type_e block,
@@ -713,10 +713,10 @@ static apr_status_t ssl_io_filter_input(ap_filter_t *f,
         if (readbytes < len) {
             len = (apr_size_t)readbytes;
         }
-        status = ssl_io_input_read(inctx, inctx->buffer, &len);
+        status = nss_io_input_read(inctx, inctx->buffer, &len);
     }
     else if (inctx->mode == AP_MODE_GETLINE) {
-        status = ssl_io_input_getline(inctx, inctx->buffer, &len);
+        status = nss_io_input_getline(inctx, inctx->buffer, &len);
     }
     else {
         /* We have no idea what you are talking about, so return an error. */
@@ -724,7 +724,7 @@ static apr_status_t ssl_io_filter_input(ap_filter_t *f,
     }
 
     if (status != APR_SUCCESS) {
-        return ssl_io_filter_error(f, bb, status);
+        return nss_io_filter_error(f, bb, status);
     }
 
     /* Create a transient bucket out of the decrypted data. */
@@ -771,7 +771,7 @@ static int nspr_filter_out_flush(nspr_filter_out_ctx_t *outctx)
 static PRInt32 PR_CALLBACK
 nspr_filter_out_write(PRFileDesc *fd, const void *in, PRInt32 inl)
 {
-    ssl_filter_ctx_t *filter_ctx = (ssl_filter_ctx_t *)(fd->secret);
+    nss_filter_ctx_t *filter_ctx = (nss_filter_ctx_t *)(fd->secret);
     nspr_filter_out_ctx_t *outctx = filter_ctx->outctx;
 
     /* pass along the encrypted data
@@ -791,11 +791,11 @@ nspr_filter_out_write(PRFileDesc *fd, const void *in, PRInt32 inl)
     return inl;
 }
 
-static apr_status_t ssl_io_filter_output(ap_filter_t *f,
+static apr_status_t nss_io_filter_output(ap_filter_t *f,
                                          apr_bucket_brigade *bb)
 {
     apr_status_t status = APR_SUCCESS;
-    ssl_filter_ctx_t *filter_ctx = f->ctx;
+    nss_filter_ctx_t *filter_ctx = f->ctx;
     nspr_filter_in_ctx_t *inctx;
     nspr_filter_out_ctx_t *outctx;
     apr_read_type_e rblock = APR_NONBLOCK_READ;
@@ -806,7 +806,7 @@ static apr_status_t ssl_io_filter_output(ap_filter_t *f,
     }
 
     if (!filter_ctx->pssl) {
-        /* ssl_filter_io_shutdown was called */
+        /* nss_filter_io_shutdown was called */
         return ap_pass_brigade(f->next, bb);
     }
 
@@ -858,7 +858,7 @@ static apr_status_t ssl_io_filter_output(ap_filter_t *f,
              * - issue the SSL_shutdown
              */
             filter_ctx->nobuffer = 1;
-            status = ssl_filter_io_shutdown(filter_ctx, f->c, 0);
+            status = nss_filter_io_shutdown(filter_ctx, f->c, 0);
             if (status != APR_SUCCESS) {
                 ap_log_error(APLOG_MARK, APLOG_INFO, status, NULL,
                              "SSL filter error shutting down I/O");
@@ -891,7 +891,7 @@ static apr_status_t ssl_io_filter_output(ap_filter_t *f,
                 break;
             }
 
-            status = ssl_filter_write(f, data, len);
+            status = nss_filter_write(f, data, len);
             apr_bucket_delete(bucket);
 
             if (status != APR_SUCCESS) {
@@ -902,7 +902,7 @@ static apr_status_t ssl_io_filter_output(ap_filter_t *f,
     return status;
 }
 
-static void ssl_io_output_create(ssl_filter_ctx_t *filter_ctx, conn_rec *c)
+static void nss_io_output_create(nss_filter_ctx_t *filter_ctx, conn_rec *c)
 {
     nspr_filter_out_ctx_t *outctx = apr_palloc(c->pool, sizeof(*outctx));
 
@@ -916,14 +916,14 @@ static void ssl_io_output_create(ssl_filter_ctx_t *filter_ctx, conn_rec *c)
     return;
 }
 
-static void ssl_io_input_add_filter(ssl_filter_ctx_t *filter_ctx, conn_rec *c,
+static void nss_io_input_add_filter(nss_filter_ctx_t *filter_ctx, conn_rec *c,
                                     PRFileDesc *ssl)
 {
     nspr_filter_in_ctx_t *inctx;
 
     inctx = apr_palloc(c->pool, sizeof(*inctx));
 
-    filter_ctx->pInputFilter = ap_add_input_filter(ssl_io_filter, inctx, NULL, c);
+    filter_ctx->pInputFilter = ap_add_input_filter(nss_io_filter, inctx, NULL, c);
 
     inctx->f = filter_ctx->pInputFilter;
     inctx->rc = APR_SUCCESS;
@@ -937,49 +937,49 @@ static void ssl_io_input_add_filter(ssl_filter_ctx_t *filter_ctx, conn_rec *c,
     filter_ctx->inctx = inctx;
 }
 
-void ssl_io_filter_init(conn_rec *c, PRFileDesc *ssl)
+void nss_io_filter_init(conn_rec *c, PRFileDesc *ssl)
 {
-    ssl_filter_ctx_t *filter_ctx;
+    nss_filter_ctx_t *filter_ctx;
 
-    filter_ctx = apr_palloc(c->pool, sizeof(ssl_filter_ctx_t));
-    filter_ctx->pOutputFilter   = ap_add_output_filter(ssl_io_filter,
+    filter_ctx = apr_palloc(c->pool, sizeof(nss_filter_ctx_t));
+    filter_ctx->pOutputFilter   = ap_add_output_filter(nss_io_filter,
                                                    filter_ctx, NULL, c);
 
-    ssl_io_input_add_filter(filter_ctx, c, ssl);
-    ssl_io_output_create(filter_ctx, c);
+    nss_io_input_add_filter(filter_ctx, c, ssl);
+    nss_io_output_create(filter_ctx, c);
 
     filter_ctx->pssl = ssl;
     filter_ctx->c = c;
     ssl->lower->secret = (PRFilePrivate *)filter_ctx;
 
     apr_pool_cleanup_register(c->pool, (void*)filter_ctx,
-                              ssl_io_filter_cleanup, apr_pool_cleanup_null);
+                              nss_io_filter_cleanup, apr_pool_cleanup_null);
 
     return;
 }
 
-void ssl_io_filter_register(apr_pool_t *p)
+void nss_io_filter_register(apr_pool_t *p)
 {
-    ap_register_input_filter  (ssl_io_filter, ssl_io_filter_input,  NULL, AP_FTYPE_CONNECTION + 5);
-    ap_register_output_filter (ssl_io_filter, ssl_io_filter_output, NULL, AP_FTYPE_CONNECTION + 5);  
+    ap_register_input_filter  (nss_io_filter, nss_io_filter_input,  NULL, AP_FTYPE_CONNECTION + 5);
+    ap_register_output_filter (nss_io_filter, nss_io_filter_output, NULL, AP_FTYPE_CONNECTION + 5);  
     return; 
 }
 
-PRFileDesc * ssl_io_new_fd() {
+PRFileDesc * nss_io_new_fd() {
     PRFileDesc *ssl = PR_CreateIOLayerStub(gIdentity, &gMethods);
 
     return ssl;
 }
 
 static PRStatus PR_CALLBACK nspr_filter_getpeername(PRFileDesc *fd, PRNetAddr *addr) {
-    ssl_filter_ctx_t *filter_ctx;
+    nss_filter_ctx_t *filter_ctx;
     conn_rec *c;
 
     /* This can occur when doing SSL_ImportFD(NULL, something); */
     if (fd->secret == NULL)
         return PR_FAILURE;
 
-    filter_ctx = (ssl_filter_ctx_t *)(fd->secret);
+    filter_ctx = (nss_filter_ctx_t *)(fd->secret);
     c = filter_ctx->c;
 
     return PR_StringToNetAddr(c->remote_ip, addr);
@@ -989,7 +989,7 @@ static PRStatus PR_CALLBACK nspr_filter_getpeername(PRFileDesc *fd, PRNetAddr *a
  * Translate NSPR PR_GetSocketOption() calls into apr_socket_opt_get() calls.
  */
 static PRStatus PR_CALLBACK nspr_filter_getsocketoption(PRFileDesc *fd, PRSocketOptionData *data) {
-    ssl_filter_ctx_t *filter_ctx = (ssl_filter_ctx_t *)(fd->secret);
+    nss_filter_ctx_t *filter_ctx = (nss_filter_ctx_t *)(fd->secret);
     conn_rec *c = filter_ctx->c;
     SSLConnRec *sslconn = myConnConfig(c); /* for the Apache socket */
     apr_int32_t on;
@@ -1050,7 +1050,7 @@ static PRStatus PR_CALLBACK nspr_filter_getsocketoption(PRFileDesc *fd, PRSocket
  * Translate NSPR PR_SetSocketOption() calls into apr_socket_opt_set() calls.
  */
 static PRStatus PR_CALLBACK nspr_filter_setsocketOption(PRFileDesc *fd, const PRSocketOptionData *data) {
-    ssl_filter_ctx_t *filter_ctx = (ssl_filter_ctx_t *)(fd->secret);
+    nss_filter_ctx_t *filter_ctx = (nss_filter_ctx_t *)(fd->secret);
     conn_rec *c = filter_ctx->c;
     SSLConnRec *sslconn = myConnConfig(c); /* for the Apache socket */
     PRStatus rv = PR_FAILURE;
@@ -1132,7 +1132,7 @@ static PRInt32 PR_CALLBACK nspr_filter_send(PRFileDesc *fd, const void *buf, PRI
  * Called once to initialize the NSPR layer that we push for each
  * request.
  */
-int ssl_io_layer_init()
+int nss_io_layer_init()
 {
     const PRIOMethods *defaultMethods;
     int rc = 1;
@@ -1168,17 +1168,17 @@ int ssl_io_layer_init()
 }
 
 SECStatus
-ssl_AuthCertificate(void *arg, PRFileDesc *socket,
+nss_AuthCertificate(void *arg, PRFileDesc *socket,
                   PRBool checksig, PRBool isServer)
 {
     SECStatus           status;
-    ssl_filter_ctx_t   *filter_ctx;
+    nss_filter_ctx_t   *filter_ctx;
 
     if (!arg || !socket) {
         return SECFailure;
     }
 
-    filter_ctx = (ssl_filter_ctx_t *)(socket->lower->secret);
+    filter_ctx = (nss_filter_ctx_t *)(socket->lower->secret);
 
     status = SSL_AuthCertificate(arg, socket, checksig, isServer);
 

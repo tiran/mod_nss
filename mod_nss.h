@@ -152,15 +152,15 @@ ap_set_module_config(c->conn_config, &nss_module, val)
 #define SSL_OPT_STRICTREQUIRE  (1<<5)
 #define SSL_OPT_OPTRENEGOTIATE (1<<6)
 #define SSL_OPT_ALL            (SSL_OPT_STDENVVARS|SSL_OPT_COMPATENVVAR|SSL_OPT_EXPORTCERTDATA|SSL_OPT_FAKEBASICAUTH|SSL_OPT_STRICTREQUIRE|SSL_OPT_OPTRENEGOTIATE)
-typedef int ssl_opt_t;
+typedef int nss_opt_t;
 
 /*
  * Define the SSL requirement structure
  */ 
 typedef struct {
     char     *cpExpr;
-    ssl_expr *mpExpr;
-} ssl_require_t;
+    nss_expr *mpExpr;
+} nss_require_t;
 
 /*
  * Define the SSL verify levels
@@ -171,7 +171,7 @@ typedef enum {
     SSL_CVERIFY_OPTIONAL        = 1,
     SSL_CVERIFY_REQUIRE         = 2,
     SSL_CVERIFY_OPTIONAL_NO_CA  = 3
-} ssl_verify_t;
+} nss_verify_t;
 
 /*
  * Define the SSL pass phrase dialog types
@@ -180,7 +180,7 @@ typedef enum {
     SSL_PPTYPE_UNSET   = UNSET,
     SSL_PPTYPE_BUILTIN = 0,
     SSL_PPTYPE_FILE    = 1,
-} ssl_pphrase_t;
+} nss_pphrase_t;
 
 /*
  * Define the mod_ssl per-module configuration structure
@@ -193,7 +193,7 @@ typedef struct {
     CERTCertificate *client_cert; 
     int is_proxy;
     int disabled;
-    int non_ssl_request;
+    int non_nss_request;
     apr_socket_t * client_socket;
 } SSLConnRec;
 
@@ -209,7 +209,7 @@ typedef struct {
     int             ssl3_session_cache_timeout;
 
     /* config for handling encrypted keys */
-    ssl_pphrase_t   pphrase_dialog_type;
+    nss_pphrase_t   pphrase_dialog_type;
     const char     *pphrase_dialog_path;
     const char     *pphrase_dialog_helper;
 
@@ -229,7 +229,7 @@ typedef struct {
     const char  *protocols;
 
     /* for client or downstream server authentication */
-    ssl_verify_t verify_mode;
+    nss_verify_t verify_mode;
 } modnss_auth_ctx_t;
 
 typedef struct {
@@ -275,7 +275,7 @@ typedef struct {
     int                 nOptionsAdd;
     int                 nOptionsDel;
     const char         *szCipherSuite;
-    ssl_verify_t   nVerifyClient;
+    nss_verify_t   nVerifyClient;
     const char         *szCACertificatePath;
     const char         *szCACertificateFile;
     const char         *szUserName;
@@ -294,7 +294,7 @@ typedef struct
  
 enum sslversion { SSL2=1, SSL3=2, TLS=4};
 
-/* the table itself is defined in ssl_engine_init.c */
+/* the table itself is defined in nss_engine_init.c */
 #define ciphernum 23
 
 /*
@@ -305,86 +305,86 @@ enum sslversion { SSL2=1, SSL3=2, TLS=4};
 extern module AP_MODULE_DECLARE_DATA nss_module;
 
 /*  configuration handling   */
-SSLModConfigRec *ssl_config_global_create(server_rec *);
-void *ssl_config_perdir_create(apr_pool_t *p, char *dir);
-void *ssl_config_perdir_merge(apr_pool_t *p, void *basev, void *addv);
-void *ssl_config_server_create(apr_pool_t *p, server_rec *s);
-void *ssl_config_server_merge(apr_pool_t *p, void *basev, void *addv);
-const char *ssl_cmd_SSLEngine(cmd_parms *, void *, int);
-const char *ssl_cmd_SSLCertificateDatabase(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLCipherSuite(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLVerifyClient(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLProtocol(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLNickname(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLEnforceValidCerts(cmd_parms *, void *, int);
-const char *ssl_cmd_SSLSessionCacheTimeout(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSL3SessionCacheTimeout(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLSessionCacheSize(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLPassPhraseDialog(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLPassPhraseHelper(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLUserName(cmd_parms *cmd, void *dcfg, const char *arg);
-const char *ssl_cmd_SSLOptions(cmd_parms *, void *, const char *);
-const char *ssl_cmd_SSLRequireSSL(cmd_parms *cmd, void *dcfg);
-const char  *ssl_cmd_SSLRequire(cmd_parms *, void *, const char *);
+SSLModConfigRec *nss_config_global_create(server_rec *);
+void *nss_config_perdir_create(apr_pool_t *p, char *dir);
+void *nss_config_perdir_merge(apr_pool_t *p, void *basev, void *addv);
+void *nss_config_server_create(apr_pool_t *p, server_rec *s);
+void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv);
+const char *nss_cmd_NSSEngine(cmd_parms *, void *, int);
+const char *nss_cmd_NSSCertificateDatabase(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSCipherSuite(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSVerifyClient(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSProtocol(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSNickname(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSEnforceValidCerts(cmd_parms *, void *, int);
+const char *nss_cmd_NSSSessionCacheTimeout(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSSession3CacheTimeout(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSSessionCacheSize(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSPassPhraseDialog(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSPassPhraseHelper(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSUserName(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSOptions(cmd_parms *, void *, const char *);
+const char *nss_cmd_NSSRequireSSL(cmd_parms *cmd, void *dcfg);
+const char  *nss_cmd_NSSRequire(cmd_parms *, void *, const char *);
 
 /*  module initialization  */
-int  ssl_init_Module(apr_pool_t *, apr_pool_t *, apr_pool_t *, server_rec *);
-void ssl_init_Child(apr_pool_t *, server_rec *);
-void ssl_init_ConfigureServer(server_rec *, apr_pool_t *, apr_pool_t *, SSLSrvConfigRec *);
-apr_status_t ssl_init_ModuleKill(void *data);
-int ssl_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum]);
+int  nss_init_Module(apr_pool_t *, apr_pool_t *, apr_pool_t *, server_rec *);
+void nss_init_Child(apr_pool_t *, server_rec *);
+void nss_init_ConfigureServer(server_rec *, apr_pool_t *, apr_pool_t *, SSLSrvConfigRec *);
+apr_status_t nss_init_ModuleKill(void *data);
+int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum]);
 
 /* Apache API hooks */
-int ssl_hook_Translate(request_rec *r);
-int ssl_hook_UserCheck(request_rec *r);
-int ssl_hook_Fixup(request_rec *r);
-int ssl_hook_Access(request_rec *r);
-int ssl_hook_Auth(request_rec *r);
-int ssl_hook_ReadReq(request_rec *r);
+int nss_hook_Translate(request_rec *r);
+int nss_hook_UserCheck(request_rec *r);
+int nss_hook_Fixup(request_rec *r);
+int nss_hook_Access(request_rec *r);
+int nss_hook_Auth(request_rec *r);
+int nss_hook_ReadReq(request_rec *r);
 
 /*  Variables  */
-void         ssl_var_register(void);
-char        *ssl_var_lookup(apr_pool_t *, server_rec *, conn_rec *, request_rec *, char *);
-void         ssl_var_log_config_register(apr_pool_t *p);
+void         nss_var_register(void);
+char        *nss_var_lookup(apr_pool_t *, server_rec *, conn_rec *, request_rec *, char *);
+void         nss_var_log_config_register(apr_pool_t *p);
 
-APR_DECLARE_OPTIONAL_FN(char *, ssl_var_lookup,
+APR_DECLARE_OPTIONAL_FN(char *, nss_var_lookup,
                         (apr_pool_t *, server_rec *,
                          conn_rec *, request_rec *, 
                          char *));
 
 /* An optional function which returns non-zero if the given connection
  * is using SSL/TLS. */
-APR_DECLARE_OPTIONAL_FN(int, ssl_is_https, (conn_rec *));
+APR_DECLARE_OPTIONAL_FN(int, nss_is_https, (conn_rec *));
 
 /* Proxy Support */
-int ssl_engine_disable(conn_rec *c);
+int nss_engine_disable(conn_rec *c);
 
-APR_DECLARE_OPTIONAL_FN(int, ssl_engine_disable, (conn_rec *));
+APR_DECLARE_OPTIONAL_FN(int, nss_engine_disable, (conn_rec *));
 
 /* I/O */
-PRFileDesc * ssl_io_new_fd();
-int ssl_io_layer_init();
-void ssl_io_filter_init(conn_rec *c, PRFileDesc *ssl);
-void ssl_io_filter_register(apr_pool_t *p);
+PRFileDesc * nss_io_new_fd();
+int nss_io_layer_init();
+void nss_io_filter_init(conn_rec *c, PRFileDesc *ssl);
+void nss_io_filter_register(apr_pool_t *p);
 
 /*  Utility Functions  */
-char        *ssl_util_vhostid(apr_pool_t *, server_rec *);
-void         ssl_util_strupper(char *);
-void         ssl_util_uuencode(char *, const char *, BOOL);
-void         ssl_util_uuencode_binary(unsigned char *, const unsigned char *, int, BOOL);
-apr_file_t  *ssl_util_ppopen(server_rec *, apr_pool_t *, const char *,
+char        *nss_util_vhostid(apr_pool_t *, server_rec *);
+void         nss_util_strupper(char *);
+void         nss_util_uuencode(char *, const char *, BOOL);
+void         nss_util_uuencode_binary(unsigned char *, const unsigned char *, int, BOOL);
+apr_file_t  *nss_util_ppopen(server_rec *, apr_pool_t *, const char *,
                              const char * const *);
-void         ssl_util_ppclose(server_rec *, apr_pool_t *, apr_file_t *);
-char        *ssl_util_readfilter(server_rec *, apr_pool_t *, const char *,
+void         nss_util_ppclose(server_rec *, apr_pool_t *, apr_file_t *);
+char        *nss_util_readfilter(server_rec *, apr_pool_t *, const char *,
                                  const char * const *);
 
 /* Pass Phrase Handling */
-SECStatus ssl_Init_Tokens(server_rec *s);
+SECStatus nss_Init_Tokens(server_rec *s);
 
 /* Logging */
-void ssl_log_ssl_error(const char *file, int line, int level, server_rec *s);
-void ssl_die(void);
+void nss_log_nss_error(const char *file, int line, int level, server_rec *s);
+void nss_die(void);
 
 /* NSS callback */
-SECStatus ssl_AuthCertificate(void *arg, PRFileDesc *socket, PRBool checksig, PRBool isServer);
+SECStatus nss_AuthCertificate(void *arg, PRFileDesc *socket, PRBool checksig, PRBool isServer);
 #endif /* __MOD_SSL_H__ */
