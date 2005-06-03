@@ -1,0 +1,908 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>mod_nss</title>
+</head>
+<body>
+<h1 style="text-align: center;">mod_nss</h1>
+<h2>Table of Contents</h2>
+<a href="#Introduction">Introduction</a><br>
+<a href="#Building">Building</a><br>
+<a href="#Installation">Installation</a><br>
+<a href="#Generation">Certificate Generation</a><br>
+<a href="#Startup">Server Startup</a><br>
+<a href="#Migration">Migration</a><br>
+<a href="#Directives">Configuration Directives</a><br>
+<a href="#Environment">Environment Variables</a><br>
+<br>
+<h1><a name="Introduction"></a>Introduction</h1>
+The <a href="http://www.modssl.org/">mod_ssl</a> package was
+created in April 1998 by <a href="mailto:rse@engelschall.com">Ralf S.
+Engelschall</a> and was originally derived from the <a
+ href="http://www.apache-ssl.org/">Apache-SSL</a> package developed by <a
+ href="mailto:ben@algroup.co.uk">Ben Laurie</a>. It stays under a
+BSD-style
+license which is equivalent to the license used by <a
+ href="http://www.apache.org/">The Apache Group</a> for the Apache
+webserver
+itself. This means, in short, that you are free to use it both for
+commercial
+and non-commercial purposes as long as you retain the authors'
+copyright
+notices and give the proper credit.
+<br>
+<br>
+mod_nss is based directly on the mod_ssl package from Apache
+2.0.54.&nbsp; It is a conversion from using OpenSSL calls to using NSS
+calls instead.<br>
+<h1><a name="Building"></a>Building</h1>
+Refer to the README file included with the distribution.<br>
+<br>
+&nbsp;To build you'll need NSPR 4.4.1 or above and NSS 3.9.2 or above.
+It may work with earlier versions but these are recommended (or
+tested). These can be retrieved from <a href="http://www.mozilla.org/">http://www.mozilla.org/</a>.
+The --with-nspr and --with-nss options require that the package be
+installed in the same parent directory (e.g. /opt/nspr,
+/usr/local/nspr, etc). It will look in this parent for include/ and
+lib/, etc.<br>
+<br>
+Run the configure script. The following mdo_nss-specificoptions are
+available:<br>
+<br>
+<table style="width: 100%; text-align: left;" border="0" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; font-weight: bold;">Option<br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;">Description<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">--with-nss=[PATH]<br>
+      </td>
+      <td style="vertical-align: top;">The file system path to the NSS
+installation. The assumption is that this has the layout of: PATH/lib,
+PATH/include, etc.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">--with-nspr=[PATH]<br>
+      </td>
+      <td style="vertical-align: top;">The file system path of the NSPR
+installation. The assumption is that this has the layout of: PATH/lib,
+PATH/include, etc.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">--with-apxs=[PATH]<br>
+      </td>
+      <td style="vertical-align: top;">The location of the apxs binary
+of the Apache you want to install the module into.<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+&nbsp;If --with-nss or --with-nspr are not passed configure will look
+for the mozilla-[nss|nspr]-devel packages and use the libraries with
+that if found.<br>
+<br>
+&nbsp;It is strongly recommended that the mozilla.org version be used.<br>
+<br>
+&nbsp;Build and install those packages somewhere then configure the
+module with something like:<br>
+<br>
+<code>&nbsp;% ./configure --with-apxs=/path/to/apxs/
+--with-nspr=/path/to/nspr/ --with-nss=/path/to/nss/<br>
+&nbsp;% gmake</code><br>
+<br>
+&nbsp;This will create a sample configuration file <code>nss.conf</code>.
+By default
+this is installed during the installation process.<br>
+<h1><a name="Installation"></a>Installation</h1>
+The make install target uses apxs to install the module into Apache.
+This automatically copies the mod_nss shared library to the appropriate
+location and updates Apache's httpd.conf so that the module will be
+loaded during the next restart.<br>
+<br>
+It also tries to rename <code>ssl.conf</code> to <code>ssl.conf.old</code>.&nbsp;
+The assumption is that mod_nss is replacing mod_ssl. They can co-exist
+as long as they are listening on separate ports.<br>
+<br>
+The mod_nss configuration file, <code>nss.conf</code>, is copied into
+the Apache
+configuration directory (as reported by apxs). You may need to make a
+manual change to httpd.conf to load this file. If you have a Red
+Hat-style Apache installation with a conf.d just move nss.conf there.
+It will be automatically loaded. Otherwise you will need to add the
+following line to httpd.conf:<br>
+<br>
+<code>Include nss.conf</code><br>
+<br>
+This has Apache load the mod_nss configuration file, <code>nss.conf</code>.
+It is here that you will setup your VirtualServer entries to and
+configure your SSL servers.<br>
+<h1><a name="Generation"></a>Certificate Generation</h1>
+A ksh script, <code>gencert</code>, is included to automatically
+generate a self-signed CA plus one server certificate. This is fine for
+testing purposes but it is strongly recommended that a real server
+certificate be obtained from a real CA before moving a mod_nss server
+into production. Users should be expected to cancel any request to a
+secure server signed by an unknown issuer.<br>
+<br>
+<code>gencert</code> takes one argument, the path to the location of
+the certificate database. A fair amount of output is generated so you
+can follow what is going on. For the most part most don't need to
+bother with the details.<br>
+<br>
+The certificate database password is httptest.<br>
+<br>
+A sample run is:<br>
+<br>
+<code>% ./gencert /etc/httpd/nss<br>
+<br>
+#####################################################################<br>
+Generating new server certificate and key database. The password<br>
+is httptest<br>
+#####################################################################<br>
+<br>
+#####################################################################<br>
+Generating self-signed client CA certificate<br>
+#####################################################################<br>
+<br>
+Generating key.&nbsp; This may take a few moments...<br>
+<br>
+[ Lots of output removed ]</code><br>
+<br>
+You should now have the following files:<br>
+<br>
+<code>/etc/httpd/nss/cert8.db<br>
+/etc/httpd/nss/key3db<br>
+/etc/httpd/nss/secmod.db</code><br>
+<br>
+These 3 files make up an NSS certificate database.<br>
+<h1><a name="Startup"></a>Server Startup</h1>
+Starting a mod_nss server is no different than starting a mod_ssl
+server. You will need to authenticate yourself to the security token
+(e.g. enter the key password). The sample nss.conf is not included in
+an <code>&lt;IfDefine SSL&gt;</code> so you do not need to use the
+startssl argument with <code>apachectl</code>. <br>
+<br>
+A sample startup might look like:<br>
+<br>
+<code>% apachectl start<br>
+Please enter password for "internal" token:</code><br>
+<br>
+If you have additional hardware tokens you will be prompted for each
+token password.<br>
+<br>
+All other output will be written to the Apache log files.<br>
+<h1><a name="Migration"></a>Migration</h1>
+A perl script, <code>migrate,pl</code>, is included to help migrate an
+existing mod_ssl configuration to work with mod_nss. There is one
+optional argument, -c, that will try to convert your existing server
+and CA certificates plus any certificate revocation lists (CRLs) into
+an NSS certificate database.<br>
+<br>
+The migration script assumes that you are migrating from ssl.conf to
+nss.conf. The original file is not changed. All comments, spacing and
+other directives are maintained so if there is no ssl.conf it is
+possible to migrate httpd.conf to use mod_nss. Simply copy httpd.conf
+to ssl.conf, run the update, then copy nss.conf to httpd.conf (after
+making a backup, of couse). This multi-step process gives you a chance
+to verify that the migration was successful.<br>
+<h1><a name="Directives"></a>Configuration Directives</h1>
+The following mod_ssl Directives are not applicable to mod_nss:<br>
+<ul>
+  <li>SSLRandomSeed</li>
+  <li>SSLSessionCache</li>
+  <li>SSLMutex</li>
+  <li>SSLCertificateChainFile</li>
+  <li>SSLCARevocationPath</li>
+  <li>SSLCARevocationFile</li>
+  <li>SSLVerifyDepth</li>
+  <li>SSLCryptoDevice</li>
+</ul>
+<font size="+2">SSLPassPhraseDialog</font><br>
+<br>
+Authentication is required in order to use the private key in an NSS
+certificate database. The method of this authentication is specified
+with the SSLPassPhraseDialog directive.&nbsp; This directive takes one
+argument specifying the method of authentication:<br>
+<ul>
+  <li>builtin</li>
+</ul>
+<div style="margin-left: 40px;">The user will be prompted to enter the
+token password for each cryptographic device. This works seemlessly
+with any hardware tokens used. The default "device" is the internal
+token provided by the NSS Certificate database itself.<br>
+</div>
+<ul>
+  <li>file:/path/to/file</li>
+</ul>
+<div style="margin-left: 40px;">The token password(s) may be stored in
+an ASCII text file which is read during startup so the server can start
+without user intervention. The format of this file is:<br>
+<br>
+<div style="margin-left: 40px;">token:password<br>
+<br>
+</div>
+</div>
+<div style="margin-left: 40px;">An example for the internal token is:<br>
+<br>
+</div>
+<div style="margin-left: 80px;">internal:secret12<br>
+</div>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>SSLPassPhraseDialog builtin</code><br>
+<div style="margin-left: 80px;"><br>
+</div>
+<font size="+2">SSLPassPhraseHelper</font> <br>
+<br>
+When Apache starts it loads and unloads any modules that aren't
+built-in twice. It loads them once so it can verify that the
+configuration is ok and then it unloads them and re-loads them again
+when the server is actually ready to receive connections. After the
+first module load Apache closes access to the terminal so there is no
+way to prompt for the NSS token passwords (it would also be annoying to
+have to authenticate twice). Because the module is loaded and unloaded
+the NSS certificate database needs to be loaded and unloaded as well,
+causing any pins entered during the first load to be lost and causing
+the server to be unstartable.<br>
+<br>
+The solution is the PassPhraseHelper. This is a stand-alone program
+that also opens the NSS certificate database and stores a copy of the
+encrypted token password entered during the first load of the NSS
+module. When mod_nss needs to open the certificate database during
+subsequent reloads it queries the PassPhraseHelper for the token
+password.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>SSLPassPhraseHelper /path/to/nss_pcache</code><br>
+<br>
+<font size="+2">SSLCertificateDatabase</font><br>
+<br>
+Specifies the location of the NSS certificate database to be used. An
+NSS certificate database consists of 3 files: cert8.db, key3.db and
+secmod.db. cert8.db stores certificates and Certificate Revocation
+Lists (CRLs), key3.db stores keys and secmod.db stores information
+about available pkcs#11 modules.<br>
+<br>
+This directive specifies a path, not a filename.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>SSLCertificateDatabase /etc/httpd/conf/nss</code><br>
+<br>
+<font size="+2">SSLSessionCacheSize</font><br>
+<br>
+Specifies the number of SSL sessions that can be cached. <br>
+<br>
+There is no upper limit.<br>
+<br>
+The default value is 10000.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>SSLSessionCacheSize 10000</code><br>
+<br>
+<big><big>SSLSessionCacheTimeout</big></big><br>
+<br>
+Specifies the number of seconds SSL2 sessions are cached.<br>
+<br>
+The valid range is 5 - 100 seconds. A setting outside the valid range
+is silently constrained.<br>
+<br>
+The default value is 100.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br
+ style="font-weight: bold;">
+<br>
+<code>SSLSessionCacheTimeout 100</code><br>
+<br>
+<big><big>SSL3SessionCacheTimeout<br>
+</big></big><br>
+Specifies the number of seconds SSL3 sessions are cached.<br>
+<br>
+The valid range is 5 - 86400 seconds.&nbsp; A setting outside the valid
+range is silently constrained.<br>
+<br>
+The default value is 86400 (24 hours).<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>SSL3SessionCacheTimeout 86400</code><br>
+<br>
+<big><big>SSLEngine</big></big><br>
+<br>
+Enables or disables the SSL protocol. This is usually used within a
+VirtualHost tag to enable SSL for a particular virtual host.<br>
+<span style="font-weight: bold;"><br>
+</span>SSL is disabled by default.<br>
+<span style="font-weight: bold;"><br>
+Example</span><br style="font-weight: bold;">
+<br>
+<code>SSLEngine on</code><br>
+<br>
+<big><big>SSLCipherSuite<br>
+</big></big><br>
+A space-separated list of the SSL ciphers used, with the prefix <code>+</code>
+to enable or <code>-</code> to disable.<br>
+<br>
+All ciphers are disabled by default.<br>
+<br>
+Available ciphers are:<br>
+<br>
+<table style="width: 50%; text-align: left;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; font-weight: bold;">Cipher Name<br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;">NSS Cipher
+definition<br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;">Protocol<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">des<br>
+      </td>
+      <td style="vertical-align: top;">SSL_EN_DES_64_CBC_WITH_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv2</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">desede3<br>
+      </td>
+      <td style="vertical-align: top;">SSL_EN_DES_192_EDE3_CBC_WITH_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv2</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rc2<br>
+      </td>
+      <td style="vertical-align: top;">SSL_EN_RC2_128_CBC_WITH_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv2</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rc2export<br>
+      </td>
+      <td style="vertical-align: top;">SSL_EN_RC2_128_CBC_EXPORT40_WITH_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv2</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rc4<br>
+      </td>
+      <td style="vertical-align: top;">SSL_EN_RC4_128_WITH_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv2</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rc4export<br>
+      </td>
+      <td style="vertical-align: top;">SSL_EN_RC4_128_EXPORT40_WITH_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv2</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_3des_sha<br>
+      </td>
+      <td style="vertical-align: top;">SSL_RSA_WITH_3DES_EDE_CBC_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_des_sha<br>
+      </td>
+      <td style="vertical-align: top;">SSL_RSA_WITH_DES_CBC_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_null_md5<br>
+      </td>
+      <td style="vertical-align: top;">SSL_RSA_WITH_NULL_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_null_sha<br>
+      </td>
+      <td style="vertical-align: top;">SSL_RSA_WITH_NULL_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_rc2_40_md5</td>
+      <td style="vertical-align: top;">SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_rc4_128_md5</td>
+      <td style="vertical-align: top;">SSL_RSA_WITH_RC4_128_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_rc4_128_sha</td>
+      <td style="vertical-align: top;">SSL_RSA_WITH_RC4_128_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_rc4_40_md5</td>
+      <td style="vertical-align: top;">SSL_RSA_EXPORT_WITH_RC4_40_MD5<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">fortezza<br>
+      </td>
+      <td style="vertical-align: top;">SSL_FORTEZZA_DMS_WITH_FORTEZZA_CBC_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">fortezza_rc4_128_sha<br>
+      </td>
+      <td style="vertical-align: top;">SSL_FORTEZZA_DMS_WITH_RC4_128_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">fortezza_null<br>
+      </td>
+      <td style="vertical-align: top;">SSL_FORTEZZA_DMS_WITH_NULL_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">fips_des_sha<br>
+      </td>
+      <td style="vertical-align: top;">SSL_RSA_FIPS_WITH_DES_CBC_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">fips_3des_sha<br>
+      </td>
+      <td style="vertical-align: top;">SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_des_56_sha</td>
+      <td style="vertical-align: top;">TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSL3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_rc4_56_sha</td>
+      <td style="vertical-align: top;">TLS_RSA_EXPORT1024_WITH_RC4_56_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_aes_128_sha<br>
+      </td>
+      <td style="vertical-align: top;">TLS_RSA_WITH_AES_128_CBC_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">rsa_aes_256_sha<br>
+      </td>
+      <td style="vertical-align: top;">TLS_RSA_WITH_AES_256_CBC_SHA<br>
+      </td>
+      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>SSLCipherSuite
+-des,-desede3,-rc2,-rc2export,-rc4,-rc4export,+rsa_3des_sha,-rsa_des_56_sha,<br>
++rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,<br>
+-rsa_rc4_40_md5,-rsa_rc4_56_sha,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,<br>
++fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha</code><br>
+<br>
+<big><big>SSLProtocol<br>
+</big></big><br>
+A comma-separated string that lists the basic protocols that the server
+can use (and clients may connect with). It doesn't enable a cipher
+specifically but allows ciphers for that protocol to be used at all.<br>
+<br>
+Options are:<br>
+<ul>
+  <li><code>SSLv2</code></li>
+  <li><code>SSLv3</code></li>
+  <li><code>TLSv1</code></li>
+  <li><code>All</code></li>
+</ul>
+Note that this differs from mod_ssl in that you can't add or subtract
+protocols.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>SSLProtocol SSLv3,TLSv1</code><br>
+<br>
+<big><big>SSLNickname<br>
+</big></big><br>
+Specify the nickname to be used for this the server certificate.
+Certificates stored in an NSS database are referred to using nicknames
+which makes accessing a specific certificate much easier. It is also
+possible to specify the certificate DN but it is easier to use a
+nickname. <br>
+<br>
+<span style="font-weight: bold;">Example</span><br
+ style="font-weight: bold;">
+<br>
+<code>SSLNickname Server-Cert</code><br>
+<br>
+<big><big>SSLVerifyClient<br>
+<small><small><br>
+</small><small><small><small>Determines whether Client Certificate
+Authentication will be requested or required. This may be set in a
+per-server or per-directory context. At the server level the
+certificate is requested during the initial SSL handshake. In the
+per-directry context an SSL renogitation is required and a certificate
+requested from the client.<br>
+<br>
+Available options are:<br>
+</small></small></small></small></big></big>
+<ul>
+  <li><big><big><small><small><code>none</code>: no client certificate
+is required or requested<br>
+    </small></small></big></big></li>
+  <li><big><big><small><small><code>optional</code>: a client
+certificate is requested but if one is not available, the connection
+may continue.<br>
+    </small></small></big></big></li>
+  <li><big><big><small><small><code>require</code>: a valid client
+certificate is required for the connection to continue.<br>
+    </small></small></big></big></li>
+</ul>
+<big><big><small><small><small><small>The mod_ssl option <code>option_no_ca</code>
+is not supported.<br>
+<br>
+There is no <code>SSLVerifyDepth</code> directive. NSS always verifies
+the entire certificate chain.<br>
+</small></small></small></small></big></big><br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>SSLVerifyClient require</code><br>
+<br>
+<big><big>SSLUserName<br>
+</big></big><br>
+Defines the field in the client certificate which will set the user
+field in the request. The option FakeBasicAuth (see SSLOptions) must
+also be set for this to work.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>SSLUserName SSL_CLIENT_S_DN_UID<span
+ style="font-family: sans-serif;"></span></code><br>
+<big><big><br>
+SSLOptions</big></big> <br>
+<br>
+Control various options in a per-server or per-directory context.<br>
+<ul>
+  <li>FakeBasicAuth: When this option is enabled and SSLUserName is set
+then the certificate attribute defined in SSLUserName is used to
+populate the value of r-&gt;user in the Apache request object. This
+equates to the environmant variable REMOTE_USER.</li>
+  <li>StdEnvVars: A standard set of SSL environment variables is
+created.</li>
+  <li>CompatEnvVars: A no-op. In previous versions of mod_ssl this
+would set additional environment variables for backwards compatibility
+with older Apache SSL implementations.</li>
+  <li>ExportCertData: Several additional environment variables are
+created, <code>SSL_CLIENT_CERT</code>, <code>SSL_CLIENT_CERT_CHAIN[0..n]
+and </code><code>SSL_SERVER_CERT</code>. This provides additional
+certificate information on the client and server to the environment,
+plus every CA certificate in the client certificate.</li>
+  <li>StrictRequire: Absolutely forces the connection to be forbidden
+when SSLRequireSSL or SSLRequire aren't met.</li>
+  <li>OptRenegotiate: Allows the SSL connection to be renegotiated
+using a different contiguration. This is designed for a per-directory
+and is relatively expensive to do. For example, it can be used to force
+very strong ciphers in particular directories.<br>
+  </li>
+</ul>
+All options are disabled by default.<br>
+<br>
+Example:<br>
+<br>
+<code>SSLOptions +FakeBasicAuth<br>
+&lt;Files ~ "\.(cgi|shtml)$"&gt;<br>
+SSLOptions +StdEnvVars<br>
+&lt;Files&gt;
+</code><br>
+<br>
+<big><big>SSLRequireSSL</big></big><br>
+<br>
+The request is forbidden unless the connection is using SSL. Only
+available in a per-directory context. This takes no arguments.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br
+ style="font-weight: bold;">
+<br>
+<code>SSLRequireSSL</code><br>
+<br>
+<big><big>SSLRequire</big></big><br>
+<br>
+Provides a regular expression-based access-control mechanism. Access
+may be restricted (or allowed) based on any number of variables such as
+components of the client certificate, the remote IP address, etc.<br>
+<br>
+SSLRequire<br>
+<h1><a name="Environment"></a>Environment Variables</h1>
+Quite a few environment variables (for CGI and SSI) may be set
+depending on the SSLOptions configuration. It can be expensive to set
+these so it is recommended that they only be set when they will be used
+(e.g. don't set them on a per-server basis). Here is a list of the
+variables along with the option used to set them.<br>
+<div style="text-align: center;">
+<h3>Always Set</h3>
+</div>
+<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; font-weight: bold; width: 45%;">Name<br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;">Description<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>HTTPS</code><br>
+      </td>
+      <td style="vertical-align: top;">Set to "on" if HTTPS is being
+used<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<div style="text-align: center;">
+<h3>+StdEnvVars<br>
+</h3>
+</div>
+<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; font-weight: bold; width: 45%;">Name<br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;">Description<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_VERSION_INTERFACE<br>
+      </code></td>
+      <td style="vertical-align: top;">The version of mod_nss the
+server is running<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_VERSION_LIBRARY<br>
+      </code></td>
+      <td style="vertical-align: top;">The version of NSS that mod_nss
+was compiled against.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_PROTOCOL<br>
+      </code></td>
+      <td style="vertical-align: top;">SSLv2, SSLv3 or TLSv1<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CIPHER<br>
+      </code></td>
+      <td style="vertical-align: top;">The cipher the connection is
+using<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CIPHER_EXPORT<br>
+      </code></td>
+      <td style="vertical-align: top;">true if the cipher is an export
+cipher, false otherwise<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CIPHER_USEKEYSIZE<br>
+      </code></td>
+      <td style="vertical-align: top;">Number if bits the cipher is
+using<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CIPHER_ALGKEYSIZE<br>
+      </code></td>
+      <td style="vertical-align: top;">Max number of bits possible in
+the cipher<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_VERIFY<br>
+      </code></td>
+      <td style="vertical-align: top;">NONE if no client auth, SUCCESS
+or FAILED if SSLVerifyCert is set<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_V_START<br>
+      </code></td>
+      <td style="vertical-align: top;">Client certificate validity
+start time<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_V_END<br>
+      </code></td>
+      <td style="vertical-align: top;">Client certificate validity end
+time</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_M_VERSION<br>
+      </code></td>
+      <td style="vertical-align: top;">X.509 version of the client
+certificiate<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_M_SERIAL<br>
+      </code></td>
+      <td style="vertical-align: top;">Serial number of the client
+certificate<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_A_KEY</code></td>
+      <td style="vertical-align: top;">Algorithm used for client key<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_A_SIG</code></td>
+      <td style="vertical-align: top;">Algorithm used for the signature
+of&nbsp; the client key</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_S_DN</code></td>
+      <td style="vertical-align: top;">Distinguished Name (DN) of the
+client certificate</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_S_DN_[C,ST,L,O,OU,CN,T,I,G,S,D,UID,Email]<br>
+      </code></td>
+      <td style="vertical-align: top;">Components of the client
+certificate. Only those that exist in the certificate are created.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_I_DN<br>
+      </code></td>
+      <td style="vertical-align: top;">Distinguished Name (DN) of the
+client certificate issuer<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_I_DN_[C,ST,L,O,OU,CN,T,I,G,S,D,UID,Email]</code></td>
+      <td style="vertical-align: top;">Components of the client issuer
+certificate. Only those that exist in the certificate are created</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_DN<br>
+      </code></td>
+      <td style="vertical-align: top;">Distinguished Name (DN) of the
+server certificate<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_DN_[C,ST,L,O,OU,CN,T,I,G,S,D,UID,Email]</code></td>
+      <td style="vertical-align: top;">Components of the server
+certificate. Only those that exist in the certificate are created</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_I_DN_[C,ST,L,O,OU,CN,T,I,G,S,D,UID,Email]</code></td>
+      <td style="vertical-align: top;">Components of the server issuer
+certificate. Only those that exist in the certificate are created</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_M_VERSION<br>
+      </code></td>
+      <td style="vertical-align: top;">X.509 version of the server
+certificiate</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_M_SERIAL<br>
+      </code></td>
+      <td style="vertical-align: top;">Serial number of the server
+certificate</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_V_START<br>
+      </code></td>
+      <td style="vertical-align: top;">Server certificate validity
+start time</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_V_END<br>
+      </code></td>
+      <td style="vertical-align: top;">Server certificate validity end
+time</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_A_KEY<br>
+      </code></td>
+      <td style="vertical-align: top;">Algorithm used for server key</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_A_SIG<br>
+      </code></td>
+      <td style="vertical-align: top;">Algorithm used for the signature
+of&nbsp; the server key</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SESSION_ID<br>
+      </code></td>
+      <td style="vertical-align: top;">SSL Session ID<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<h3 style="text-align: center;">+ExportCertData<br>
+</h3>
+<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; font-weight: bold; width: 45%;">Name<br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;">Description<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_CERT<br>
+      </code></td>
+      <td style="vertical-align: top;">The server certificate in PEM
+format.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_CERT<br>
+      </code></td>
+      <td style="vertical-align: top;">The client certificate in PEM
+format (if available)<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_CERT_CHAIN_[0..n]<br>
+      </code></td>
+      <td style="vertical-align: top;">Each certificate in the client
+certificate chain in PEM format (including the client certificate
+itself).<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+Troubleshooting<br>
+<br>
+<br>
+</body>
+</html>
