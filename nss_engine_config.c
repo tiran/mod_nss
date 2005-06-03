@@ -73,6 +73,7 @@ static void modnss_ctx_init(modnss_ctx_t *mctx)
     mctx->tls                 = PR_FALSE;
     mctx->tlsrollback         = PR_FALSE;
 
+    mctx->enforce             = PR_TRUE;
     mctx->nickname            = NULL;
     mctx->servercert          = NULL;
     mctx->serverkey           = NULL;
