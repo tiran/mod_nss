@@ -29,17 +29,9 @@ install-libLTLIBRARIES: libmodnss.la
 	    fi \
 	else \
 	    if [ ! -f @apache_conf@/ssl.conf ]; then \
-		mv @apache_conf@/ssl.confnss.conf @apache_conf@/ssl.conf.old; \
+		mv @apache_conf@/ssl.conf @apache_conf@/ssl.conf.old; \
 	    fi \
 	fi
-	@echo ""
-	@echo "**********************   NOTE   **************************"
-	@echo "mod_nss and mod_ssl may not be installed at the same time."
-	@echo "An attempt has been made to rename ssl.conf to"
-	@echo "ssl.conf.old but be sure to double-check your Apache"
-	@echo "configuration."
-	@echo "**********************   NOTE   **************************"
-	@echo ""
 
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
