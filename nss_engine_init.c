@@ -606,8 +606,8 @@ static void nss_init_server_certs(server_rec *s,
                 "Certificate not verified: '%s'", mctx->nickname);
             nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
             if (mctx->enforce) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "Unable to verify certificate '%s'. Add \"SSLEnforceValidCerts off\" to nss.conf so the server can start until the problem can be resolved.", mctx->nickname);
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                    "Unable to verify certificate '%s'. Add \"NSSEnforceValidCerts off\" to nss.conf so the server can start until the problem can be resolved.", mctx->nickname);
                 nss_die();
             }
         }
