@@ -34,21 +34,21 @@ AddType application/x-pkcs7-crl    .crl
 #   Configure the pass phrase gathering process.
 #   The filtering dialog program (`builtin' is a internal
 #   terminal dialog) has to provide the pass phrase on stdout.
-SSLPassPhraseDialog  builtin
+NSSPassPhraseDialog  builtin
 
 
 #   Pass Phrase Helper:
 #   This helper program stores the token password pins between
 #   restarts of Apache.
-SSLPassPhraseHelper @apache_bin@/nss_pcache
+NSSPassPhraseHelper @apache_bin@/nss_pcache
 
 #   Configure the SSL Session Cache. 
-#   SSLSessionCacheSize is the number of entries in the cache.
-#   SSLSessionCacheTimeout is the SSL2 session timeout (in seconds).
-#   SSL3SessionCacheTimeout is the SSL3/TLS session timeout (in seconds).
-SSLSessionCacheSize 10000
-SSLSessionCacheTimeout 100
-SSL3SessionCacheTimeout 86400
+#   NSSSessionCacheSize is the number of entries in the cache.
+#   NSSSessionCacheTimeout is the SSL2 session timeout (in seconds).
+#   NSSSession3CacheTimeout is the SSL3/TLS session timeout (in seconds).
+NSSSessionCacheSize 10000
+NSSSessionCacheTimeout 100
+NSSSession3CacheTimeout 86400
 
 ##
 ## SSL Virtual Host Context
@@ -67,29 +67,29 @@ TransferLog @apache_prefix@/logs/access_log
 
 #   SSL Engine Switch:
 #   Enable/Disable SSL for this virtual host.
-SSLEngine on
+NSSEngine on
 
 #   SSL Cipher Suite:
 #   List the ciphers that the client is permitted to negotiate.
 #   See the mod_nss documentation for a complete list.
-SSLCipherSuite -des,-desede3,-rc2,-rc2export,-rc4,-rc4export,+rsa_3des_sha,-rsa_des_56_sha,+rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,-rsa_rc4_40_md5,-rsa_rc4_56_sha,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,+fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha
+NSSCipherSuite -des,-desede3,-rc2,-rc2export,-rc4,-rc4export,+rsa_3des_sha,-rsa_des_56_sha,+rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,-rsa_rc4_40_md5,-rsa_rc4_56_sha,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,+fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha
 
-SSLProtocol SSLv3,TLSv1
+NSSProtocol SSLv3,TLSv1
 
 #   SSL Certificate Nickname:
 #   The nickname of the server certificate you are going to use.
-SSLNickname Server-Cert
+NSSNickname Server-Cert
 
 #   Server Certificate Database:
 #   The NSS security database directory that holds the certificates and
 #   keys. The database consists of 3 files: cert8.db, key3.db and secmod.db.
 #   Provide the directory that these files exist.
-SSLCertificateDatabase @apache_conf@
+NSSCertificateDatabase @apache_conf@
 
 #   Client Authentication (Type):
 #   Client certificate verification type.  Types are none, optional and
 #   require.
-#SSLVerifyClient none
+#NSSVerifyClient none
 
 #   Access Control:
 #   With SSLRequire you can do per-directory access control based
@@ -98,7 +98,7 @@ SSLCertificateDatabase @apache_conf@
 #   mixture between C and Perl.  See the mod_nss documentation
 #   for more details.
 #<Location />
-#SSLRequire (    %{SSL_CIPHER} !~ m/^(EXP|NULL)/ \
+#NSSRequire (    %{SSL_CIPHER} !~ m/^(EXP|NULL)/ \
 #            and %{SSL_CLIENT_S_DN_O} eq "Snake Oil, Ltd." \
 #            and %{SSL_CLIENT_S_DN_OU} in {"Staff", "CA", "Dev"} \
 #            and %{TIME_WDAY} >= 1 and %{TIME_WDAY} <= 5 \
@@ -127,18 +127,18 @@ SSLCertificateDatabase @apache_conf@
 #     useless for serving static content. So one usually enables the
 #     exportation for CGI and SSI requests only.
 #   o StrictRequire:
-#     This denies access when "SSLRequireSSL" or "SSLRequire" applied even
+#     This denies access when "NSSRequireSSL" or "NSSRequire" applied even
 #     under a "Satisfy any" situation, i.e. when it applies access is denied
 #     and no other module can change it.
 #   o OptRenegotiate:
 #     This enables optimized SSL connection renegotiation handling when SSL
 #     directives are used in per-directory context. 
-#SSLOptions +FakeBasicAuth +ExportCertData +CompatEnvVars +StrictRequire
+#NSSOptions +FakeBasicAuth +ExportCertData +CompatEnvVars +StrictRequire
 <Files ~ "\.(cgi|shtml|phtml|php3?)$">
-    SSLOptions +StdEnvVars
+    NSSOptions +StdEnvVars
 </Files>
 <Directory "@apache_prefix@/cgi-bin">
-    SSLOptions +StdEnvVars
+    NSSOptions +StdEnvVars
 </Directory>
 
 #   Per-Server Logging:

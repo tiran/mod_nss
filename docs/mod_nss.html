@@ -40,13 +40,17 @@ calls instead.<br>
 <h1><a name="Building"></a>Building</h1>
 Refer to the README file included with the distribution.<br>
 <br>
-&nbsp;To build you'll need NSPR 4.4.1 or above and NSS 3.9.2 or above.
+To build you'll need NSPR 4.4.1 or above and NSS 3.9.2 or above.
 It may work with earlier versions but these are recommended (or
 tested). These can be retrieved from <a href="http://www.mozilla.org/">http://www.mozilla.org/</a>.
 The --with-nspr and --with-nss options require that the package be
 installed in the same parent directory (e.g. /opt/nspr,
 /usr/local/nspr, etc). It will look in this parent for include/ and
 lib/, etc.<br>
+<br>
+You will also need the NSS and NSPR directories in your library search
+path (either /etc/ld.so.conf or LD_LIBRARY_PATH) to link and run the
+module.<br>
 <br>
 Run the configure script. The following mdo_nss-specificoptions are
 available:<br>
@@ -80,6 +84,12 @@ PATH/include, etc.</td>
       </td>
       <td style="vertical-align: top;">The location of the apxs binary
 of the Apache you want to install the module into.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">--with-apr-config</td>
+      <td style="vertical-align: top;">The location of apr-config which
+tells us where the APR include files and libraries are located<br>
       </td>
     </tr>
   </tbody>
@@ -117,10 +127,10 @@ configuration directory (as reported by apxs). You may need to make a
 manual change to httpd.conf to load this file. If you have a Red
 Hat-style Apache installation with a conf.d just move nss.conf there.
 It will be automatically loaded. Otherwise you will need to add the
-following line to httpd.conf:<br>
+following line to httpd.conf (location relative to httpd.conf):<br>
 <br>
-<code>Include nss.conf</code><br>
-<br>
+<code>Include conf/nss.conf<br>
+</code><br>
 This has Apache load the mod_nss configuration file, <code>nss.conf</code>.
 It is here that you will setup your VirtualServer entries to and
 configure your SSL servers.<br>
@@ -141,7 +151,8 @@ The certificate database password is httptest.<br>
 <br>
 A sample run is:<br>
 <br>
-<code>% ./gencert /etc/httpd/nss<br>
+<code># mkdir /etc/httpd/nss</code><br>
+<code># ./gencert /etc/httpd/nss<br>
 <br>
 #####################################################################<br>
 Generating new server certificate and key database. The password<br>
@@ -205,11 +216,11 @@ The following mod_ssl Directives are not applicable to mod_nss:<br>
   <li>SSLVerifyDepth</li>
   <li>SSLCryptoDevice</li>
 </ul>
-<font size="+2">SSLPassPhraseDialog</font><br>
+<font size="+2">NSSPassPhraseDialog</font><br>
 <br>
 Authentication is required in order to use the private key in an NSS
 certificate database. The method of this authentication is specified
-with the SSLPassPhraseDialog directive.&nbsp; This directive takes one
+with the NSSPassPhraseDialog directive.&nbsp; This directive takes one
 argument specifying the method of authentication:<br>
 <ul>
   <li>builtin</li>
@@ -238,10 +249,10 @@ without user intervention. The format of this file is:<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>SSLPassPhraseDialog builtin</code><br>
+<code>NSSPassPhraseDialog builtin</code><br>
 <div style="margin-left: 80px;"><br>
 </div>
-<font size="+2">SSLPassPhraseHelper</font> <br>
+<font size="+2">NSSPassPhraseHelper</font> <br>
 <br>
 When Apache starts it loads and unloads any modules that aren't
 built-in twice. It loads them once so it can verify that the
@@ -263,9 +274,9 @@ password.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>SSLPassPhraseHelper /path/to/nss_pcache</code><br>
+<code>NSSPassPhraseHelper /path/to/nss_pcache</code><br>
 <br>
-<font size="+2">SSLCertificateDatabase</font><br>
+<font size="+2">NSSCertificateDatabase</font><br>
 <br>
 Specifies the location of the NSS certificate database to be used. An
 NSS certificate database consists of 3 files: cert8.db, key3.db and
@@ -277,9 +288,9 @@ This directive specifies a path, not a filename.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>SSLCertificateDatabase /etc/httpd/conf/nss</code><br>
+<code>NSSCertificateDatabase /etc/httpd/conf/nss</code><br>
 <br>
-<font size="+2">SSLSessionCacheSize</font><br>
+<font size="+2">NSSSessionCacheSize</font><br>
 <br>
 Specifies the number of SSL sessions that can be cached. <br>
 <br>
@@ -289,11 +300,11 @@ The default value is 10000.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>SSLSessionCacheSize 10000</code><br>
+<code>NSSSessionCacheSize 10000</code><br>
 <br>
-<big><big>SSLSessionCacheTimeout</big></big><br>
+<big><big>NSSSessionCacheTimeout</big></big><br>
 <br>
-Specifies the number of seconds SSL2 sessions are cached.<br>
+Specifies the number of seconds SSL 2 sessions are cached.<br>
 <br>
 The valid range is 5 - 100 seconds. A setting outside the valid range
 is silently constrained.<br>
@@ -303,11 +314,11 @@ The default value is 100.<br>
 <span style="font-weight: bold;">Example</span><br
  style="font-weight: bold;">
 <br>
-<code>SSLSessionCacheTimeout 100</code><br>
+<code>NSSSessionCacheTimeout 100</code><br>
 <br>
-<big><big>SSL3SessionCacheTimeout<br>
+<big><big>NSSSession3CacheTimeout<br>
 </big></big><br>
-Specifies the number of seconds SSL3 sessions are cached.<br>
+Specifies the number of seconds SSL 3 sessions are cached.<br>
 <br>
 The valid range is 5 - 86400 seconds.&nbsp; A setting outside the valid
 range is silently constrained.<br>
@@ -316,9 +327,9 @@ The default value is 86400 (24 hours).<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>SSL3SessionCacheTimeout 86400</code><br>
+<code>NSSSession3CacheTimeout 86400</code><br>
 <br>
-<big><big>SSLEngine</big></big><br>
+<big><big>NSSEngine</big></big><br>
 <br>
 Enables or disables the SSL protocol. This is usually used within a
 VirtualHost tag to enable SSL for a particular virtual host.<br>
@@ -327,9 +338,9 @@ VirtualHost tag to enable SSL for a particular virtual host.<br>
 <span style="font-weight: bold;"><br>
 Example</span><br style="font-weight: bold;">
 <br>
-<code>SSLEngine on</code><br>
+<code>NSSEngine on</code><br>
 <br>
-<big><big>SSLCipherSuite<br>
+<big><big>NSSCipherSuite<br>
 </big></big><br>
 A space-separated list of the SSL ciphers used, with the prefix <code>+</code>
 to enable or <code>-</code> to disable.<br>
@@ -511,13 +522,13 @@ definition<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>SSLCipherSuite
+<code>NSSCipherSuite
 -des,-desede3,-rc2,-rc2export,-rc4,-rc4export,+rsa_3des_sha,-rsa_des_56_sha,<br>
 +rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,<br>
 -rsa_rc4_40_md5,-rsa_rc4_56_sha,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,<br>
 +fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha</code><br>
 <br>
-<big><big>SSLProtocol<br>
+<big><big>NSSProtocol<br>
 </big></big><br>
 A comma-separated string that lists the basic protocols that the server
 can use (and clients may connect with). It doesn't enable a cipher
@@ -535,9 +546,9 @@ protocols.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>SSLProtocol SSLv3,TLSv1</code><br>
+<code>NSSProtocol SSLv3,TLSv1</code><br>
 <br>
-<big><big>SSLNickname<br>
+<big><big>NSSNickname<br>
 </big></big><br>
 Specify the nickname to be used for this the server certificate.
 Certificates stored in an NSS database are referred to using nicknames
@@ -548,9 +559,22 @@ nickname. <br>
 <span style="font-weight: bold;">Example</span><br
  style="font-weight: bold;">
 <br>
-<code>SSLNickname Server-Cert</code><br>
+<code>NSSNickname Server-Cert</code><br>
 <br>
-<big><big>SSLVerifyClient<br>
+<big><big>NSSEnforceValidCerts<br>
+<br>
+<small><small>By default mod_nss will not start up if the server
+certificate is not valid. This means that if the certificate has
+expired or is signed by a CA that is not trusted in the NSS certificate
+database the server will not start. If you would like the server to
+start anyway you can add this directive to nss.conf and the server will
+start with just a warning. This mode is not recommended.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSEnforceValidCerts on</code><br>
+</small></small><br>
+NSSVerifyClient<br>
 <small><small><br>
 </small><small><small><small>Determines whether Client Certificate
 Authentication will be requested or required. This may be set in a
@@ -576,30 +600,30 @@ certificate is required for the connection to continue.<br>
 <big><big><small><small><small><small>The mod_ssl option <code>option_no_ca</code>
 is not supported.<br>
 <br>
-There is no <code>SSLVerifyDepth</code> directive. NSS always verifies
+There is no <code>NSSVerifyDepth</code> directive. NSS always verifies
 the entire certificate chain.<br>
 </small></small></small></small></big></big><br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>SSLVerifyClient require</code><br>
+<code>NSSVerifyClient require</code><br>
 <br>
-<big><big>SSLUserName<br>
+<big><big>NSSUserName<br>
 </big></big><br>
 Defines the field in the client certificate which will set the user
-field in the request. The option FakeBasicAuth (see SSLOptions) must
+field in the request. The option FakeBasicAuth (see NSSOptions) must
 also be set for this to work.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>SSLUserName SSL_CLIENT_S_DN_UID<span
+<code>NSSUserName SSL_CLIENT_S_DN_UID<span
  style="font-family: sans-serif;"></span></code><br>
 <big><big><br>
-SSLOptions</big></big> <br>
+NSSOptions</big></big> <br>
 <br>
 Control various options in a per-server or per-directory context.<br>
 <ul>
-  <li>FakeBasicAuth: When this option is enabled and SSLUserName is set
-then the certificate attribute defined in SSLUserName is used to
+  <li>FakeBasicAuth: When this option is enabled and NSSUserName is set
+then the certificate attribute defined in NSSUserName is used to
 populate the value of r-&gt;user in the Apache request object. This
 equates to the environmant variable REMOTE_USER.</li>
   <li>StdEnvVars: A standard set of SSL environment variables is
@@ -613,7 +637,7 @@ and </code><code>SSL_SERVER_CERT</code>. This provides additional
 certificate information on the client and server to the environment,
 plus every CA certificate in the client certificate.</li>
   <li>StrictRequire: Absolutely forces the connection to be forbidden
-when SSLRequireSSL or SSLRequire aren't met.</li>
+when NSSRequireSSL or NSSRequire aren't met.</li>
   <li>OptRenegotiate: Allows the SSL connection to be renegotiated
 using a different contiguration. This is designed for a per-directory
 and is relatively expensive to do. For example, it can be used to force
@@ -624,13 +648,13 @@ All options are disabled by default.<br>
 <br>
 Example:<br>
 <br>
-<code>SSLOptions +FakeBasicAuth<br>
+<code>NSSOptions +FakeBasicAuth<br>
 &lt;Files ~ "\.(cgi|shtml)$"&gt;<br>
-SSLOptions +StdEnvVars<br>
+NSSOptions +StdEnvVars<br>
 &lt;Files&gt;
 </code><br>
 <br>
-<big><big>SSLRequireSSL</big></big><br>
+<big><big>NSSRequireSSL</big></big><br>
 <br>
 The request is forbidden unless the connection is using SSL. Only
 available in a per-directory context. This takes no arguments.<br>
@@ -638,18 +662,18 @@ available in a per-directory context. This takes no arguments.<br>
 <span style="font-weight: bold;">Example</span><br
  style="font-weight: bold;">
 <br>
-<code>SSLRequireSSL</code><br>
+<code>NSSRequireSSL</code><br>
 <br>
-<big><big>SSLRequire</big></big><br>
+<big><big>NSSRequire</big></big><br>
 <br>
 Provides a regular expression-based access-control mechanism. Access
 may be restricted (or allowed) based on any number of variables such as
 components of the client certificate, the remote IP address, etc.<br>
 <br>
-SSLRequire<br>
+NSSRequire<br>
 <h1><a name="Environment"></a>Environment Variables</h1>
 Quite a few environment variables (for CGI and SSI) may be set
-depending on the SSLOptions configuration. It can be expensive to set
+depending on the NSSOptions configuration. It can be expensive to set
 these so it is recommended that they only be set when they will be used
 (e.g. don't set them on a per-server basis). Here is a list of the
 variables along with the option used to set them.<br>
