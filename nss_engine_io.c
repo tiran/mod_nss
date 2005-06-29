@@ -852,6 +852,7 @@ static apr_status_t nss_io_filter_output(ap_filter_t *f,
                 apr_bucket_delete(bucket);
             }
         }
+#if defined AP_BUCKET_IS_EOC
         else if (AP_BUCKET_IS_EOC(bucket)) {
             /* The special "EOC" bucket means a shutdown is needed;
              * - turn off buffering in nspr_filter_out_write
@@ -868,6 +869,7 @@ static apr_status_t nss_io_filter_output(ap_filter_t *f,
             }
             break;
         }
+#endif
         else {
             /* filter output */
             const char *data;
