@@ -61,9 +61,9 @@ NSSSession3CacheTimeout 86400
 #ServerName www.example.com:443
 #ServerAdmin you@example.com
 
-# mod_ssl logs to separate log files, you can choose to do that if you'd like
-ErrorLog @apache_prefix@/logs/error_log
-TransferLog @apache_prefix@/logs/access_log
+# mod_nss can log to separate log files, you can choose to do that if you'd like
+#ErrorLog @apache_prefix@/logs/error_log
+#TransferLog @apache_prefix@/logs/access_log
 
 #   SSL Engine Switch:
 #   Enable/Disable SSL for this virtual host.
@@ -85,6 +85,12 @@ NSSNickname Server-Cert
 #   keys. The database consists of 3 files: cert8.db, key3.db and secmod.db.
 #   Provide the directory that these files exist.
 NSSCertificateDatabase @apache_conf@
+
+#   Database Prefix:
+#   In order to be able to store multiple NSS databases in one directory
+#   they need unique names. This option sets the database prefix used for
+#   cert8.db and key3.db.
+#NSSDBPrefix my-prefix-
 
 #   Client Authentication (Type):
 #   Client certificate verification type.  Types are none, optional and

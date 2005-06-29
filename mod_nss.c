@@ -41,6 +41,9 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(CertificateDatabase, TAKE1,
                 "SSL Server Certificate database "
                 "(`/path/to/file'")
+    SSL_CMD_SRV(DBPrefix, TAKE1,
+                "NSS Database prefix (optional) "
+                "(`my-prefix-'")
     SSL_CMD_SRV(SessionCacheTimeout, TAKE1,
                 "SSL 2 Session Cache object lifetime "
                 "(`N' - number of seconds)")

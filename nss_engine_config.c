@@ -45,6 +45,7 @@ SSLModConfigRec *nss_config_global_create(server_rec *s)
      */
     mc->nInitCount                  = 0;
     mc->pCertificateDatabase        = NULL;
+    mc->pDBPrefix                   = NULL;
     mc->session_cache_size          = UNSET;
     mc->session_cache_timeout       = UNSET;
     mc->ssl3_session_cache_timeout  = UNSET;
@@ -269,6 +270,17 @@ const char *nss_cmd_NSSCertificateDatabase(cmd_parms *cmd,
     SSLModConfigRec *mc = myModConfig(cmd->server);
 
     mc->pCertificateDatabase = arg;
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSDBPrefix(cmd_parms *cmd,
+                                void *dcfg,
+                               const char *arg)
+{
+    SSLModConfigRec *mc = myModConfig(cmd->server);
+
+    mc->pDBPrefix = arg;
 
     return NULL;
 }

@@ -202,6 +202,7 @@ typedef struct {
     int             nInitCount;
     apr_pool_t     *pPool;
     const char     *pCertificateDatabase;
+    const char     *pDBPrefix;
 
     /* config for SSL session cache */
     int             session_cache_size;
@@ -312,6 +313,7 @@ void *nss_config_server_create(apr_pool_t *p, server_rec *s);
 void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv);
 const char *nss_cmd_NSSEngine(cmd_parms *, void *, int);
 const char *nss_cmd_NSSCertificateDatabase(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSDBPrefix(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSCipherSuite(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSVerifyClient(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSProtocol(cmd_parms *cmd, void *dcfg, const char *arg);

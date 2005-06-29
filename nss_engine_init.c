@@ -98,17 +98,23 @@ static void nss_add_version_components(apr_pool_t *p,
 
 /*
  *  Initialize SSL library
+ *
+ *  If sslenabled is not set then there is no need to prompt for the token
+ *  passwords. 
  */
-static void nss_init_SSLLibrary(server_rec *s)
+static void nss_init_SSLLibrary(server_rec *s, int sslenabled)
 {
     SECStatus rv;
     SSLModConfigRec *mc = myModConfig(s);
+    SSLSrvConfigRec *sc; 
+
+    sc = mySrvConfig(s);
 
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                  "Init: %snitializing NSS library", mc->nInitCount == 1 ? "I" : "Re-i");
 
     /* Do we need to fire up our password helper? */
-    if (mc->nInitCount == 1) {
+    if (mc->nInitCount == 1 && sslenabled) {
         const char * child_argv[3];
         apr_status_t rv;
 
@@ -121,7 +127,8 @@ static void nss_init_SSLLibrary(server_rec *s)
 
         child_argv[0] = mc->pphrase_dialog_helper;
         child_argv[1] = mc->pCertificateDatabase;
-        child_argv[2] = NULL;
+        child_argv[2] = mc->pDBPrefix;
+        child_argv[3] = NULL;
 
         rv = apr_procattr_create(&mc->procattr, mc->pPool);
 
@@ -165,10 +172,10 @@ static void nss_init_SSLLibrary(server_rec *s)
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
 
     /* Initialize NSS and open the certificate database read-only. */
-    rv = NSS_Initialize(mc->pCertificateDatabase, NULL, NULL, "secmod.db", NSS_INIT_READONLY);
+    rv = NSS_Initialize(mc->pCertificateDatabase, mc->pDBPrefix, mc->pDBPrefix, "secmod.db", NSS_INIT_READONLY);
 
     /* Assuming everything is ok so far, check the cert database password(s). */
-    if (rv != SECSuccess || nss_Init_Tokens(s) != SECSuccess) {
+    if (sslenabled && (rv != SECSuccess || nss_Init_Tokens(s) != SECSuccess)) {
         NSS_Shutdown();
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "NSS initialization failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
@@ -197,6 +204,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     SSLModConfigRec *mc = myModConfig(base_server);
     SSLSrvConfigRec *sc; 
     server_rec *s;
+    int sslenabled = FALSE;
 
     mc->nInitCount++;
  
@@ -259,12 +267,16 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             sc->enabled = FALSE;
         }
 
+        if (sc->enabled == TRUE) {
+            sslenabled = TRUE;
+        }
+
         if (sc->proxy_enabled == UNSET) {
             sc->proxy_enabled = FALSE;
         }
     }
 
-    nss_init_SSLLibrary(base_server);
+    nss_init_SSLLibrary(base_server, sslenabled);
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                  "done Init: Initializing NSS library");
 
@@ -293,6 +305,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
          */
         nss_init_ConfigureServer(s, p, ptemp, sc);
     }
+
 
     /*
      *  Announce mod_ssl and SSL library in HTTP Server field
