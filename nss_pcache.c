@@ -146,8 +146,8 @@ CreatePk11PinStore(Pk11PinStore **out, const char *tokenName, const char *pin)
         }
 
         /* Generate a key and parameters to do the encryption */
-        store->key = PK11_KeyGen(store->slot, store->mech->type,
-                       0, 0, 0);
+        store->key = PK11_TokenKeyGenWithFlags(store->slot, store->mech->type,
+                     NULL, 0, NULL, CKF_ENCRYPT|CKF_DECRYPT, PR_FALSE, NULL);
         if (store->key == 0)
         {
             /* PR_SetError(xxx); */
