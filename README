@@ -9,15 +9,15 @@ SYNOPSIS
 
 BUILDING
 
- To build this you'll need NSPR 4.4.1 and NSS 3.9.2. It may work with earlier
+ To build this you'll need NSPR 4.4.1 and NSS 3.9.3. It may work with earlier
  versions but these are recommended (or tested). These can be retrieved from
  http://www.mozilla.org/. The --with-nspr and --with-nss tags require that
  the package be installed in the same parent directory (e.g. /opt/nspr,
- /usr/local/nspr, etc). It will look in this parent for include/ and lib/, etc.
+ /usr/local/nspr, etc). It will look in this parent for include/, lib/, etc.
 
  If --with-nss or --with-nspr are not passed configure will look for the
  mozilla-[nss|nspr]-devel packages and use the libraries with that if found.
- It is strongly recommended that the mozilla.org version is used instead.
+ It is strongly recommended that the mozilla.org version be used instead.
 
  Build and install those packages somewhere then configure the module with
  something like:
@@ -28,7 +28,7 @@ BUILDING
  This will install a sample configuration file nss.conf. You'll need to do
  some hand-editing as well.
 
- To httpd.conf add (say right before Section 3):
+ To httpd.conf add (anywhere is fine):
 
  Include conf/nss.conf
 
@@ -42,10 +42,12 @@ CONFIGURING
  certificate. This is a *BAD* idea and you shouldn't use this. It is for
  example purposes only.
 
- When configuring a file for use with the SSLPassPhraseDialog setting
- add the following to nss.conf:
+ You can store the token passwords in a file so you aren't prompted during
+ startup (so you can do unattended starts, for example). To do this, set
+ the file that will store the token passwords in the NSSPassPhraseDialog 
+ attribute in nss.conf ala:
 
- SSLPassPhraseDialog  file:/path/to/password.conf
+ NSSPassPhraseDialog  file:/path/to/password.conf
 
  The format of the file for a non-hardware token is tokenname:password.
  A sample for the internal software token is like:
