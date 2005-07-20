@@ -27,7 +27,13 @@ AC_CHECKING(for apr-config)
 AC_MSG_CHECKING(for --with-apr-config)
 AC_ARG_WITH(apr-config, [--with-apr-config 	Use apr-config to determine the APR directory],
 [
-  AC_PATH_PROG(APR_CONFIG, apr-config)
+  if test -x "$withval"
+  then
+    AC_MSG_RESULT([using $withval])
+    APR_CONFIG=$withval
+  else
+    AC_PATH_PROG(APR_CONFIG, apr-config)
+  fi
   if test -n "$APR_CONFIG"; then
     apr_inc=`$APR_CONFIG --includes`
   else
