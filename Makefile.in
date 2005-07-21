@@ -99,7 +99,7 @@ nss_pcache_SOURCES = nss_pcache.c
 libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c
 
 INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
-LIBS = @nspr_lib@ @nss_lib@ -lnspr4 -lplc4 -lplds4 -lssl3 -lsmime3 -lnss3
+LIBS = @nspr_lib@ @nss_lib@ -lnspr4 -lplc4 -lplds4 -lssl3 -lsmime3 -lnss3 -lsoftokn3
 
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
 	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
