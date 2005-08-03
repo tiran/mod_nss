@@ -16,6 +16,7 @@
 <a href="#Migration">Migration</a><br>
 <a href="#Directives">Configuration Directives</a><br>
 <a href="#Environment">Environment Variables</a><br>
+<a href="#Database_Management">Database Management</a><br>
 <br>
 <h1><a name="Introduction"></a>Introduction</h1>
 The <a href="http://www.modssl.org/">mod_ssl</a> package was
@@ -35,12 +36,15 @@ notices and give the proper credit.
 <br>
 <br>
 mod_nss is based directly on the mod_ssl package from Apache
-2.0.54.&nbsp; It is a conversion from using OpenSSL calls to using NSS
+2.0.54.&nbsp; It is a conversion from using OpenSSL calls to using <a
+ href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a>
 calls instead.<br>
 <h1><a name="Building"></a>Building</h1>
 Refer to the README file included with the distribution.<br>
 <br>
-To build you'll need NSPR 4.4.1 or above and NSS 3.9.2 or above.
+To build you'll need <a href="NSPR">NSPR</a> 4.4.1 or above and <a
+ href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a> 3.9.2
+or above.
 It may work with earlier versions but these are recommended (or
 tested). These can be retrieved from <a href="http://www.mozilla.org/">http://www.mozilla.org/</a>.
 The --with-nspr and --with-nss options require that the package be
@@ -48,11 +52,13 @@ installed in the same parent directory (e.g. /opt/nspr,
 /usr/local/nspr, etc). It will look in this parent for include/ and
 lib/, etc.<br>
 <br>
-You will also need the NSS and NSPR directories in your library search
+You will also need the <a
+ href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a> and <a
+ href="NSPR">NSPR</a> directories in your library search
 path (either /etc/ld.so.conf or LD_LIBRARY_PATH) to link and run the
 module.<br>
 <br>
-Run the configure script. The following mdo_nss-specificoptions are
+Run the configure script. The following mod_nss-specific options are
 available:<br>
 <br>
 <table style="width: 100%; text-align: left;" border="0" cellpadding="2"
@@ -87,7 +93,7 @@ of the Apache you want to install the module into.<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">--with-apr-config</td>
+      <td style="vertical-align: top;">--with-apr-config=[PATH]</td>
       <td style="vertical-align: top;">The location of apr-config which
 tells us where the APR include files and libraries are located<br>
       </td>
@@ -554,12 +560,14 @@ Specify the nickname to be used for this the server certificate.
 Certificates stored in an NSS database are referred to using nicknames
 which makes accessing a specific certificate much easier. It is also
 possible to specify the certificate DN but it is easier to use a
-nickname. <br>
+nickname.&nbsp; If the nickname includes spaces then the value needs to
+be enclosed in double quotes.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br
  style="font-weight: bold;">
 <br>
 <code>NSSNickname Server-Cert</code><br>
+<code>NSSNickname "This contains a space"</code><br>
 <br>
 <big><big>NSSEnforceValidCerts<br>
 <br>
@@ -568,7 +576,8 @@ certificate is not valid. This means that if the certificate has
 expired or is signed by a CA that is not trusted in the NSS certificate
 database the server will not start. If you would like the server to
 start anyway you can add this directive to nss.conf and the server will
-start with just a warning. This mode is not recommended.<br>
+start with just a warning. Not enforcing a valid server certificate is
+not recommended.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
@@ -670,7 +679,7 @@ Provides a regular expression-based access-control mechanism. Access
 may be restricted (or allowed) based on any number of variables such as
 components of the client certificate, the remote IP address, etc.<br>
 <br>
-NSSRequire<br>
+<code>NSSRequire</code><br>
 <h1><a name="Environment"></a>Environment Variables</h1>
 Quite a few environment variables (for CGI and SSI) may be set
 depending on the NSSOptions configuration. It can be expensive to set
@@ -925,7 +934,139 @@ itself).<br>
   </tbody>
 </table>
 <br>
-Troubleshooting<br>
+<h1><a name="Database_Management"></a>Database Management</h1>
+NSS stores it's certificates and keys in a set of files referred to as
+the "certificate database." The files by default (with NSS 3.x) are
+named cert8.db, key3.db and secmod.db. See the NSS documentation at <a
+ href="http://www.mozilla.org/projects/security/pki/nss/">http://www.mozilla.org/projects/security/pki/nss/</a>
+for more information on these specific files.<br>
+<br>
+The NSS database also stores any Certificate Revocation Lists (CRLs). <br>
+<br>
+Several NSS tools are available for managing certificates, keys,
+PKCS#11 modules and CRLs. These come with the NSS distribution. Here is
+a brief overview:<br>
+<br>
+<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">Tool</span><br>
+      </td>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">Description</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>certutil</code><br>
+      </td>
+      <td style="vertical-align: top;">Generate Certificate Signing
+Requests, install certificates and manage certificate trust flags.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>crlutil</code><br>
+      </td>
+      <td style="vertical-align: top;">Manage certificate revocation
+lists (CRLs). <font size="-1"> </font></td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>modutil</code><br>
+      </td>
+      <td style="vertical-align: top;">Manage the database of PKCS11
+modules (<tt>secmod.db</tt>). Add modules and modify the properties of
+existing modules (such as whether a module is the default provider of
+some crypto service).</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><tt>pk12util</tt></td>
+      <td style="vertical-align: top;">Import and export keys and
+certificates in PKCS12 format.</td>
+    </tr>
+  </tbody>
+</table>
+<br>
+Here are some quick, useful commands. This assumes that the NSPR and
+NSS libraries are in your LD_LIBRARY_PATH. Certificates may be referred
+to by either their DN or by a short nickname that is assigned when the
+certificate is added to the database. The nickname is the preferred
+method of referring to certificates. All of these commands use the -d
+option to specify the database location. The default is ~/.netscape and
+is probably not what you want.<br>
+<br>
+<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">Description</span><br>
+      </td>
+      <td style="vertical-align: top;"><span style="font-weight: bold;">Command</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Create a Database<br>
+      </td>
+      <td style="vertical-align: top;">certutil -N -d [path]<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">List all Certificates<br>
+      </td>
+      <td style="vertical-align: top;">certutil -L -d [path]<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Extract a cert (Server-Cert) in
+ASCII<br>
+      </td>
+      <td style="vertical-align: top;">certutil -L -n Server-Cert -d
+[path] -a<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Extract a cert and key
+(Server-Cert) in PKCS#12<br>
+      </td>
+      <td style="vertical-align: top;">pk12util -o server.p12 -n
+Server-Cert -d [path]<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">Import a cert and key
+(Import-Me) from PKCS#12<br>
+      </td>
+      <td style="vertical-align: top;">pk12util -i server.p12 -n
+Import-Me -d [path]<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<h2>Importing OpenSSL Certificates</h2>
+If you have existing OpenSSL certificates you can import them into an
+NSS certificate database.<br>
+<br>
+To import a server certificate (nickname Server-Cert):<br>
+<br>
+<code>% openssl pkcs12 -export -in /path/to/certificate -inkey
+/path/to/keyfile -out server.p12 -name "Server-Cert" -passout pass:foo<br>
+% pk12util -i server.p12 -d [path] -W foo<br>
+</code><br>
+To import a CA certificate:<br>
+<br>
+<code>% certutil -A -n "myca" -t "CT,," -d [path] -a -i
+/path/to/cacertificate</code><br>
+<br>
+To import a CRL:<br>
+<br>
+<code>% openssl crl -in /path/to/crlfile -out /tmp/crl.tmp -inform PEM
+-outform DER<br>
+% crlutil -I -t 1 -d [path] -i /tmp/crl.tmp</code><br>
+<br>
+To verify that your server certificate was imported properly, you can
+have NSS validate it:<br>
+<br>
+<code>% certutil -V -n Server-Cert -u V -d .<br>
+certutil: certificate is valid</code><br>
 <br>
 <br>
 </body>
