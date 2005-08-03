@@ -22,11 +22,14 @@ BUILDING
  Build and install those packages somewhere then configure the module with
  something like:
 
- % ./configure --with-apxs=/path/to/apxs/ --with-nspr=/path/to/nspr/ --with-nss=/path/to/nss/
+ % ./configure --with-apxs[=/path/to/apxs/] --with-nspr=/path/to/nspr/ --with-nss=/path/to/nss/
  % gmake all install
 
+ You only need to use =/path/to/apxs if apxs isn't in your path or if you
+ want to install into a specific Apache installation.
+
  This will install a sample configuration file nss.conf. You'll need to do
- some hand-editing as well.
+ some hand-editing as well to tell Apache to read this file.
 
  To httpd.conf add (anywhere is fine):
 
@@ -35,12 +38,19 @@ BUILDING
  You'll need to change the default ports in nss.conf from 443 to
  something else if you aren't starting this as root.
 
-CONFIGURING
+CONFIGURING NSS
 
  You'll need to create an NSS database and get a server certificate installed.
  A script, gencerts, is included to help get things going with a self-signed
  certificate. This is a *BAD* idea and you shouldn't use this. It is for
- example purposes only.
+ demonstration purposes only. As a matter of policy, users should not get
+ used to accepting a SSL certifiate signed by an unknown or untrusted
+ issuer.
+
+ The result of the gencert script is an NSS database that contains a
+ self-signed CA, a server certificate (nickname Server-Cert) and a
+ client certificate (alpha). The client certificate is generated to make
+ testing client authentication simpler.
 
  You can store the token passwords in a file so you aren't prompted during
  startup (so you can do unattended starts, for example). To do this, set
@@ -53,3 +63,7 @@ CONFIGURING
  A sample for the internal software token is like:
 
  internal:netscape
+
+DOCUMENTATION
+
+ See docs/mod_nss.html for additional information.
