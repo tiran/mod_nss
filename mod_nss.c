@@ -134,9 +134,9 @@ static const command_rec nss_config_cmds[] = {
                "(`/path/to/dir' - contains PEM encoded certificates)")
 
     /* Deprecated directives. */
-    AP_INIT_RAW_ARGS("SSLLog", ap_set_deprecated, NULL, OR_ALL, 
+    AP_INIT_RAW_ARGS("NSSLog", ap_set_deprecated, NULL, OR_ALL, 
       "SSLLog directive is no longer supported - use ErrorLog."),
-    AP_INIT_RAW_ARGS("SSLLogLevel", ap_set_deprecated, NULL, OR_ALL, 
+    AP_INIT_RAW_ARGS("NSSLogLevel", ap_set_deprecated, NULL, OR_ALL, 
       "SSLLogLevel directive is no longer supported - use LogLevel."),
 #endif
     
