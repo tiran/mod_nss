@@ -70,6 +70,7 @@ SECStatus nss_Init_Tokens(server_rec *s)
                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "The token %s has not been initialized.", PK11_GetTokenName(slot));
             }
+            PK11_FreeSlot(slot);
             continue;
         }
 
@@ -79,6 +80,7 @@ SECStatus nss_Init_Tokens(server_rec *s)
             break;
         }
         parg->retryCount = 0; // reset counter to 0 for the next token
+        PK11_FreeSlot(slot);
     }
     
     /*

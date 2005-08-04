@@ -362,7 +362,7 @@ static void nss_init_ctx_protocol(server_rec *s,
 
     if (mctx->auth.protocols == NULL) {
         ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-            "SSLProtocols not set; using: SSLv3 and TLSv1");
+            "NSSProtocols not set; using: SSLv3 and TLSv1");
         ssl3 = tls = 1;
     } else {
         lprotocols = strdup(mctx->auth.protocols);
@@ -659,6 +659,7 @@ static void nss_init_server_certs(server_rec *s,
     }
     
     mctx->serverkey = PK11_FindPrivateKeyFromCert(slot, mctx->servercert, NULL);
+    PK11_FreeSlot(slot);
 
     if (mctx->serverkey == NULL) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
@@ -703,6 +704,7 @@ static void nss_init_server_certs(server_rec *s,
         nss_die();
     }
     
+#if 1
     secstatus = SSL_ConfigSecureServer(mctx->model, mctx->servercert, mctx->serverkey, mctx->serverKEAType);
     if (secstatus != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
@@ -710,6 +712,7 @@ static void nss_init_server_certs(server_rec *s,
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
+#endif
 
     secstatus = (SECStatus)SSL_HandshakeCallback(mctx->model, (SSLHandshakeCallback)NSSHandshakeCallback, NULL);
     if (secstatus != SECSuccess)
@@ -760,11 +763,34 @@ void nss_init_Child(apr_pool_t *p, server_rec *s)
 
 apr_status_t nss_init_ModuleKill(void *data)
 {
-    /* 
-     * There is nothing stored at the server level to kill at the moment.
-     */
+    SSLSrvConfigRec *sc;
+    server_rec *base_server = (server_rec *)data;
+    server_rec *s;
+    SECStatus rv;
 
-    NSS_Shutdown();
+    /*
+     * Free the non-pool allocated structures
+     * in the per-server configurations
+     */
+    for (s = base_server; s; s = s->next) {
+        sc = mySrvConfig(s);
+
+        if (sc->enabled) {
+            CERT_DestroyCertificate(sc->server->servercert);
+            SECKEY_DestroyPrivateKey(sc->server->serverkey);
+
+            /* Closing this implicitly cleans up the copy of the certificates
+             * and keys associated with any SSL socket */
+            PR_Close(sc->server->model);
+        }
+    }
+
+    if ((rv = NSS_Shutdown()) != SECSuccess) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+             "NSS_Shutdown failed: %d", PR_GetError());
+    }
+
+    PR_Cleanup();
 
     return APR_SUCCESS;
 }
