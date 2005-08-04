@@ -15,6 +15,7 @@
 
 #include "mod_nss.h"
 #include "apr_thread_proc.h"
+#include "ap_mpm.h"
 
 static SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket);
 static SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg);
@@ -107,6 +108,7 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled)
     SECStatus rv;
     SSLModConfigRec *mc = myModConfig(s);
     SSLSrvConfigRec *sc; 
+    int forked = 0;
 
     sc = mySrvConfig(s);
 
@@ -193,7 +195,11 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled)
 
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
         "Initializing SSL Session Cache of size %d. SSL2 timeout = %d, SSL3/TLS timeout = %d.", mc->session_cache_size, mc->session_cache_timeout, mc->ssl3_session_cache_timeout);
-    SSL_ConfigServerSessionIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
+    ap_mpm_query(AP_MPMQ_IS_FORKED, &forked);
+    if (forked)
+        SSL_ConfigMPServerSIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
+    else
+        SSL_ConfigServerSessionIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
 
 }
 
@@ -767,6 +773,7 @@ apr_status_t nss_init_ModuleKill(void *data)
     server_rec *base_server = (server_rec *)data;
     server_rec *s;
     SECStatus rv;
+    int shutdowncache = 0;
 
     /*
      * Free the non-pool allocated structures
@@ -782,15 +789,18 @@ apr_status_t nss_init_ModuleKill(void *data)
             /* Closing this implicitly cleans up the copy of the certificates
              * and keys associated with any SSL socket */
             PR_Close(sc->server->model);
+
+            shutdowncache = 1;
         }
     }
+
+    if (shutdowncache) 
+        SSL_ShutdownServerSessionIDCache();
 
     if ((rv = NSS_Shutdown()) != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
              "NSS_Shutdown failed: %d", PR_GetError());
     }
-
-    PR_Cleanup();
 
     return APR_SUCCESS;
 }
