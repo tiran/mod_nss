@@ -19,6 +19,7 @@
 #include <prtypes.h>
 #include <seccomon.h>
 #include <pk11func.h>
+#include <secmod.h>
 #include "nss_pcache.h"
 
 static char * getstr(const char * cmd, int el);
@@ -301,11 +302,15 @@ int main(int argc, char ** argv)
     char * command;
     char * tokenName;
     char * tokenpw;
+    int fipsmode = 0;
 
-    if (argc < 2 || argc > 3) {
-        fprintf(stderr, "Usage: nss_pcache <directory> <prefix>\n");
+    if (argc < 3 || argc > 4) {
+        fprintf(stderr, "Usage: nss_pcache <fips on/off> <directory> <prefix>\n");
         exit(1);
     }
+
+    if (!strcasecmp(argv[1], "on"))
+        fipsmode = 1;
 
     /* Initialize NSPR */
     PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 256);
@@ -314,7 +319,23 @@ int main(int argc, char ** argv)
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
  
     /* Initialize NSS and open the certificate database read-only. */
-    rv = NSS_Initialize(argv[1], argc == 3 ? argv[2] : NULL, argc == 3 ? argv[2] : NULL, "secmod.db", NSS_INIT_READONLY);
+    rv = NSS_Initialize(argv[2], argc == 3 ? argv[3] : NULL, argc == 3 ? argv[3] : NULL, "secmod.db", NSS_INIT_READONLY);
+
+    if (fipsmode) {
+        if (!PK11_IsFIPS()) {
+            char * internal_name = PR_smprintf("%s",
+                SECMOD_GetInternalModule()->commonName);
+
+            if ((SECMOD_DeleteInternalModule(internal_name) != SECSuccess) ||
+                 !PK11_IsFIPS()) {
+                 NSS_Shutdown();
+                 fprintf(stderr,
+                     "Unable to enable FIPS mode");
+                 exit(1);
+            }
+            PR_smprintf_free(internal_name);
+        } 
+    }
 
     in = PR_GetSpecialFD(PR_StandardInput);
     out = PR_GetSpecialFD(PR_StandardOutput);

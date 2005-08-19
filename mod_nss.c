@@ -66,6 +66,9 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(Engine, FLAG,
                 "SSL switch for the protocol engine "
                 "(`on', `off')")
+    SSL_CMD_SRV(FIPS, FLAG,
+                "FIPS 140-1 mode "
+                "(`on', `off')")
     SSL_CMD_ALL(CipherSuite, TAKE1,
                 "Comma-delimited list of permitted SSL Ciphers, + to enable, - to disable "
                 "(`[+-]XXX,...,[+-]XXX' - see manual)")

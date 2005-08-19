@@ -16,6 +16,7 @@
 #include "mod_nss.h"
 #include "apr_thread_proc.h"
 #include "ap_mpm.h"
+#include <secmod.h>
 
 static SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket);
 static SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg);
@@ -103,7 +104,7 @@ static void nss_add_version_components(apr_pool_t *p,
  *  If sslenabled is not set then there is no need to prompt for the token
  *  passwords. 
  */
-static void nss_init_SSLLibrary(server_rec *s, int sslenabled)
+static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled)
 {
     SECStatus rv;
     SSLModConfigRec *mc = myModConfig(s);
@@ -117,7 +118,7 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled)
 
     /* Do we need to fire up our password helper? */
     if (mc->nInitCount == 1 && sslenabled) {
-        const char * child_argv[3];
+        const char * child_argv[4];
         apr_status_t rv;
 
         if (mc->pphrase_dialog_helper == NULL &&
@@ -128,9 +129,10 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled)
         }
 
         child_argv[0] = mc->pphrase_dialog_helper;
-        child_argv[1] = mc->pCertificateDatabase;
-        child_argv[2] = mc->pDBPrefix;
-        child_argv[3] = NULL;
+        child_argv[1] = fipsenabled ? "on" : "off";
+        child_argv[2] = mc->pCertificateDatabase;
+        child_argv[3] = mc->pDBPrefix;
+        child_argv[4] = NULL;
 
         rv = apr_procattr_create(&mc->procattr, mc->pPool);
 
@@ -177,7 +179,32 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled)
     rv = NSS_Initialize(mc->pCertificateDatabase, mc->pDBPrefix, mc->pDBPrefix, "secmod.db", NSS_INIT_READONLY);
 
     /* Assuming everything is ok so far, check the cert database password(s). */
-    if (sslenabled && (rv != SECSuccess || nss_Init_Tokens(s) != SECSuccess)) {
+    if (sslenabled && (rv != SECSuccess)) {
+        NSS_Shutdown();
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+            "NSS initialization failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
+    }
+
+    if (fipsenabled) {
+        if (!PK11_IsFIPS()) {
+            char * internal_name = PR_smprintf("%s",
+                SECMOD_GetInternalModule()->commonName);
+
+            if ((SECMOD_DeleteInternalModule(internal_name) != SECSuccess) ||
+                 !PK11_IsFIPS()) {
+                 NSS_Shutdown();
+                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                     "Unable to enable FIPS mode on certificate database %s.", mc->pCertificateDatabase);
+                 nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+                 nss_die();
+            }
+            PR_smprintf_free(internal_name);
+        } /* FIPS is already enabled, nothing to do */
+    }
+
+    if (sslenabled && (nss_Init_Tokens(s) != SECSuccess)) {
         NSS_Shutdown();
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "NSS initialization failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
@@ -200,7 +227,6 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled)
         SSL_ConfigMPServerSIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
     else
         SSL_ConfigServerSessionIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
-
 }
 
 int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
@@ -211,6 +237,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     SSLSrvConfigRec *sc; 
     server_rec *s;
     int sslenabled = FALSE;
+    int fipsenabled = FALSE;
 
     mc->nInitCount++;
  
@@ -269,8 +296,22 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
         sc->vhost_id_len = strlen(sc->vhost_id);
 
         /* Fix up stuff that may not have been set */
+        if (sc->fips == UNSET) {
+            sc->fips = FALSE;
+        }
+
+        /* If any servers have SSL, we want sslenabled set so we
+         * can initialize the database. fipsenabled is similar. If
+         * any of the servers have it set, they all will need to use
+         * FIPS mode.
+         */
+
         if (sc->enabled == UNSET) {
             sc->enabled = FALSE;
+        }
+
+        if (sc->fips == TRUE) {
+            fipsenabled = TRUE;
         }
 
         if (sc->enabled == TRUE) {
@@ -282,7 +323,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
         }
     }
 
-    nss_init_SSLLibrary(base_server, sslenabled);
+    nss_init_SSLLibrary(base_server, sslenabled, fipsenabled);
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                  "done Init: Initializing NSS library");
 
@@ -366,33 +407,39 @@ static void nss_init_ctx_protocol(server_rec *s,
 
     ssl2 = ssl3 = tls = 0;
 
-    if (mctx->auth.protocols == NULL) {
-        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-            "NSSProtocols not set; using: SSLv3 and TLSv1");
+    if (mctx->sc->fips) {
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+            "In FIPS mode, setting SSLv3 and TLSv1");
         ssl3 = tls = 1;
     } else {
-        lprotocols = strdup(mctx->auth.protocols);
-        ap_str_tolower(lprotocols);
-
-        if (strstr(lprotocols, "all") != NULL) {
-            ssl2 = ssl3 = tls = 1;
+        if (mctx->auth.protocols == NULL) {
+            ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
+                "NSSProtocols not set; using: SSLv3 and TLSv1");
+            ssl3 = tls = 1;
         } else {
-            if (strstr(lprotocols, "sslv2") != NULL) {
-                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling SSL2");
-                ssl2 = 1;
-            }
+            lprotocols = strdup(mctx->auth.protocols);
+            ap_str_tolower(lprotocols);
 
-            if (strstr(lprotocols, "sslv3") != NULL) {
-                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling SSL3");
-                ssl3 = 1;
-            }
+            if (strstr(lprotocols, "all") != NULL) {
+                ssl2 = ssl3 = tls = 1;
+            } else {
+                if (strstr(lprotocols, "sslv2") != NULL) {
+                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling SSL2");
+                    ssl2 = 1;
+                }
 
-            if (strstr(lprotocols, "tlsv1") != NULL) {
-                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling TLS");
-                tls = 1;
+                if (strstr(lprotocols, "sslv3") != NULL) {
+                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling SSL3");
+                    ssl3 = 1;
+                }
+
+                if (strstr(lprotocols, "tlsv1") != NULL) {
+                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling TLS");
+                    tls = 1;
+                }
             }
+            free(lprotocols);
         }
-        free(lprotocols);
     }
 
     stat = SECSuccess;
@@ -520,9 +567,17 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
     }
     ciphers = strdup(suite);
 
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+    if (mctx->sc->fips) {
+        free(ciphers);
+        ciphers = strdup("+fips_3des_sha, +fips_des_sha");
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                 "FIPS mode, configuring permitted SSL ciphers [%s]",
+                 ciphers);
+    } else {
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                  "Configuring permitted SSL ciphers [%s]",
                  suite);
+    }
 
     /* Disable all NSS supported cipher suites. This is to prevent any new
      * NSS cipher suites from getting automatically and unintentionally
