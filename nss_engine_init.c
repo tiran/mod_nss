@@ -104,7 +104,8 @@ static void nss_add_version_components(apr_pool_t *p,
  *  If sslenabled is not set then there is no need to prompt for the token
  *  passwords. 
  */
-static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled)
+static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
+                                int ocspenabled)
 {
     SECStatus rv;
     SSLModConfigRec *mc = myModConfig(s);
@@ -227,6 +228,12 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled)
         SSL_ConfigMPServerSIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
     else
         SSL_ConfigServerSessionIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
+
+    if (ocspenabled) {
+        CERT_EnableOCSPChecking(CERT_GetDefaultCertDB());
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+            "OCSP is enabled.");
+    }
 }
 
 int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
@@ -238,6 +245,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     server_rec *s;
     int sslenabled = FALSE;
     int fipsenabled = FALSE;
+    int ocspenabled = FALSE;
 
     mc->nInitCount++;
  
@@ -300,6 +308,10 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             sc->fips = FALSE;
         }
 
+        if (sc->ocsp == UNSET) {
+            sc->ocsp = FALSE;
+        }
+
         /* If any servers have SSL, we want sslenabled set so we
          * can initialize the database. fipsenabled is similar. If
          * any of the servers have it set, they all will need to use
@@ -314,6 +326,10 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             fipsenabled = TRUE;
         }
 
+        if (sc->ocsp == TRUE) {
+            ocspenabled = TRUE;
+        }
+
         if (sc->enabled == TRUE) {
             sslenabled = TRUE;
         }
@@ -323,7 +339,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
         }
     }
 
-    nss_init_SSLLibrary(base_server, sslenabled, fipsenabled);
+    nss_init_SSLLibrary(base_server, sslenabled, fipsenabled, ocspenabled);
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                  "done Init: Initializing NSS library");
 
@@ -337,7 +353,6 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
      */
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
                  "Init: Initializing (virtual) servers for SSL");
-
 
     for (s = base_server; s; s = s->next) {
         sc = mySrvConfig(s);

@@ -59,6 +59,9 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(PassPhraseHelper, TAKE1,
                 "Process to securely store SSL tokens to handle restarts "
                 "(`/path/to/file`")
+    SSL_CMD_SRV(OCSP, FLAG,
+                "OCSP (Online Certificate Status Protocol)"
+                "(`on', `off')")
 
     /*
      * Per-server context configuration directives

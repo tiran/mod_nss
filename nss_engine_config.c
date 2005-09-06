@@ -102,6 +102,7 @@ static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
     SSLSrvConfigRec *sc = apr_palloc(p, sizeof(*sc));
     
     sc->mc                          = NULL;
+    sc->ocsp                        = UNSET;
     sc->fips                        = UNSET;
     sc->enabled                     = UNSET;
     sc->proxy_enabled               = UNSET;
@@ -164,6 +165,7 @@ void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
     SSLSrvConfigRec *mrg  = nss_config_server_new(p);
 
     cfgMerge(mc, NULL);
+    cfgMergeBool(ocsp);
     cfgMergeBool(fips);
     cfgMergeBool(enabled);
     cfgMergeBool(proxy_enabled);
@@ -270,6 +272,15 @@ const char *nss_cmd_NSSFIPS(cmd_parms *cmd, void *dcfg, int flag)
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->fips = flag ? TRUE : FALSE;
+ 
+    return NULL;
+}
+
+const char *nss_cmd_NSSOCSP(cmd_parms *cmd, void *dcfg, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->ocsp = flag ? TRUE : FALSE;
  
     return NULL;
 }
