@@ -36,7 +36,7 @@ BUILDING
  Include conf/nss.conf
 
  You'll need to change the default ports in nss.conf from 443 to
- something else if you aren't starting this as root.
+ something else if you aren't starting the server as root.
 
 CONFIGURING NSS
 
@@ -63,6 +63,13 @@ CONFIGURING NSS
  A sample for the internal software token is like:
 
  internal:netscape
+
+BUILT-IN ROOT CAs
+
+NSS provides a list of built-in CA's (VeriSign, Thawte, etc). This takes the
+form of a shared library, libnssckbi.so. If this library is placed in the
+same directory as the certificate database then it will be loaded
+automatically when the server starts.
 
 DOCUMENTATION
 
