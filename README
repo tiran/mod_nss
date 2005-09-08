@@ -74,3 +74,40 @@ automatically when the server starts.
 DOCUMENTATION
 
  See docs/mod_nss.html for additional information.
+
+ For NSS documentation, see http://www.mozilla.org/projects/security/pki/nss/
+
+REQUESTING A CERTIFICATE
+
+ The NSS command-line tools may be used to generate a certificate request
+ suitable for submission to a local CA or a commerical CA like Verisign,
+ and install the issued certificate into your local database. A sample
+ request may look something like this. This assumes that your certificate
+ database directory (NSSCertificateDatabase) is set to /opt/fortitude/alias
+
+ Step 1 Create the database. This assumes you want your certificate database
+        in /etc/httpd/alias
+
+ % cd /etc/httpd
+ % mkdir alias
+ % cd alias
+ % certutil -N -d .
+
+ Step 2 Generate a PKCS#10 certificate request
+
+ % certutil -R -d . -s "CN=test.example.com, O=Example, c=US" -o certreq.txt -a
+
+ The file certreq.txt contains an ASCII representation of the certificate
+ request and may be submitted to a CA for approval.
+
+ Step 3 The CA has issued your certificate. In this example, you have the
+        PKCS#7 (ASCII) copy in the file cert.txt. You have a copy of the CA
+        certificate chain in ca.txt.
+
+ % certutil -A -d . -n Server-Cert -t "u,u,u" -a < cert.txt 
+ % certutil -A -d . -n "My CA" -t "CTu,CTu,CTu" -a < ca.txt 
+
+ Step 4 Verify that the certificate and CA are installed correctly
+
+ % certutil -V -u V -d . -n Server-Cert
+
