@@ -350,8 +350,19 @@ Example</span><br style="font-weight: bold;">
 <br>
 Enables or disables FIPS 140 mode. This replaces the standard
 internal PKCS#11 module with a FIPS-enabled one. It also forces the
-enabled protocols to SSLv3 and TLSv1 and disables all ciphers but the
-FIPS ones.<br>
+enabled protocols to TLSv1 and disables all ciphers but the
+FIPS ones. You may still select which ciphers you would like
+limited to those that are FIPS-certified. Any non-FIPS that are
+included in the NSSCipherSuite entry are automatically disabled.
+The allowable ciphers are:<br>
+<ul>
+<li>rsa_3des_sha</li>
+<li>rsa_des_sha</li>
+<li>fips_3des_sha</li>
+<li>fips_des_sha</li>
+<li>rsa_des_56_sha</li>
+<li>fortezza</li>
+</ul>
 <span style="font-weight: bold;"><br>
 </span>FIPS is disabled by default.<br>
 <span style="font-weight: bold;"><br>
