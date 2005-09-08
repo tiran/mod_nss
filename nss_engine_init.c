@@ -195,9 +195,9 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
 
             if ((SECMOD_DeleteInternalModule(internal_name) != SECSuccess) ||
                  !PK11_IsFIPS()) {
-                 NSS_Shutdown();
                  ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                      "Unable to enable FIPS mode on certificate database %s.", mc->pCertificateDatabase);
+                 NSS_Shutdown();
                  nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
                  nss_die();
             }
@@ -424,8 +424,8 @@ static void nss_init_ctx_protocol(server_rec *s,
 
     if (mctx->sc->fips) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "In FIPS mode, setting SSLv3 and TLSv1");
-        ssl3 = tls = 1;
+            "In FIPS mode, enabling TLSv1");
+        tls = 1;
     } else {
         if (mctx->auth.protocols == NULL) {
             ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
@@ -568,8 +568,10 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
                                       modnss_ctx_t *mctx)
 {
     PRBool cipher_state[ciphernum];
+    PRBool fips_state[ciphernum];
     const char *suite = mctx->auth.cipher_suite; 
     char * ciphers;
+    char * fipsciphers = NULL;
     int i;
  
     /* 
@@ -582,17 +584,44 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
     }
     ciphers = strdup(suite);
 
+#define CIPHERSIZE 2048
+
     if (mctx->sc->fips) {
-        free(ciphers);
-        ciphers = strdup("+fips_3des_sha, +fips_des_sha");
+        SSLCipherSuiteInfo suite;
+        int i;
+        int nfound = 0;
+
+        fipsciphers = (char *)malloc(CIPHERSIZE);
+        fipsciphers[0] = '\0';
+
+        for (i=0; i<ciphernum;i++) {
+            if (SSL_GetCipherSuiteInfo(ciphers_def[i].num,
+                &suite, sizeof suite) == SECSuccess)
+            {
+                /* We could ignore the non-standard ciphers here but lets
+                 * allow the user to choose.
+                 */
+                if (suite.isFIPS)
+                {
+                     strncat(fipsciphers, "+", CIPHERSIZE - strlen(fipsciphers));
+                     strncat(fipsciphers, ciphers_def[i].name, CIPHERSIZE - strlen(fipsciphers));
+                     strncat(fipsciphers, ",", CIPHERSIZE - strlen(fipsciphers));
+                     nfound++;
+                }
+            }
+        }
+
+        if (nfound > 0) {
+            fipsciphers[strlen(fipsciphers) - 1] = '\0'; /* remove last comma */
+        }
+
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                 "FIPS mode, configuring permitted SSL ciphers [%s]",
-                 ciphers);
-    } else {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                 "Configuring permitted SSL ciphers [%s]",
+                 "FIPS mode enabled, permitted SSL ciphers are: [%s]",
+                 fipsciphers);
+    } 
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                "Configuring permitted SSL ciphers [%s]",
                  suite);
-    }
 
     /* Disable all NSS supported cipher suites. This is to prevent any new
      * NSS cipher suites from getting automatically and unintentionally
@@ -610,13 +639,32 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
     for (i=0; i<ciphernum; i++)
     {
         cipher_state[i] = PR_FALSE;
+        fips_state[i] = PR_FALSE;
     }
 
     if (nss_parse_ciphers(s, ciphers, cipher_state) == -1) {
         nss_die();
     }
 
+    if (mctx->sc->fips) {
+        if (nss_parse_ciphers(s, fipsciphers, fips_state) == -1) {
+            nss_die();
+        }
+    }
+
     free(ciphers);
+    free(fipsciphers);
+
+    /* If FIPS is enabled, see if any non-FIPS ciphers were selected */
+    if (mctx->sc->fips) {
+        for (i=0; i<ciphernum; i++) {
+            if (cipher_state[i] == PR_TRUE && fips_state[i] == PR_FALSE) {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                    "Cipher %s is enabled but this is not a FIPS cipher, disabling.", ciphers_def[i].name);
+                cipher_state[i] = PR_FALSE;
+            }   
+        }
+    }
 
     /* See if any ciphers have been enabled for a given protocol */
     if (mctx->ssl2 && countciphers(cipher_state, SSL2) == 0) {
