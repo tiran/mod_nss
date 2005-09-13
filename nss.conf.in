@@ -72,7 +72,7 @@ NSSEngine on
 #   SSL Cipher Suite:
 #   List the ciphers that the client is permitted to negotiate.
 #   See the mod_nss documentation for a complete list.
-NSSCipherSuite -des,-desede3,-rc2,-rc2export,-rc4,-rc4export,+rsa_3des_sha,-rsa_des_56_sha,+rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,-rsa_rc4_40_md5,-rsa_rc4_56_sha,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,+fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha
+NSSCipherSuite +rsa_3des_sha,-rsa_des_56_sha,+rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,-rsa_rc4_40_md5,-rsa_rc4_56_sha,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,+fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha
 
 NSSProtocol SSLv3,TLSv1
 
@@ -96,6 +96,11 @@ NSSCertificateDatabase @apache_conf@
 #   Client certificate verification type.  Types are none, optional and
 #   require.
 #NSSVerifyClient none
+
+#
+#   Online Certificate Status Protocol (OCSP).
+#   Verify that certificates have not been revoked before accepting them.
+#NSSOCSP off
 
 #   Access Control:
 #   With SSLRequire you can do per-directory access control based

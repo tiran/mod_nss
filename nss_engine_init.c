@@ -143,10 +143,6 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
             nss_die();
         }
 
-#if 0
-        apr_procattr_io_set(mc->procattr, APR_PARENT_BLOCK, APR_FULL_NONBLOCK,
-                             APR_FULL_NONBLOCK);
-#endif
         apr_procattr_io_set(mc->procattr, APR_PARENT_BLOCK, APR_PARENT_BLOCK,
                              APR_FULL_NONBLOCK);
         apr_procattr_error_check_set(mc->procattr, 1);
@@ -436,11 +432,19 @@ static void nss_init_ctx_protocol(server_rec *s,
             ap_str_tolower(lprotocols);
 
             if (strstr(lprotocols, "all") != NULL) {
+#ifdef WANT_SSL2
                 ssl2 = ssl3 = tls = 1;
+#else
+                ssl3 = tls = 1;
+#endif
             } else {
                 if (strstr(lprotocols, "sslv2") != NULL) {
+#ifdef WANT_SSL2
                     ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling SSL2");
                     ssl2 = 1;
+#else
+                    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s, "SSL2 is not supported");
+#endif
                 }
 
                 if (strstr(lprotocols, "sslv3") != NULL) {
@@ -933,7 +937,7 @@ SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket)
     PRErrorCode err = PR_GetError();
 
     ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-        "Bad remote server certificate: %d", err);
+        "Bad certificate: %d", err);
 
     return SECFailure;
 }

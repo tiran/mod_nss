@@ -17,6 +17,7 @@
 <a href="#Directives">Configuration Directives</a><br>
 <a href="#Environment">Environment Variables</a><br>
 <a href="#Database_Management">Database Management</a><br>
+<a href="#SSLv2">Why is SSLv2 disabled?</a><br>
 <br>
 <h1><a name="Introduction"></a>Introduction</h1>
 The <a href="http://www.modssl.org/">mod_ssl</a> package was
@@ -340,7 +341,7 @@ The default value is 86400 (24 hours).<br>
 Enables or disables the SSL protocol. This is usually used within a
 VirtualHost tag to enable SSL for a particular virtual host.<br>
 <span style="font-weight: bold;"><br>
-</span>SSL is disabled by default.<br>
+</span>SSL is disabled by default. <br>
 <span style="font-weight: bold;"><br>
 Example</span><br style="font-weight: bold;">
 <br>
@@ -389,7 +390,8 @@ Example</span><br style="font-weight: bold;">
 A space-separated list of the SSL ciphers used, with the prefix <code>+</code>
 to enable or <code>-</code> to disable.<br>
 <br>
-All ciphers are disabled by default.<br>
+All ciphers are disabled by default. The SSLv2 ciphers cannot be enabled because
+<a href="#SSLv2">SSLv2</a> is not allowed in mod_nss.<br>
 <br>
 Available ciphers are:<br>
 <br>
@@ -567,8 +569,7 @@ definition<br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSCipherSuite
--des,-desede3,-rc2,-rc2export,-rc4,-rc4export,+rsa_3des_sha,-rsa_des_56_sha,<br>
-+rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,<br>
++rsa_3des_sha,-rsa_des_56_sha,+rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,<br>
 -rsa_rc4_40_md5,-rsa_rc4_56_sha,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,<br>
 +fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha</code><br>
 <br>
@@ -580,13 +581,13 @@ specifically but allows ciphers for that protocol to be used at all.<br>
 <br>
 Options are:<br>
 <ul>
-  <li><code>SSLv2</code></li>
   <li><code>SSLv3</code></li>
   <li><code>TLSv1</code></li>
   <li><code>All</code></li>
 </ul>
 Note that this differs from mod_ssl in that you can't add or subtract
 protocols.<br>
+<a href="#SSLv2">SSLv2</a> is not supported at this time.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
@@ -607,9 +608,9 @@ be enclosed in double quotes.<br>
 <code>NSSNickname Server-Cert</code><br>
 <code>NSSNickname "This contains a space"</code><br>
 <br>
-<big><big>NSSEnforceValidCerts<br>
+NSSEnforceValidCerts<br>
 <br>
-<small><small>By default mod_nss will not start up if the server
+By default mod_nss will not start up if the server
 certificate is not valid. This means that if the certificate has
 expired or is signed by a CA that is not trusted in the NSS certificate
 database the server will not start. If you would like the server to
@@ -620,10 +621,10 @@ not recommended.<br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSEnforceValidCerts on</code><br>
-</small></small><br>
+<br>
 NSSVerifyClient<br>
-<small><small><br>
-</small><small><small><small>Determines whether Client Certificate
+<br>
+Determines whether Client Certificate
 Authentication will be requested or required. This may be set in a
 per-server or per-directory context. At the server level the
 certificate is requested during the initial SSL handshake. In the
@@ -631,25 +632,25 @@ per-directry context an SSL renogitation is required and a certificate
 requested from the client.<br>
 <br>
 Available options are:<br>
-</small></small></small></small></big></big>
+
 <ul>
-  <li><big><big><small><small><code>none</code>: no client certificate
+  <li><code>none</code>: no client certificate
 is required or requested<br>
-    </small></small></big></big></li>
-  <li><big><big><small><small><code>optional</code>: a client
+    </li>
+  <li>code>optional</code>: a client
 certificate is requested but if one is not available, the connection
 may continue.<br>
-    </small></small></big></big></li>
-  <li><big><big><small><small><code>require</code>: a valid client
+    </li>
+  <li><code>require</code>: a valid client
 certificate is required for the connection to continue.<br>
-    </small></small></big></big></li>
+    </li>
 </ul>
-<big><big><small><small><small><small>The mod_ssl option <code>option_no_ca</code>
+The mod_ssl option <code>option_no_ca</code>
 is not supported.<br>
 <br>
 There is no <code>NSSVerifyDepth</code> directive. NSS always verifies
 the entire certificate chain.<br>
-</small></small></small></small></big></big><br>
+<br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSVerifyClient require</code><br>
@@ -1105,7 +1106,11 @@ have NSS validate it:<br>
 <br>
 <code>% certutil -V -n Server-Cert -u V -d .<br>
 certutil: certificate is valid</code><br>
-<br>
+<h1><a name="SSLv2"></a>Why is SSLv2 disabled?</h1>
+All major browsers (Firefox, Internet Explorer, Mozilla, Netscape, Opera, and
+Safari) support SSL 3 and TLS so there is no need for a web server to support
+SSL 2. There are some known attacks against SSL 2 that are handled by
+SSL 3/TLS. SSL2 also doesn't support useful features like client authentication.
 <br>
 </body>
 </html>

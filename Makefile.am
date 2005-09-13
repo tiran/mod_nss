@@ -10,7 +10,8 @@ libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engin
 
 ## Set the includes and libraries needed
 INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
-LIBS = @nspr_lib@ @nss_lib@ -lnspr4 -lplc4 -lplds4 -lssl3 -lsmime3 -lnss3 -lsoftokn3
+LIBS = @nspr_lib@ @nss_lib@ -lssl3 -lsmime3 -lnss3 -lsoftokn3 -lplc4 -lplds4 -lnspr4
+@SSL2_TRUE@AM_CFLAGS=-DWANT_SSL2
 
 install-libLTLIBRARIES: libmodnss.la
 	@APXS@ -i -a -n nss libmodnss.la
