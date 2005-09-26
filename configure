@@ -1022,7 +1022,11 @@ Optional Packages:
   --with-apr-config 	Use apr-config to determine the APR directory
   --with-apxs=PATH 	Path to apxs
   --with-nspr=PATH 	Netscape Portable Runtime (NSPR) directory
+  --with-nspr-inc=PATH        Netscape Portable Runtime (NSPR) include file directory
+  --with-nspr-lib=PATH        Netscape Portable Runtime (NSPR) library directory
   --with-nss=PATH 	Network Security Services (NSS) directory
+  --with-nss-inc=PATH         Network Security Services (NSS) include directory
+  --with-nss-lib=PATH         Network Security Services (NSS) library directory
 
 Some influential environment variables:
   CC          C compiler command
@@ -4537,7 +4541,7 @@ test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4540 "configure"' > conftest.$ac_ext
+  echo '#line 4544 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5066,7 +5070,7 @@ chmod -w .
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
 compiler_c_o=no
-if { (eval echo configure:5069: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+if { (eval echo configure:5073: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
   # The compiler can only warn and ignore the option if not recognized
   # So say no if there are warnings
   if test -s out/conftest.err; then
@@ -6250,7 +6254,7 @@ linux-gnu*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*)
-    echo '#line 6253 "configure"' > conftest.$ac_ext
+    echo '#line 6257 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -6922,7 +6926,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 6925 "configure"
+#line 6929 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -7020,7 +7024,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 7023 "configure"
+#line 7027 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8468,7 +8472,6 @@ else
 fi
 
 
-
 { echo "$as_me:$LINENO: checking for apr-config..." >&5
 echo "$as_me: checking for apr-config..." >&6;}
 # check for --with-apr-config
@@ -8569,10 +8572,14 @@ fi;
 # if no apxs found yet, check /usr/local/apache/sbin
 # since it's the default Apache location
 if test -z "$APXS"; then
-  echo "$as_me:$LINENO: checking for apxs in /usr/local/apache/sbin" >&5
-echo $ECHO_N "checking for apxs in /usr/local/apache/sbin... $ECHO_C" >&6
+  echo "$as_me:$LINENO: checking for apxs in /usr/local/apache/sbin and /usr/sbin" >&5
+echo $ECHO_N "checking for apxs in /usr/local/apache/sbin and /usr/sbin... $ECHO_C" >&6
   if test -x /usr/local/apache/sbin/apxs; then
     APXS=/usr/local/apache/sbin/apxs
+    echo "$as_me:$LINENO: result: found $APXS. Use --with-apxs to specify another." >&5
+echo "${ECHO_T}found $APXS. Use --with-apxs to specify another." >&6
+  elif test -x /usr/sbin/apxs; then
+    APXS=/usr/sbin/apxs
     echo "$as_me:$LINENO: result: found $APXS. Use --with-apxs to specify another." >&5
 echo "${ECHO_T}found $APXS. Use --with-apxs to specify another." >&6
   else
@@ -8662,7 +8669,7 @@ echo $ECHO_N "checking for --with-nspr... $ECHO_C" >&6
 if test "${with_nspr+set}" = set; then
   withval="$with_nspr"
 
-  if test -e "$withval"/include/nspr.h
+  if test -e "$withval"/include/nspr.h -a -d "$withval"/lib
   then
     echo "$as_me:$LINENO: result: using $withval" >&5
 echo "${ECHO_T}using $withval" >&6
@@ -8681,10 +8688,60 @@ else
 echo "${ECHO_T}no" >&6
 fi;
 
+# check for --with-nspr-inc
+echo "$as_me:$LINENO: checking for --with-nspr-inc" >&5
+echo $ECHO_N "checking for --with-nspr-inc... $ECHO_C" >&6
+
+# Check whether --with-nspr-inc or --without-nspr-inc was given.
+if test "${with_nspr_inc+set}" = set; then
+  withval="$with_nspr_inc"
+
+  if test -e "$withval"/nspr.h
+  then
+    echo "$as_me:$LINENO: result: using $withval" >&5
+echo "${ECHO_T}using $withval" >&6
+    nspr_inc="-I$withval"
+  else
+    echo
+    { { echo "$as_me:$LINENO: error: $withval not found" >&5
+echo "$as_me: error: $withval not found" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi;
+
+# check for --with-nspr-lib
+echo "$as_me:$LINENO: checking for --with-nspr-lib" >&5
+echo $ECHO_N "checking for --with-nspr-lib... $ECHO_C" >&6
+
+# Check whether --with-nspr-lib or --without-nspr-lib was given.
+if test "${with_nspr_lib+set}" = set; then
+  withval="$with_nspr_lib"
+
+  if test -d "$withval"
+  then
+    echo "$as_me:$LINENO: result: using $withval" >&5
+echo "${ECHO_T}using $withval" >&6
+    nspr_lib="-L$withval"
+  else
+    echo
+    { { echo "$as_me:$LINENO: error: $withval not found" >&5
+echo "$as_me: error: $withval not found" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi;
+
 # if NSPR is not found yet, try pkg-config
 
 # last resort
-if test -z "$NSPRDIR"; then
+if test -z "$nspr_inc" -o -z "$nspr_lib"; then
   echo "$as_me:$LINENO: checking for nspr with pkg-config" >&5
 echo $ECHO_N "checking for nspr with pkg-config... $ECHO_C" >&6
   # Extract the first word of "pkg-config", so it can be a program name with args.
@@ -8727,9 +8784,9 @@ echo "${ECHO_T}no" >&6
 fi
 
   if test -n "$PKG_CONFIG"; then
-    if $PKG_CONFIG --exists mozilla-nspr; then
-      nspr_inc=`$PKG_CONFIG --cflags-only-I mozilla-nspr`
-      nspr_lib=`$PKG_CONFIG --libs-only-L mozilla-nspr`
+    if $PKG_CONFIG --exists nspr; then
+      nspr_inc=`$PKG_CONFIG --cflags-only-I nspr`
+      nspr_lib=`$PKG_CONFIG --libs-only-L nspr`
     else
       { { echo "$as_me:$LINENO: error: NSPR not found, specify with --with-nspr." >&5
 echo "$as_me: error: NSPR not found, specify with --with-nspr." >&2;}
@@ -8749,7 +8806,7 @@ echo $ECHO_N "checking for --with-nss... $ECHO_C" >&6
 if test "${with_nss+set}" = set; then
   withval="$with_nss"
 
-  if test -e "$withval"/include/nss.h
+  if test -e "$withval"/include/nss.h -a -d "$withval"/lib
   then
     echo "$as_me:$LINENO: result: using $withval" >&5
 echo "${ECHO_T}using $withval" >&6
@@ -8768,10 +8825,60 @@ else
 echo "${ECHO_T}no" >&6
 fi;
 
+# check for --with-nss-inc
+echo "$as_me:$LINENO: checking for --with-nss-inc" >&5
+echo $ECHO_N "checking for --with-nss-inc... $ECHO_C" >&6
+
+# Check whether --with-nss-inc or --without-nss-inc was given.
+if test "${with_nss_inc+set}" = set; then
+  withval="$with_nss_inc"
+
+  if test -e "$withval"/nss.h
+  then
+    echo "$as_me:$LINENO: result: using $withval" >&5
+echo "${ECHO_T}using $withval" >&6
+    nss_inc="-I$withval"
+  else
+    echo
+    { { echo "$as_me:$LINENO: error: $withval not found" >&5
+echo "$as_me: error: $withval not found" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi;
+
+# check for --with-nss-lib
+echo "$as_me:$LINENO: checking for --with-nss-lib" >&5
+echo $ECHO_N "checking for --with-nss-lib... $ECHO_C" >&6
+
+# Check whether --with-nss-lib or --without-nss-lib was given.
+if test "${with_nss_lib+set}" = set; then
+  withval="$with_nss_lib"
+
+  if test -d "$withval"
+  then
+    echo "$as_me:$LINENO: result: using $withval" >&5
+echo "${ECHO_T}using $withval" >&6
+    nss_lib="-L$withval"
+  else
+    echo
+    { { echo "$as_me:$LINENO: error: $withval not found" >&5
+echo "$as_me: error: $withval not found" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi;
+
 # if NSS is not found yet, try pkg-config
 
 # last resort
-if test -z "$NSSDIR"; then
+if test -z "$nss_inc" -o -z "$nss_lib"; then
   echo "$as_me:$LINENO: checking for nss with pkg-config" >&5
 echo $ECHO_N "checking for nss with pkg-config... $ECHO_C" >&6
   # Extract the first word of "pkg-config", so it can be a program name with args.
@@ -8814,9 +8921,9 @@ echo "${ECHO_T}no" >&6
 fi
 
   if test -n "$PKG_CONFIG"; then
-    if $PKG_CONFIG --exists mozilla-nss; then
-      nss_inc=`$PKG_CONFIG --cflags-only-I mozilla-nss`
-      nss_lib=`$PKG_CONFIG --libs-only-L mozilla-nss`
+    if $PKG_CONFIG --exists nss; then
+      nss_inc=`$PKG_CONFIG --cflags-only-I nss`
+      nss_lib=`$PKG_CONFIG --libs-only-L nss`
     else
       { { echo "$as_me:$LINENO: error: NSS not found, specify with --with-nss." >&5
 echo "$as_me: error: NSS not found, specify with --with-nss." >&2;}

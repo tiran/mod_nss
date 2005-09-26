@@ -73,9 +73,12 @@ AC_MSG_RESULT(no))
 # if no apxs found yet, check /usr/local/apache/sbin
 # since it's the default Apache location
 if test -z "$APXS"; then
-  AC_MSG_CHECKING(for apxs in /usr/local/apache/sbin)
+  AC_MSG_CHECKING(for apxs in /usr/local/apache/sbin and /usr/sbin)
   if test -x /usr/local/apache/sbin/apxs; then
     APXS=/usr/local/apache/sbin/apxs
+    AC_MSG_RESULT([found $APXS. Use --with-apxs to specify another.])
+  elif test -x /usr/sbin/apxs; then
+    APXS=/usr/sbin/apxs
     AC_MSG_RESULT([found $APXS. Use --with-apxs to specify another.])
   else
     AC_MSG_RESULT(no)
@@ -114,7 +117,7 @@ AC_CHECKING(for NSPR)
 AC_MSG_CHECKING(for --with-nspr)
 AC_ARG_WITH(nspr, [  --with-nspr=PATH 	Netscape Portable Runtime (NSPR) directory],
 [
-  if test -e "$withval"/include/nspr.h
+  if test -e "$withval"/include/nspr.h -a -d "$withval"/lib
   then
     AC_MSG_RESULT([using $withval])
     NSPRDIR=$withval
@@ -127,16 +130,46 @@ AC_ARG_WITH(nspr, [  --with-nspr=PATH 	Netscape Portable Runtime (NSPR) director
 ],
 AC_MSG_RESULT(no))
 
+# check for --with-nspr-inc
+AC_MSG_CHECKING(for --with-nspr-inc)
+AC_ARG_WITH(nspr-inc, [  --with-nspr-inc=PATH        Netscape Portable Runtime (NSPR) include file directory],
+[
+  if test -e "$withval"/nspr.h
+  then
+    AC_MSG_RESULT([using $withval])
+    nspr_inc="-I$withval"
+  else
+    echo
+    AC_MSG_ERROR([$withval not found])
+  fi
+],
+AC_MSG_RESULT(no))
+
+# check for --with-nspr-lib
+AC_MSG_CHECKING(for --with-nspr-lib)
+AC_ARG_WITH(nspr-lib, [  --with-nspr-lib=PATH        Netscape Portable Runtime (NSPR) library directory],
+[
+  if test -d "$withval"
+  then
+    AC_MSG_RESULT([using $withval])
+    nspr_lib="-L$withval"
+  else
+    echo
+    AC_MSG_ERROR([$withval not found])
+  fi
+],
+AC_MSG_RESULT(no))
+
 # if NSPR is not found yet, try pkg-config
 
 # last resort
-if test -z "$NSPRDIR"; then
+if test -z "$nspr_inc" -o -z "$nspr_lib"; then
   AC_MSG_CHECKING(for nspr with pkg-config)
   AC_PATH_PROG(PKG_CONFIG, pkg-config)
   if test -n "$PKG_CONFIG"; then
-    if $PKG_CONFIG --exists mozilla-nspr; then
-      nspr_inc=`$PKG_CONFIG --cflags-only-I mozilla-nspr`
-      nspr_lib=`$PKG_CONFIG --libs-only-L mozilla-nspr`
+    if $PKG_CONFIG --exists nspr; then
+      nspr_inc=`$PKG_CONFIG --cflags-only-I nspr`
+      nspr_lib=`$PKG_CONFIG --libs-only-L nspr`
     else
       AC_MSG_ERROR([NSPR not found, specify with --with-nspr.])
     fi
@@ -149,7 +182,7 @@ AC_CHECKING(for NSS)
 AC_MSG_CHECKING(for --with-nss)
 AC_ARG_WITH(nss, [  --with-nss=PATH 	Network Security Services (NSS) directory],
 [
-  if test -e "$withval"/include/nss.h
+  if test -e "$withval"/include/nss.h -a -d "$withval"/lib
   then
     AC_MSG_RESULT([using $withval])
     NSSDIR=$withval
@@ -162,16 +195,46 @@ AC_ARG_WITH(nss, [  --with-nss=PATH 	Network Security Services (NSS) directory],
 ],
 AC_MSG_RESULT(no))
 
+# check for --with-nss-inc
+AC_MSG_CHECKING(for --with-nss-inc)
+AC_ARG_WITH(nss-inc, [  --with-nss-inc=PATH         Network Security Services (NSS) include directory],
+[
+  if test -e "$withval"/nss.h
+  then
+    AC_MSG_RESULT([using $withval])
+    nss_inc="-I$withval"
+  else
+    echo
+    AC_MSG_ERROR([$withval not found])
+  fi
+],
+AC_MSG_RESULT(no))
+
+# check for --with-nss-lib
+AC_MSG_CHECKING(for --with-nss-lib)
+AC_ARG_WITH(nss-lib, [  --with-nss-lib=PATH         Network Security Services (NSS) library directory],
+[
+  if test -d "$withval"
+  then
+    AC_MSG_RESULT([using $withval])
+    nss_lib="-L$withval"
+  else
+    echo
+    AC_MSG_ERROR([$withval not found])
+  fi
+],
+AC_MSG_RESULT(no))
+
 # if NSS is not found yet, try pkg-config
 
 # last resort
-if test -z "$NSSDIR"; then
+if test -z "$nss_inc" -o -z "$nss_lib"; then
   AC_MSG_CHECKING(for nss with pkg-config)
   AC_PATH_PROG(PKG_CONFIG, pkg-config)
   if test -n "$PKG_CONFIG"; then
-    if $PKG_CONFIG --exists mozilla-nss; then
-      nss_inc=`$PKG_CONFIG --cflags-only-I mozilla-nss`
-      nss_lib=`$PKG_CONFIG --libs-only-L mozilla-nss`
+    if $PKG_CONFIG --exists nss; then
+      nss_inc=`$PKG_CONFIG --cflags-only-I nss`
+      nss_lib=`$PKG_CONFIG --libs-only-L nss`
     else
       AC_MSG_ERROR([NSS not found, specify with --with-nss.])
     fi
