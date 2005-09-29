@@ -69,6 +69,8 @@ static void modnss_ctx_init(modnss_ctx_t *mctx)
 {
     mctx->sc                  = NULL; /* set during module init */
 
+    mctx->as_server           = PR_TRUE;
+
     mctx->ssl2                = PR_FALSE;
     mctx->ssl3                = PR_FALSE;
     mctx->tls                 = PR_FALSE;
@@ -87,6 +89,18 @@ static void modnss_ctx_init(modnss_ctx_t *mctx)
 
 }
 
+static void modnss_ctx_init_proxy(SSLSrvConfigRec *sc,
+                                  apr_pool_t *p)
+{
+    modnss_ctx_t *mctx;
+
+    mctx = sc->proxy = apr_palloc(p, sizeof(*sc->proxy));
+
+    modnss_ctx_init(mctx);
+
+    mctx->as_server = PR_FALSE;
+}
+
 static void modnss_ctx_init_server(SSLSrvConfigRec *sc,
                                    apr_pool_t *p)
 {
@@ -95,6 +109,8 @@ static void modnss_ctx_init_server(SSLSrvConfigRec *sc,
     mctx = sc->server = apr_palloc(p, sizeof(*sc->server));
 
     modnss_ctx_init(mctx);
+
+    mctx->as_server = PR_TRUE;
 }
 
 static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
@@ -111,9 +127,7 @@ static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
     sc->proxy                       = NULL;
     sc->server                      = NULL;
 
-#ifdef PROXY
     modnss_ctx_init_proxy(sc, p);
-#endif
 
     modnss_ctx_init_server(sc, p);
 
@@ -149,6 +163,13 @@ static void modnss_ctx_cfg_merge(modnss_ctx_t *base,
     cfgMerge(enforce, PR_TRUE);
 }
 
+static void modnss_ctx_cfg_merge_proxy(modnss_ctx_t *base,
+                                       modnss_ctx_t *add,
+                                       modnss_ctx_t *mrg)
+{
+    modnss_ctx_cfg_merge(base, add, mrg);
+}
+
 static void modnss_ctx_cfg_merge_server(modnss_ctx_t *base,
                                         modnss_ctx_t *add,
                                         modnss_ctx_t *mrg)
@@ -170,9 +191,7 @@ void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
     cfgMergeBool(enabled);
     cfgMergeBool(proxy_enabled);
 
-#ifdef PROXY 
     modnss_ctx_cfg_merge_proxy(base->proxy, add->proxy, mrg->proxy);
-#endif
 
     modnss_ctx_cfg_merge_server(base->server, add->server, mrg->server);
 
@@ -270,7 +289,7 @@ const char *nss_cmd_NSSEngine(cmd_parms *cmd, void *dcfg, int flag)
 const char *nss_cmd_NSSFIPS(cmd_parms *cmd, void *dcfg, int flag)
 {
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
-
+    
     sc->fips = flag ? TRUE : FALSE;
  
     return NULL;
@@ -281,7 +300,7 @@ const char *nss_cmd_NSSOCSP(cmd_parms *cmd, void *dcfg, int flag)
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->ocsp = flag ? TRUE : FALSE;
- 
+
     return NULL;
 }
 
@@ -391,6 +410,46 @@ const char *nss_cmd_NSSNickname(cmd_parms *cmd,
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->server->nickname = arg;
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSProxyEngine(cmd_parms *cmd, void *dcfg, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+ 
+    sc->proxy_enabled = flag ? TRUE : FALSE;
+
+    return NULL;
+}
+ 
+const char *nss_cmd_NSSProxyProtocol(cmd_parms *cmd,
+                                     void *dcfg,
+                                     const char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->proxy->auth.protocols = arg;
+}
+
+const char *nss_cmd_NSSProxyCipherSuite(cmd_parms *cmd,
+                                        void *dcfg,
+                                        const char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+ 
+    sc->proxy->auth.cipher_suite = arg;
+ 
+    return NULL;
+}
+ 
+const char *nss_cmd_NSSProxyNickname(cmd_parms *cmd,
+                                void *dcfg,
+                                const char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->proxy->nickname = arg;
 
     return NULL;
 }

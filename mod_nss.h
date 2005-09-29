@@ -238,6 +238,8 @@ typedef struct {
     
     char *cipherSuite;
 
+    int as_server;
+
     int ssl2;
     int ssl3;
     int tls;
@@ -278,9 +280,7 @@ typedef struct {
     int                 nOptionsAdd;
     int                 nOptionsDel;
     const char         *szCipherSuite;
-    nss_verify_t   nVerifyClient;
-    const char         *szCACertificatePath;
-    const char         *szCACertificateFile;
+    nss_verify_t        nVerifyClient;
     const char         *szUserName;
 } SSLDirConfigRec;
 
@@ -333,6 +333,11 @@ const char *nss_cmd_NSSOptions(cmd_parms *, void *, const char *);
 const char *nss_cmd_NSSRequireSSL(cmd_parms *cmd, void *dcfg);
 const char  *nss_cmd_NSSRequire(cmd_parms *, void *, const char *);
 
+const char *nss_cmd_NSSProxyEngine(cmd_parms *cmd, void *dcfg, int flag);
+const char *nss_cmd_NSSProxyProtocol(cmd_parms *, void *, const char *);
+const char *nss_cmd_NSSProxyCipherSuite(cmd_parms *, void *, const char *);
+const char *nss_cmd_NSSProxyNickname(cmd_parms *cmd, void *dcfg, const char *arg);
+
 /*  module initialization  */
 int  nss_init_Module(apr_pool_t *, apr_pool_t *, apr_pool_t *, server_rec *);
 void nss_init_Child(apr_pool_t *, server_rec *);
@@ -363,7 +368,10 @@ APR_DECLARE_OPTIONAL_FN(char *, nss_var_lookup,
 APR_DECLARE_OPTIONAL_FN(int, nss_is_https, (conn_rec *));
 
 /* Proxy Support */
+int nss_proxy_enable(conn_rec *c);
 int nss_engine_disable(conn_rec *c);
+
+APR_DECLARE_OPTIONAL_FN(int, nss_proxy_enable, (conn_rec *));
 
 APR_DECLARE_OPTIONAL_FN(int, nss_engine_disable, (conn_rec *));
 

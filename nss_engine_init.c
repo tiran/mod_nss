@@ -16,7 +16,9 @@
 #include "mod_nss.h"
 #include "apr_thread_proc.h"
 #include "ap_mpm.h"
-#include <secmod.h>
+#include "secmod.h"
+#include "sslerr.h"
+#include "pk11func.h"
 
 static SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket);
 static SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg);
@@ -111,6 +113,7 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
     SSLModConfigRec *mc = myModConfig(s);
     SSLSrvConfigRec *sc; 
     int forked = 0;
+    char cwd[PATH_MAX];
 
     sc = mySrvConfig(s);
 
@@ -172,8 +175,14 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
     /* Set the PKCS #11 strings for the internal token. */
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
 
+    /* We need to be in the same directory as libnssckbi.so to load the
+     * root certificates properly.
+     */
+    getcwd(cwd, PATH_MAX);
+    chdir(mc->pCertificateDatabase);
     /* Initialize NSS and open the certificate database read-only. */
     rv = NSS_Initialize(mc->pCertificateDatabase, mc->pDBPrefix, mc->pDBPrefix, "secmod.db", NSS_INIT_READONLY);
+    chdir(cwd);
 
     /* Assuming everything is ok so far, check the cert database password(s). */
     if (sslenabled && (rv != SECSuccess)) {
@@ -287,11 +296,9 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             sc->server->sc = sc;
         }
 
-#ifdef PROXY
         if (sc->proxy) {
             sc->proxy->sc = sc;
         }
-#endif
 
         /*
          * Create the server host:port string because we need it a lot
@@ -366,8 +373,8 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
 
 
     /*
-     *  Announce mod_ssl and SSL library in HTTP Server field
-     *  as ``mod_ssl/X.X.X OpenSSL/X.X.X''
+     *  Announce mod_nss and SSL library in HTTP Server field
+     *  as ``mod_nss/X.X.X NSS/X.X.X''
      */
     nss_add_version_components(p, base_server);
 
@@ -391,19 +398,27 @@ static void nss_init_ctx_socket(server_rec *s,
         nss_die();
     }
 
-    if (SSL_OptionSet(mctx->model, SSL_HANDSHAKE_AS_SERVER, PR_TRUE)
+    if (SSL_OptionSet(mctx->model, SSL_HANDSHAKE_AS_SERVER, mctx->as_server)
             != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                 "Unable to set SSL server handshake mode.");
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
-    if (SSL_OptionSet(mctx->model, SSL_HANDSHAKE_AS_CLIENT, PR_FALSE)
+    if (SSL_OptionSet(mctx->model, SSL_HANDSHAKE_AS_CLIENT, !mctx->as_server)
             != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                "Unable to disable handshake as client");
+                "Unable to set handshake as client");
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
+    }
+    if (!mctx->as_server) {
+        if ((SSL_OptionSet(mctx->model, SSL_NO_CACHE, PR_TRUE)) != SECSuccess) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                    "Unable to disable SSL client caching");
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+            nss_die();
+        }
     }
 }
 
@@ -622,7 +637,8 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                  "FIPS mode enabled, permitted SSL ciphers are: [%s]",
                  fipsciphers);
-    } 
+    }
+
     ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                 "Configuring permitted SSL ciphers [%s]",
                  suite);
@@ -666,7 +682,7 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                     "Cipher %s is enabled but this is not a FIPS cipher, disabling.", ciphers_def[i].name);
                 cipher_state[i] = PR_FALSE;
-            }   
+            }
         }
     }
 
@@ -728,18 +744,20 @@ static void nss_init_server_certs(server_rec *s,
      * Get own certificate and private key.
      */
  
-    if (mctx->nickname == NULL) {
+    if (mctx->nickname == NULL && mctx->as_server) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "No certificate nickname provided.");
         nss_die();
     }
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-         "Using nickname %s.", mctx->nickname);
+
+    if (mctx->nickname != NULL)
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+             "Using nickname %s.", mctx->nickname);
 
     mctx->servercert = FindServerCertFromNickname(mctx->nickname);
 
     /* Verify the certificate chain. */
-    if (mctx->servercert != NULL) {
+    if (mctx->servercert != NULL && mctx->as_server) {
         SECCertificateUsage usage = certificateUsageSSLServer;
 
         if (CERT_VerifyCertificateNow(CERT_GetDefaultCertDB(), mctx->servercert, PR_TRUE, usage, NULL, NULL) != SECSuccess)  {
@@ -754,14 +772,14 @@ static void nss_init_server_certs(server_rec *s,
         }
     }
 
-    if (NULL == mctx->servercert)
+    if (NULL == mctx->servercert && mctx->as_server)
     {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
             "Certificate not found: '%s'", mctx->nickname);
         nss_die();
     }
 
-    if (strchr(mctx->nickname, ':'))
+    if (mctx->nickname && strchr(mctx->nickname, ':'))
     {
         char* token = strdup(mctx->nickname);
         char* colon = strchr(token, ':');
@@ -786,17 +804,20 @@ static void nss_init_server_certs(server_rec *s,
         slot = PK11_GetInternalKeySlot();
     }
     
-    mctx->serverkey = PK11_FindPrivateKeyFromCert(slot, mctx->servercert, NULL);
-    PK11_FreeSlot(slot);
+    if (mctx->servercert) {
+        mctx->serverkey = PK11_FindPrivateKeyFromCert(slot, mctx->servercert, NULL);
+        PK11_FreeSlot(slot);
+    }
 
-    if (mctx->serverkey == NULL) {
+    if (mctx->as_server && mctx->serverkey == NULL) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
             "Key not found for: '%s'", mctx->nickname);
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
 
-    mctx->serverKEAType = NSS_FindCertKEAType(mctx->servercert);
+    if (mctx->as_server) {
+        mctx->serverKEAType = NSS_FindCertKEAType(mctx->servercert);
 
     /*
      * Check for certs that are expired or not yet valid and WARN about it
@@ -824,6 +845,7 @@ static void nss_init_server_certs(server_rec *s,
                 "Unhandled Certificate time type %d for: '%s'", certtimestatus, mctx->nickname);
             break;
     }
+    }
 
     secstatus = (SECStatus)SSL_SetPKCS11PinArg(mctx->model, NULL);
     if (secstatus != SECSuccess) {
@@ -832,15 +854,15 @@ static void nss_init_server_certs(server_rec *s,
         nss_die();
     }
     
-#if 1
-    secstatus = SSL_ConfigSecureServer(mctx->model, mctx->servercert, mctx->serverkey, mctx->serverKEAType);
-    if (secstatus != SECSuccess) {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "SSL error configuring server: '%s'", mctx->nickname);
-        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
-        nss_die();
+    if (mctx->as_server) {
+        secstatus = SSL_ConfigSecureServer(mctx->model, mctx->servercert, mctx->serverkey, mctx->serverKEAType);
+        if (secstatus != SECSuccess) {
+            ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                "SSL error configuring server: '%s'", mctx->nickname);
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+            nss_die();
+        }
     }
-#endif
 
     secstatus = (SECStatus)SSL_HandshakeCallback(mctx->model, (SSLHandshakeCallback)NSSHandshakeCallback, NULL);
     if (secstatus != SECSuccess)
@@ -850,6 +872,16 @@ static void nss_init_server_certs(server_rec *s,
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
+}
+
+static void nss_init_proxy_ctx(server_rec *s,
+                                apr_pool_t *p,
+                                apr_pool_t *ptemp,
+                                SSLSrvConfigRec *sc)
+{
+    nss_init_ctx(s, p, ptemp, sc->proxy);
+
+    nss_init_server_certs(s, p, ptemp, sc->proxy);
 }
 
 static void nss_init_server_ctx(server_rec *s,
@@ -876,11 +908,11 @@ void nss_init_ConfigureServer(server_rec *s,
         nss_init_server_ctx(s, p, ptemp, sc);
     }
 
-#ifdef PROXY
     if (sc->proxy_enabled) {
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                     "Enabling proxy.");
         nss_init_proxy_ctx(s, p, ptemp, sc);
     }
-#endif
 }
 
 void nss_init_Child(apr_pool_t *p, server_rec *s)
@@ -936,10 +968,14 @@ SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket)
 {
     PRErrorCode err = PR_GetError();
 
-    ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-        "Bad certificate: %d", err);
-
-    return SECFailure;
+    switch (err) {
+        default:
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                "Bad remote server certificate.", err);
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
+            return SECFailure;
+            break;
+    }
 }
 
 /*
@@ -1027,6 +1063,9 @@ FindServerCertFromNickname(const char* name)
     CERTCertListNode *cln;
     PRUint32 bestCertMatchedUsage = 0;
     PRBool bestCertIsValid = PR_FALSE;
+
+    if (name == NULL)
+        return NULL;
 
     clist = PK11_ListCerts(PK11CertListUser, NULL);
 

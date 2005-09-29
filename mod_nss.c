@@ -15,6 +15,7 @@
 
 #include "mod_nss.h"
 #include <assert.h>
+#include "sslerr.h"
 
 /*
  *  the table of configuration directives we provide
@@ -101,7 +102,6 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_DIR(Require, AUTHCFG, RAW_ARGS,
                "Require a boolean expression to evaluate to true for granting access" 
                "(arbitrary complex boolean expression - see manual)")
-#ifdef PROXY
     /* 
      * Proxy configuration for remote SSL connections
      */
@@ -114,31 +114,11 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(ProxyCipherSuite, TAKE1,
                "SSL Proxy: colon-delimited list of permitted SSL ciphers "
                "(`XXX:...:XXX' - see manual)")
-    SSL_CMD_SRV(ProxyVerify, TAKE1,
-               "SSL Proxy: whether to verify the remote certificate "
-               "(`on' or `off')")
-    SSL_CMD_SRV(ProxyVerifyDepth, TAKE1,
-               "SSL Proxy: maximum certificate verification depth "
-               "(`N' - number of intermediate certificates)")
-    SSL_CMD_SRV(ProxyCACertificateFile, TAKE1,
-               "SSL Proxy: file containing server certificates "
-               "(`/path/to/file' - PEM encoded certificates)")
-    SSL_CMD_SRV(ProxyCACertificatePath, TAKE1,
-               "SSL Proxy: directory containing server certificates "
-               "(`/path/to/dir' - contains PEM encoded certificates)")
-    SSL_CMD_SRV(ProxyCARevocationPath, TAKE1,
-                "SSL Proxy: CA Certificate Revocation List (CRL) path "
-                "(`/path/to/dir' - contains PEM encoded files)")
-    SSL_CMD_SRV(ProxyCARevocationFile, TAKE1,
-                "SSL Proxy: CA Certificate Revocation List (CRL) file "
-                "(`/path/to/file' - PEM encoded)")
-    SSL_CMD_SRV(ProxyMachineCertificateFile, TAKE1,
-               "SSL Proxy: file containing client certificates "
-               "(`/path/to/file' - PEM encoded certificates)")
-    SSL_CMD_SRV(ProxyMachineCertificatePath, TAKE1,
-               "SSL Proxy: directory containing client certificates "
-               "(`/path/to/dir' - contains PEM encoded certificates)")
+    SSL_CMD_SRV(ProxyNickname, TAKE1,
+               "SSL Proxy: client certificate Nickname to be for proxy connections "
+               "(`nickname')")
 
+#ifdef IGNORE
     /* Deprecated directives. */
     AP_INIT_RAW_ARGS("NSSLog", ap_set_deprecated, NULL, OR_ALL, 
       "SSLLog directive is no longer supported - use ErrorLog."),
@@ -183,7 +163,6 @@ static SSLConnRec *nss_init_connection_ctx(conn_rec *c)
     return sslconn;
 }
 
-#ifdef PROXY
 int nss_proxy_enable(conn_rec *c)
 {
     SSLSrvConfigRec *sc = mySrvConfig(c->base_server);
@@ -193,7 +172,7 @@ int nss_proxy_enable(conn_rec *c)
     if (!sc->proxy_enabled) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, c->base_server,
                      "SSL Proxy requested for %s but not enabled "
-                     "[Hint: SSLProxyEngine]", sc->vhost_id);
+                     "[Hint: NSSProxyEngine]", sc->vhost_id);
 
         return 0;
     }
@@ -203,7 +182,6 @@ int nss_proxy_enable(conn_rec *c)
 
     return 1;
 }
-#endif
 
 int nss_engine_disable(conn_rec *c)
 {
@@ -220,6 +198,76 @@ int nss_engine_disable(conn_rec *c)
     sslconn->disabled = 1;
 
     return 1;
+}
+
+/* Callback for an incoming certificate that is not valid */
+
+SECStatus NSSBadCertHandler(void *arg, PRFileDesc * socket)
+{
+    conn_rec *c = (conn_rec *)arg;
+    PRErrorCode err = PR_GetError();
+    SECStatus rv = SECFailure;
+    CERTCertificate *peerCert = SSL_PeerCertificate(socket);
+                                                                                
+    switch (err) {
+        case SSL_ERROR_BAD_CERT_DOMAIN:
+            if (c->remote_host != NULL) {
+                rv = CERT_VerifyCertName(peerCert, c->remote_host);
+                if (rv != SECSuccess) {
+                    char *remote = CERT_GetCommonName(&peerCert->subject);
+                    ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                        "SSL Proxy: Possible man-in-the-middle attack. The remove server is %s, we expected %s", remote, c->remote_host, rv);
+                    PORT_Free(remote);
+                }
+            } else {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                    "SSL Proxy: I don't have the name of the host we're supposed to connect to so I can't verify that we are connecting to who we think we should be. Giving up. Hint: See Apache bug 36468.");
+            }
+            break;
+        default:
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                "Bad remote server certificate.", err);
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
+            break;
+    }
+    return rv;
+}
+
+/* Callback to pull the client certificate upon server request */
+
+static SECStatus NSSGetClientAuthData(void *arg, PRFileDesc *socket,
+                                    CERTDistNames *caNames,
+                                    CERTCertificate **pRetCert,/*return */
+                                    SECKEYPrivateKey **pRetKey)
+{
+    CERTCertificate *               cert;
+    SECKEYPrivateKey *              privKey;
+    void *                          proto_win = NULL;
+    SECStatus                       rv = SECFailure;
+    char *                          localNickName = (char *)arg;
+
+    proto_win = SSL_RevealPinArg(socket);
+
+    if (localNickName) {
+        cert = CERT_FindUserCertByUsage(CERT_GetDefaultCertDB(),
+                                    localNickName, certUsageSSLClient,
+                                    PR_FALSE, proto_win);
+        if (cert) {
+            privKey = PK11_FindKeyByAnyCert(cert, proto_win);
+            if (privKey) {
+                rv = SECSuccess;
+            } else {
+                CERT_DestroyCertificate(cert);
+            }
+        } 
+
+        if (rv == SECSuccess) {
+            *pRetCert = cert;
+            *pRetKey  = privKey;
+        }
+    }
+
+    return rv;
 }
 
 static int nss_hook_pre_connection(conn_rec *c, void *csd)
@@ -285,7 +333,28 @@ static int nss_hook_pre_connection(conn_rec *c, void *csd)
 
     nss_io_filter_init(c, ssl);
 
-    SSL_ResetHandshake(ssl, PR_TRUE);
+    SSL_ResetHandshake(ssl, mctx->as_server);
+
+    /* If we are doing a client connection, set our own bad certificate
+     * handler and register the nickname we want to use in case client
+     * authentication is requested.
+     */
+    if (!mctx->as_server) {
+        if (SSL_BadCertHook(ssl, (SSLBadCertHandler) NSSBadCertHandler, c) != SECSuccess)
+        {
+            /* errors are reported in the certificate handler */
+            return DECLINED;
+        }
+        if (mctx->nickname) {
+            if (SSL_GetClientAuthDataHook(ssl, NSSGetClientAuthData,
+                                          (void*)mctx->nickname) != SECSuccess)
+            {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, c->base_server,
+                    "Unable to register client authentication callback");
+                return DECLINED;
+            }
+        }
+    }
 
     return APR_SUCCESS;
 }
@@ -335,9 +404,7 @@ static void nss_register_hooks(apr_pool_t *p)
 
     nss_var_register();
 
-#ifdef PROXY
     APR_REGISTER_OPTIONAL_FN(nss_proxy_enable);
-#endif
     APR_REGISTER_OPTIONAL_FN(nss_engine_disable);
 }
 

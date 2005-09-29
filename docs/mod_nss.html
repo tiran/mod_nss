@@ -1,4 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
 <!--
  Copyright 2001-2005 The Apache Software Foundation
 
@@ -13,8 +15,6 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
 -->
-<html>
-<head>
   <meta content="text/html; charset=ISO-8859-1"
  http-equiv="content-type">
   <title>mod_nss</title>
@@ -32,25 +32,18 @@
 <a href="#Environment">Environment Variables</a><br>
 <a href="#Database_Management">Database Management</a><br>
 <a href="#SSLv2">Why is SSLv2 disabled?</a><br>
-<br>
+<a href="#FAQ">Frequently Asked Questions</a><br>
 <h1><a name="Introduction"></a>Introduction</h1>
 The <a href="http://www.modssl.org/">mod_ssl</a> package was
 created in April 1998 by <a href="mailto:rse@engelschall.com">Ralf S.
 Engelschall</a> and was originally derived from the <a
  href="http://www.apache-ssl.org/">Apache-SSL</a> package developed by <a
- href="mailto:ben@algroup.co.uk">Ben Laurie</a>. It stays under a
-BSD-style
-license which is equivalent to the license used by <a
- href="http://www.apache.org/">The Apache Group</a> for the Apache
-webserver
-itself. This means, in short, that you are free to use it both for
-commercial
-and non-commercial purposes as long as you retain the authors'
-copyright
-notices and give the proper credit.
+ href="mailto:ben@algroup.co.uk">Ben Laurie</a>. It is licensed under
+the <a href="http://www.apache.org/licenses/" class="external"
+ title="http://www.apache.org/licenses/" rel="nofollow">Apache 2.0
+license</a><span class="urlexpansion">.<br>
 <br>
-<br>
-mod_nss is based directly on the mod_ssl package from Apache
+</span>mod_nss is based directly on the mod_ssl package from Apache
 2.0.54.&nbsp; It is a conversion from using OpenSSL calls to using <a
  href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a>
 calls instead.<br>
@@ -94,11 +87,39 @@ PATH/include, etc.<br>
       </td>
     </tr>
     <tr>
+      <td style="vertical-align: top;">--with-nss-inc=PATH<br>
+      </td>
+      <td style="vertical-align: top;">The file system path to the NSS
+include directory (e.g. /usr/local/include/nss3)<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">--with-nss-lib=PATH<br>
+      </td>
+      <td style="vertical-align: top;">The file system path to the NSS
+lib directory (e.g. /usr/local/lib)<br>
+      </td>
+    </tr>
+    <tr>
       <td style="vertical-align: top;">--with-nspr=[PATH]<br>
       </td>
       <td style="vertical-align: top;">The file system path of the NSPR
 installation. The assumption is that this has the layout of: PATH/lib,
 PATH/include, etc.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">--with-nspr-inc=PATH<br>
+      </td>
+      <td style="vertical-align: top;">The file system path to the NSPR
+include directory (e.g. /usr/local/include/nspr4)<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">--with-nspr-lib=PATH<br>
+      </td>
+      <td style="vertical-align: top;">The file system path to the NSPR
+lib directory (e.g. /usr/local/lib)<br>
+      </td>
     </tr>
     <tr>
       <td style="vertical-align: top;">--with-apxs=[PATH]<br>
@@ -117,7 +138,7 @@ tells us where the APR include files and libraries are located<br>
 </table>
 <br>
 &nbsp;If --with-nss or --with-nspr are not passed configure will look
-for the mozilla-[nss|nspr]-devel packages and use the libraries with
+for the [nss|nspr]-devel packages and use the libraries with
 that if found.<br>
 <br>
 &nbsp;It is strongly recommended that the mozilla.org version be used.<br>
@@ -371,12 +392,12 @@ limited to those that are FIPS-certified. Any non-FIPS that are
 included in the NSSCipherSuite entry are automatically disabled.
 The allowable ciphers are:<br>
 <ul>
-<li>rsa_3des_sha</li>
-<li>rsa_des_sha</li>
-<li>fips_3des_sha</li>
-<li>fips_des_sha</li>
-<li>rsa_des_56_sha</li>
-<li>fortezza</li>
+  <li>rsa_3des_sha</li>
+  <li>rsa_des_sha</li>
+  <li>fips_3des_sha</li>
+  <li>fips_des_sha</li>
+  <li>rsa_des_56_sha</li>
+  <li>fortezza</li>
 </ul>
 <span style="font-weight: bold;"><br>
 </span>FIPS is disabled by default.<br>
@@ -404,7 +425,8 @@ Example</span><br style="font-weight: bold;">
 A space-separated list of the SSL ciphers used, with the prefix <code>+</code>
 to enable or <code>-</code> to disable.<br>
 <br>
-All ciphers are disabled by default. The SSLv2 ciphers cannot be enabled because
+All ciphers are disabled by default. The SSLv2 ciphers cannot be
+enabled because
 <a href="#SSLv2">SSLv2</a> is not allowed in mod_nss.<br>
 <br>
 Available ciphers are:<br>
@@ -622,7 +644,7 @@ be enclosed in double quotes.<br>
 <code>NSSNickname Server-Cert</code><br>
 <code>NSSNickname "This contains a space"</code><br>
 <br>
-NSSEnforceValidCerts<br>
+<big><big>NSSEnforceValidCerts</big></big><br>
 <br>
 By default mod_nss will not start up if the server
 certificate is not valid. This means that if the certificate has
@@ -636,7 +658,7 @@ not recommended.<br>
 <br>
 <code>NSSEnforceValidCerts on</code><br>
 <br>
-NSSVerifyClient<br>
+<big><big>NSSVerifyClient</big></big><br>
 <br>
 Determines whether Client Certificate
 Authentication will be requested or required. This may be set in a
@@ -646,18 +668,17 @@ per-directry context an SSL renogitation is required and a certificate
 requested from the client.<br>
 <br>
 Available options are:<br>
-
 <ul>
   <li><code>none</code>: no client certificate
 is required or requested<br>
-    </li>
-  <li>code>optional</code>: a client
+  </li>
+  <li>code&gt;optional: a client
 certificate is requested but if one is not available, the connection
 may continue.<br>
-    </li>
+  </li>
   <li><code>require</code>: a valid client
 certificate is required for the connection to continue.<br>
-    </li>
+  </li>
 </ul>
 The mod_ssl option <code>option_no_ca</code>
 is not supported.<br>
@@ -732,7 +753,45 @@ Provides a regular expression-based access-control mechanism. Access
 may be restricted (or allowed) based on any number of variables such as
 components of the client certificate, the remote IP address, etc.<br>
 <br>
-<code>NSSRequire</code><br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSRequire<br>
+</code><br>
+<big><big>NSSProxyEngine</big></big><br>
+<br>
+Enables or disables mod_nss HTTPS support for mod_proxy.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSProxyEngine on</code><br>
+<br>
+<big><big>NSSProxyProtocol</big></big><br>
+<br>
+Specifies the SSL protocols that may be used in proxy connections. The
+syntax is identical to NSSProtocol.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSProxyProtocol SSLv3<br>
+</code><br>
+<big><big>NSSProxyCipherSuite</big></big><br>
+<br>
+Specifies the SSL ciphers available for proxy connections. They syntax
+is identical to NSSCipherSuite.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSProxyCipherSuite
++rsa_3des_sha,-rsa_null_md5,-rsa_null_sha,+rsa_rc4_128_md5</code><br>
+<br>
+<big><big>NSSProxyNickname</big></big><br>
+<br>
+The nickname of the client certificate to send if the remote server
+requests client authentication.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSProxyNickname beta</code><br>
 <h1><a name="Environment"></a>Environment Variables</h1>
 Quite a few environment variables (for CGI and SSI) may be set
 depending on the NSSOptions configuration. It can be expensive to set
@@ -1121,10 +1180,53 @@ have NSS validate it:<br>
 <code>% certutil -V -n Server-Cert -u V -d .<br>
 certutil: certificate is valid</code><br>
 <h1><a name="SSLv2"></a>Why is SSLv2 disabled?</h1>
-All major browsers (Firefox, Internet Explorer, Mozilla, Netscape, Opera, and
-Safari) support SSL 3 and TLS so there is no need for a web server to support
+All major browsers (Firefox, Internet Explorer, Mozilla, Netscape,
+Opera, and
+Safari) support SSL 3 and TLS so there is no need for a web server to
+support
 SSL 2. There are some known attacks against SSL 2 that are handled by
-SSL 3/TLS. SSL2 also doesn't support useful features like client authentication.
+SSL 3/TLS. SSL2 also doesn't support useful features like client
+authentication.
 <br>
+<h1><a name="FAQ"></a>Frequently Asked Questions</h1>
+Q. Does mod_nss support mod_proxy?<br>
+<br>
+A. In order to use the mod_nss proxy support you will need to build
+your own mod_proxy by applying a patch found in bug <a
+ href="http://issues.apache.org/bugzilla/show_bug.cgi?id=36468">36468</a>.
+The patch is needed so we can compare the hostname contained in the
+remote certificate with the hostname you meant to visit. This prevents
+man-in-the-middle attacks.<br>
+<br>
+You also have to change the SSL functions that mod_proxy looks to use.
+You'll need to apply this patch:<br>
+<br>
+<code>1038,1039c1038,1039<br>
+&lt; APR_DECLARE_OPTIONAL_FN(int, ssl_proxy_enable, (conn_rec *));<br>
+&lt; APR_DECLARE_OPTIONAL_FN(int, ssl_engine_disable, (conn_rec *));<br>
+---<br>
+&gt; APR_DECLARE_OPTIONAL_FN(int, nss_proxy_enable, (conn_rec *));<br>
+&gt; APR_DECLARE_OPTIONAL_FN(int, nss_engine_disable, (conn_rec *));<br>
+1041,1042c1041,1042<br>
+&lt; static APR_OPTIONAL_FN_TYPE(ssl_proxy_enable) *proxy_ssl_enable =
+NULL;<br>
+&lt; static APR_OPTIONAL_FN_TYPE(ssl_engine_disable) *proxy_ssl_disable
+= NULL;<br>
+---<br>
+&gt; static APR_OPTIONAL_FN_TYPE(nss_proxy_enable) *proxy_ssl_enable =
+NULL;<br>
+&gt; static APR_OPTIONAL_FN_TYPE(nss_engine_disable) *proxy_ssl_disable
+= NULL;<br>
+1069,1070c1069,1070<br>
+&lt;&nbsp;&nbsp;&nbsp;&nbsp; proxy_ssl_enable =
+APR_RETRIEVE_OPTIONAL_FN(ssl_proxy_enable);<br>
+&lt;&nbsp;&nbsp;&nbsp;&nbsp; proxy_ssl_disable =
+APR_RETRIEVE_OPTIONAL_FN(ssl_engine_disable);<br>
+---<br>
+&gt;&nbsp;&nbsp;&nbsp;&nbsp; proxy_ssl_enable =
+APR_RETRIEVE_OPTIONAL_FN(nss_proxy_enable);<br>
+&gt;&nbsp;&nbsp;&nbsp;&nbsp; proxy_ssl_disable =
+APR_RETRIEVE_OPTIONAL_FN(nss_engine_disable);<br>
+</code><br>
 </body>
 </html>
