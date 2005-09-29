@@ -504,8 +504,6 @@ static apr_status_t nss_filter_write(ap_filter_t *f,
     outctx = filter_ctx->outctx;
 
     res = PR_Write(filter_ctx->pssl, (char *)data, len);
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, NULL,
-          "Sent returned %d", res);
 
     if (res < 0) {
         int nss_err = PR_GetError();
