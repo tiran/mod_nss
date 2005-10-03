@@ -51,6 +51,8 @@ SSLModConfigRec *nss_config_global_create(server_rec *s)
     mc->ssl3_session_cache_timeout  = UNSET;
     mc->pphrase_dialog_helper       = NULL;
     mc->pphrase_dialog_path         = NULL;
+    mc->aRandSeed                   = apr_array_make(pool, 4,
+                                                     sizeof(ssl_randseed_t));
 
     apr_pool_userdata_set(mc, SSL_MOD_CONFIG_KEY,
                           apr_pool_cleanup_null,
@@ -556,6 +558,93 @@ const char *nss_cmd_NSSPassPhraseHelper(cmd_parms *cmd,
         return apr_pstrcat(cmd->pool,
                            "NSSPassPhraseHelper: ", mc->pphrase_dialog_path,
                            "does not exist or is not executable.", NULL);
+    }
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSRandomSeed(cmd_parms *cmd,
+                                  void *dcfg,
+                                  const char *arg1,
+                                  const char *arg2,
+                                  const char *arg3)
+{   
+    SSLModConfigRec *mc = myModConfig(cmd->server);
+    const char *err;
+    ssl_randseed_t *seed;
+    int arg2len = strlen(arg2);
+    
+    if ((err = ap_check_cmd_context(cmd, GLOBAL_ONLY))) {
+        return err;
+    }
+    
+    /* Only run through this once. Otherwise the random seed sources are
+     * pushed into the array for each server start (and we are guaranteed 2) */
+    if (mc->nInitCount >= 1) {
+        return NULL;
+    }
+
+    seed = apr_array_push(mc->aRandSeed);
+
+    if (strcEQ(arg1, "startup")) {
+        seed->nCtx = SSL_RSCTX_STARTUP;
+    }
+    else if (strcEQ(arg1, "connect")) {
+        return apr_pstrcat(cmd->pool, "NSSRandomSeed: "
+                           "mod_nss doesn't do per-connection random seeding",
+                           NULL);
+    }
+    else {
+        return apr_pstrcat(cmd->pool, "NSSRandomSeed: "
+                           "invalid context: `", arg1, "'",
+                           NULL);
+    }
+
+    if ((arg2len > 5) && strEQn(arg2, "file:", 5)) {
+        seed->nSrc   = SSL_RSSRC_FILE;
+        seed->cpPath = ap_server_root_relative(mc->pPool, arg2+5);
+    }
+    else if ((arg2len > 5) && strEQn(arg2, "exec:", 5)) {
+        seed->nSrc   = SSL_RSSRC_EXEC;
+        seed->cpPath = ap_server_root_relative(mc->pPool, arg2+5);
+    }
+    else if (strcEQ(arg2, "builtin")) {
+        seed->nSrc   = SSL_RSSRC_BUILTIN;
+        seed->cpPath = NULL;
+    }
+    else {
+        seed->nSrc   = SSL_RSSRC_FILE;
+        seed->cpPath = ap_server_root_relative(mc->pPool, arg2);
+    }
+
+    if (seed->nSrc != SSL_RSSRC_BUILTIN) {
+        apr_finfo_t finfo;
+        if (!seed->cpPath) {
+            return apr_pstrcat(cmd->pool,
+                               "Invalid NSSRandomSeed path ",
+                               arg2, NULL);
+        }
+        if (apr_stat(&finfo, seed->cpPath, APR_FINFO_TYPE|APR_FINFO_SIZE, cmd->pool) != 0) {
+            return apr_pstrcat(cmd->pool,
+                               "NSSRandomSeed: source path '",
+                               seed->cpPath, "' does not exist", NULL);
+        }
+    }
+
+    if (!arg3) {
+        seed->nBytes = 0; /* read whole file */
+    }
+    else {
+        if (seed->nSrc == SSL_RSSRC_BUILTIN) {
+            return "NSSRandomSeed: byte specification not "
+                   "allowed for builtin seed source";
+        }
+
+        seed->nBytes = atoi(arg3);
+
+        if (seed->nBytes < 0) {
+            return "NSSRandomSeed: invalid number of bytes specified";
+        }
     }
 
     return NULL;

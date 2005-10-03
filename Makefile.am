@@ -6,7 +6,7 @@ bin_PROGRAMS = nss_pcache
 nss_pcache_SOURCES = nss_pcache.c
 
 ## Define the source file for the module
-libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c
+libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c nss_engine_rand.c
 
 ## Set the includes and libraries needed
 INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@

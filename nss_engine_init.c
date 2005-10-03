@@ -348,8 +348,14 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
 
     /* Load our layer */
     nss_io_layer_init();
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                 "done layer");
+
+    /* 
+     * Seed the Pseudo Random Number Generator (PRNG)
+     * only need ptemp here; nothing inside allocated from the pool
+     * needs to live once we return from nss_rand_seed().
+     */
+    if (mc->nInitCount > 1)
+        nss_rand_seed(base_server, ptemp, SSL_RSCTX_STARTUP, "Init: ");
 
     /*
      *  initialize servers

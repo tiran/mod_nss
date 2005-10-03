@@ -107,7 +107,7 @@ bin_PROGRAMS = nss_pcache
 
 nss_pcache_SOURCES = nss_pcache.c
 
-libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c
+libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c nss_engine_rand.c
 
 INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
 LIBS = @nspr_lib@ @nss_lib@ -lssl3 -lsmime3 -lnss3 -lsoftokn3 -lplc4 -lplds4 -lnspr4
@@ -133,7 +133,7 @@ am_libmodnss_la_OBJECTS = mod_nss.lo nss_engine_config.lo \
 	nss_engine_init.lo nss_engine_io.lo nss_engine_kernel.lo \
 	nss_engine_log.lo nss_engine_pphrase.lo nss_engine_vars.lo \
 	nss_expr.lo nss_expr_eval.lo nss_expr_parse.lo nss_expr_scan.lo \
-	nss_util.lo
+	nss_util.lo nss_engine_rand.lo
 libmodnss_la_OBJECTS = $(am_libmodnss_la_OBJECTS)
 bin_PROGRAMS = nss_pcache$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
@@ -157,6 +157,7 @@ am__depfiles_maybe = depfiles
 @AMDEP_TRUE@	./$(DEPDIR)/nss_engine_kernel.Plo \
 @AMDEP_TRUE@	./$(DEPDIR)/nss_engine_log.Plo \
 @AMDEP_TRUE@	./$(DEPDIR)/nss_engine_pphrase.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/nss_engine_rand.Plo \
 @AMDEP_TRUE@	./$(DEPDIR)/nss_engine_vars.Plo \
 @AMDEP_TRUE@	./$(DEPDIR)/nss_expr.Plo \
 @AMDEP_TRUE@	./$(DEPDIR)/nss_expr_eval.Plo \
@@ -256,6 +257,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nss_engine_kernel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nss_engine_log.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nss_engine_pphrase.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nss_engine_rand.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nss_engine_vars.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nss_expr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nss_expr_eval.Plo@am__quote@

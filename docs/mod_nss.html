@@ -249,7 +249,6 @@ to verify that the migration was successful.<br>
 <h1><a name="Directives"></a>Configuration Directives</h1>
 The following mod_ssl Directives are not applicable to mod_nss:<br>
 <ul>
-  <li>SSLRandomSeed</li>
   <li>SSLSessionCache</li>
   <li>SSLMutex</li>
   <li>SSLCertificateChainFile</li>
@@ -370,6 +369,35 @@ The default value is 86400 (24 hours).<br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSSession3CacheTimeout 86400</code><br>
+<br>
+<big><big>NSSRandomSeed</big></big><br>
+<br>
+Configures sources to seed the NSS Random Number Generator (RNG) at
+startup.&nbsp; Currently this only supports seeding the RNG at startup.
+<br>
+<br>
+The following sources are available:<br>
+<ul>
+  <li><code>builtin:</code> Combines the current system time, the
+current process id
+and a randomly choosen 128-byte extract of the process stack. This is
+not a particularly strong source of entropy.</li>
+  <li><code>file:/path/to/source:</code> Reads from the specified file.
+If the number of bytes to read is specified it just reads that amount.
+Be aware that some operating systems block on /dev/random if not enough
+entropy is available. This means that the server will wait until that
+data is available to continue startup. These systems generally offer a
+non-blocking device as well, /dev/urandom.</li>
+  <li><code>exec:/path/to/program: Executes the given program and takes
+the stdout of it as the entryop. If the bytes argument is included it
+reads that many bytes, otherwise it reads until the program exits.</code><br>
+  </li>
+</ul>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSRandomSeed startup builtin<br>
+NSSRandomSeed startup /dev/urandom 512<br>
+NSSRandomSeed startup /usr/bin/makerandom</code><br>
 <br>
 <big><big>NSSEngine</big></big><br>
 <br>

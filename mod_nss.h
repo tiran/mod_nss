@@ -163,6 +163,26 @@ typedef struct {
 } nss_require_t;
 
 /*
+ * Define the SSL random number generator seeding source. The CONNECT
+ * method is not currently used.
+ */
+typedef enum {
+    SSL_RSCTX_STARTUP = 1,
+    SSL_RSCTX_CONNECT = 2
+} ssl_rsctx_t;
+typedef enum {
+    SSL_RSSRC_BUILTIN = 1,
+    SSL_RSSRC_FILE    = 2,
+    SSL_RSSRC_EXEC    = 3
+} ssl_rssrc_t;
+typedef struct {
+    ssl_rsctx_t  nCtx;
+    ssl_rssrc_t  nSrc;
+    char        *cpPath;
+    int          nBytes;
+} ssl_randseed_t;
+
+/*
  * Define the SSL verify levels
  */
 typedef enum {
@@ -216,6 +236,8 @@ typedef struct {
 
     apr_proc_t      proc;
     apr_procattr_t *procattr;
+
+    apr_array_header_t   *aRandSeed;
 
     struct {
         void *pV1, *pV2, *pV3, *pV4, *pV5, *pV6, *pV7, *pV8, *pV9, *pV10;
@@ -328,6 +350,7 @@ const char *nss_cmd_NSSSession3CacheTimeout(cmd_parms *cmd, void *dcfg, const ch
 const char *nss_cmd_NSSSessionCacheSize(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSPassPhraseDialog(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSPassPhraseHelper(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSRandomSeed(cmd_parms *, void *, const char *, const char *, const char *);
 const char *nss_cmd_NSSUserName(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSOptions(cmd_parms *, void *, const char *);
 const char *nss_cmd_NSSRequireSSL(cmd_parms *cmd, void *dcfg);

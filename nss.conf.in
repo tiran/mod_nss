@@ -50,6 +50,20 @@ NSSSessionCacheSize 10000
 NSSSessionCacheTimeout 100
 NSSSession3CacheTimeout 86400
 
+#
+# Pseudo Random Number Generator (PRNG):
+# Configure one or more sources to seed the PRNG of the SSL library.
+# The seed data should be of good random quality.
+# WARNING! On some platforms /dev/random blocks if not enough entropy
+# is available. Those platforms usually also provide a non-blocking
+# device, /dev/urandom, which may be used instead.
+#
+# This does not support seeding the RNG with each connection.
+
+NSSRandomSeed startup builtin
+#NSSRandomSeed startup file:/dev/random  512
+#NSSRandomSeed startup file:/dev/urandom 512
+
 ##
 ## SSL Virtual Host Context
 ##
