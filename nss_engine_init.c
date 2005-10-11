@@ -756,11 +756,11 @@ static void nss_init_server_certs(server_rec *s,
         nss_die();
     }
 
-    if (mctx->nickname != NULL)
+    if (mctx->nickname != NULL) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
              "Using nickname %s.", mctx->nickname);
-
-    mctx->servercert = FindServerCertFromNickname(mctx->nickname);
+        mctx->servercert = FindServerCertFromNickname(mctx->nickname);
+    }
 
     /* Verify the certificate chain. */
     if (mctx->servercert != NULL && mctx->as_server) {
@@ -812,8 +812,8 @@ static void nss_init_server_certs(server_rec *s,
     
     if (mctx->servercert) {
         mctx->serverkey = PK11_FindPrivateKeyFromCert(slot, mctx->servercert, NULL);
-        PK11_FreeSlot(slot);
     }
+    PK11_FreeSlot(slot);
 
     if (mctx->as_server && mctx->serverkey == NULL) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
@@ -951,6 +951,16 @@ apr_status_t nss_init_ModuleKill(void *data)
             PR_Close(sc->server->model);
 
             shutdowncache = 1;
+        }
+        if (sc->proxy_enabled) {
+            if (sc->proxy->servercert != NULL) {
+                CERT_DestroyCertificate(sc->proxy->servercert);
+                SECKEY_DestroyPrivateKey(sc->proxy->serverkey);
+            }
+
+            /* Closing this implicitly cleans up the copy of the certificates
+             * and keys associated with any SSL socket */
+            PR_Close(sc->proxy->model);
         }
     }
 
