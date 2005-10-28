@@ -717,6 +717,19 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
     }
 }
 
+static void nss_init_server_check(server_rec *s,
+                                  apr_pool_t *p,
+                                  apr_pool_t *ptemp,
+                                  modnss_ctx_t *mctx)
+{
+    if (mctx->servercert != NULL || mctx->serverkey != NULL) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "Illegal attempt to re-initialise SSL for server "
+                "(theoretically shouldn't happen!)");
+        nss_die();
+    }
+}
+
 static void nss_init_ctx(server_rec *s,
                          apr_pool_t *p,
                          apr_pool_t *ptemp,
@@ -895,6 +908,8 @@ static void nss_init_server_ctx(server_rec *s,
                                 apr_pool_t *ptemp,
                                 SSLSrvConfigRec *sc)
 {
+    nss_init_server_check(s, p, ptemp, sc->server);
+
     nss_init_ctx(s, p, ptemp, sc->server);
 
     nss_init_server_certs(s, p, ptemp, sc->server);
