@@ -16,7 +16,6 @@
 # All rights reserved.
 # END COPYRIGHT BLOCK
 %define product fedora
-%define flavor 
 %define _build_name_fmt %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.%{flavor}.rpm
 Summary: mod_nss
 Name: mod_nss
