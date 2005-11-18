@@ -319,7 +319,12 @@ int main(int argc, char ** argv)
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
  
     /* Initialize NSS and open the certificate database read-only. */
-    rv = NSS_Initialize(argv[2], argc == 3 ? argv[3] : NULL, argc == 3 ? argv[3] : NULL, "secmod.db", NSS_INIT_READONLY);
+    rv = NSS_Initialize(argv[2], argc == 4 ? argv[3] : NULL, argc == 4 ? argv[3] : NULL, "secmod.db", NSS_INIT_READONLY);
+
+    if (rv != SECSuccess) {
+        fprintf(stderr, "Unable to initialize NSS database: %d\n", rv);
+        exit(1);
+    }
 
     if (fipsmode) {
         if (!PK11_IsFIPS()) {
