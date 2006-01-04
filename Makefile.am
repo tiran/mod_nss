@@ -7,11 +7,13 @@ nss_pcache_SOURCES = nss_pcache.c
 
 ## Define the source file for the module
 libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c nss_engine_rand.c
+libmodnss_la_LDFLAGS = -module -avoid-version
 
 ## Set the includes and libraries needed
 INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
 LIBS = @nspr_lib@ @nss_lib@ -lssl3 -lsmime3 -lnss3 -lsoftokn3 -lplc4 -lplds4 -lnspr4
 @SSL2_TRUE@AM_CFLAGS=-DWANT_SSL2
+EXTRA_CPPFLAGS=@extra_cppflags@
 
 install-libLTLIBRARIES: libmodnss.la
 	@APXS@ -i -a -n nss libmodnss.la
@@ -65,7 +67,7 @@ nss_expr_parse.c nss_expr_parse.h: nss_expr_parse.y
 
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
 	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CFLAGS) $(CFLAGS)
+	$(AM_CFLAGS) $(CFLAGS) $(EXTRA_CPPFLAGS)
 
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@

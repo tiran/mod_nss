@@ -100,7 +100,11 @@ char *nss_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
         else if (strcEQ(var, "REQUEST_METHOD"))
             result = (char *)(r->method);
         else if (strcEQ(var, "REQUEST_SCHEME"))
+#ifndef AP_SERVER_MAJORVERSION_NUMBER
             result = (char *)ap_http_method(r);
+#else
+            result = (char *)ap_http_scheme(r);
+#endif
         else if (strcEQ(var, "REQUEST_URI"))
             result = r->uri;
         else if (strcEQ(var, "SCRIPT_FILENAME") ||

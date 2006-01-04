@@ -1,191 +1,7 @@
+/* A Bison parser, made by GNU Bison 1.875c.  */
 
-/*  A Bison parser, made from nss_expr_parse.y
-    by GNU Bison version 1.28  */
-
-#define YYBISON 1  /* Identify Bison output.  */
-
-#define	T_TRUE	257
-#define	T_FALSE	258
-#define	T_DIGIT	259
-#define	T_ID	260
-#define	T_STRING	261
-#define	T_REGEX	262
-#define	T_REGEX_I	263
-#define	T_FUNC_FILE	264
-#define	T_OP_EQ	265
-#define	T_OP_NE	266
-#define	T_OP_LT	267
-#define	T_OP_LE	268
-#define	T_OP_GT	269
-#define	T_OP_GE	270
-#define	T_OP_REG	271
-#define	T_OP_NRE	272
-#define	T_OP_IN	273
-#define	T_OP_OR	274
-#define	T_OP_AND	275
-#define	T_OP_NOT	276
-
-#line 22 "nss_expr_parse.y"
-
-#include "mod_nss.h"
-
-#line 26 "nss_expr_parse.y"
-typedef union {
-    char     *cpVal;
-    nss_expr *exVal;
-} YYSTYPE;
-#include <stdio.h>
-
-#ifndef __cplusplus
-#ifndef __STDC__
-#define const
-#endif
-#endif
-
-
-
-#define	YYFINAL		53
-#define	YYFLAG		-32768
-#define	YYNTBASE	29
-
-#define YYTRANSLATE(x) ((unsigned)(x) <= 276 ? nss_expr_yytranslate[x] : 36)
-
-static const char nss_expr_yytranslate[] = {     0,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,    28,     2,     2,    23,
-    24,     2,     2,    27,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,    25,     2,    26,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     1,     3,     4,     5,     6,
-     7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
-    17,    18,    19,    20,    21,    22
-};
-
-#if YYDEBUG != 0
-static const short nss_expr_yyprhs[] = {     0,
-     0,     2,     4,     6,     9,    13,    17,    19,    23,    27,
-    31,    35,    39,    43,    47,    53,    57,    61,    63,    67,
-    69,    71,    76,    78,    80,    82
-};
-
-static const short nss_expr_yyrhs[] = {    30,
-     0,     3,     0,     4,     0,    22,    30,     0,    30,    20,
-    30,     0,    30,    21,    30,     0,    31,     0,    23,    30,
-    24,     0,    33,    11,    33,     0,    33,    12,    33,     0,
-    33,    13,    33,     0,    33,    14,    33,     0,    33,    15,
-    33,     0,    33,    16,    33,     0,    33,    19,    25,    32,
-    26,     0,    33,    17,    34,     0,    33,    18,    34,     0,
-    33,     0,    32,    27,    33,     0,     5,     0,     7,     0,
-    28,    25,     6,    26,     0,    35,     0,     8,     0,     9,
-     0,    10,    23,     7,    24,     0
-};
-
-#endif
-
-#if YYDEBUG != 0
-static const short nss_expr_yyrline[] = { 0,
-    69,    72,    73,    74,    75,    76,    77,    78,    81,    82,
-    83,    84,    85,    86,    87,    88,    89,    92,    93,    96,
-    97,    98,    99,   102,   111,   122
-};
-#endif
-
-
-#if YYDEBUG != 0 || defined (YYERROR_VERBOSE)
-
-static const char * const nss_expr_yytname[] = {   "$","error","$undefined.","T_TRUE",
-"T_FALSE","T_DIGIT","T_ID","T_STRING","T_REGEX","T_REGEX_I","T_FUNC_FILE","T_OP_EQ",
-"T_OP_NE","T_OP_LT","T_OP_LE","T_OP_GT","T_OP_GE","T_OP_REG","T_OP_NRE","T_OP_IN",
-"T_OP_OR","T_OP_AND","T_OP_NOT","'('","')'","'{'","'}'","','","'%'","root","expr",
-"comparison","words","word","regex","funccall", NULL
-};
-#endif
-
-static const short nss_expr_yyr1[] = {     0,
-    29,    30,    30,    30,    30,    30,    30,    30,    31,    31,
-    31,    31,    31,    31,    31,    31,    31,    32,    32,    33,
-    33,    33,    33,    34,    34,    35
-};
-
-static const short nss_expr_yyr2[] = {     0,
-     1,     1,     1,     2,     3,     3,     1,     3,     3,     3,
-     3,     3,     3,     3,     5,     3,     3,     1,     3,     1,
-     1,     4,     1,     1,     1,     4
-};
-
-static const short nss_expr_yydefact[] = {     0,
-     2,     3,    20,    21,     0,     0,     0,     0,     1,     7,
-     0,    23,     0,     4,     0,     0,     0,     0,     0,     0,
-     0,     0,     0,     0,     0,     0,     0,     0,     8,     0,
-     5,     6,     9,    10,    11,    12,    13,    14,    24,    25,
-    16,    17,     0,    26,    22,     0,    18,    15,     0,    19,
-     0,     0,     0
-};
-
-static const short nss_expr_yydefgoto[] = {    51,
-     9,    10,    46,    11,    41,    12
-};
-
-static const short nss_expr_yypact[] = {     3,
--32768,-32768,-32768,-32768,   -11,     3,     3,   -10,     0,-32768,
-    22,-32768,    16,-32768,    -2,    23,     3,     3,     4,     4,
-     4,     4,     4,     4,    34,    34,    21,    24,-32768,    25,
-    26,-32768,-32768,-32768,-32768,-32768,-32768,-32768,-32768,-32768,
--32768,-32768,     4,-32768,-32768,    18,-32768,-32768,     4,-32768,
-    49,    50,-32768
-};
-
-static const short nss_expr_yypgoto[] = {-32768,
-    10,-32768,-32768,   -19,    27,-32768
-};
-
-
-#define	YYLAST		53
-
-
-static const short nss_expr_yytable[] = {    33,
-    34,    35,    36,    37,    38,     1,     2,     3,     3,     4,
-     4,    13,     5,     5,    16,    14,    15,    17,    18,    17,
-    18,    29,    28,    47,     6,     7,    31,    32,    30,    50,
-     8,     8,    19,    20,    21,    22,    23,    24,    25,    26,
-    27,    39,    40,    48,    49,    43,    18,    44,    52,    53,
-    45,     0,    42
-};
-
-static const short nss_expr_yycheck[] = {    19,
-    20,    21,    22,    23,    24,     3,     4,     5,     5,     7,
-     7,    23,    10,    10,    25,     6,     7,    20,    21,    20,
-    21,    24,     7,    43,    22,    23,    17,    18,     6,    49,
-    28,    28,    11,    12,    13,    14,    15,    16,    17,    18,
-    19,     8,     9,    26,    27,    25,    21,    24,     0,     0,
-    26,    -1,    26
-};
-/* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/lib/bison.simple"
-/* This file comes from bison-1.28.  */
-
-/* Skeleton output parser for bison,
-   Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
+/* Skeleton parser for Yacc-like parsing with Bison,
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -207,273 +23,834 @@ static const short nss_expr_yycheck[] = {    19,
    This special exception was added by the Free Software Foundation
    in version 1.24 of Bison.  */
 
-/* This is the parser code that is written into each bison parser
-  when the %semantic_parser declaration is not specified in the grammar.
-  It was written by Richard Stallman by simplifying the hairy parser
-  used when %semantic_parser is specified.  */
+/* Written by Richard Stallman by simplifying the original so called
+   ``semantic'' parser.  */
 
-#ifndef YYSTACK_USE_ALLOCA
-#ifdef alloca
-#define YYSTACK_USE_ALLOCA
-#else /* alloca not defined */
-#ifdef __GNUC__
-#define YYSTACK_USE_ALLOCA
-#define alloca __builtin_alloca
-#else /* not GNU C.  */
-#if (!defined (__STDC__) && defined (sparc)) || defined (__sparc__) || defined (__sparc) || defined (__sgi) || (defined (__sun) && defined (__i386))
-#define YYSTACK_USE_ALLOCA
-#include <alloca.h>
-#else /* not sparc */
-/* We think this test detects Watcom and Microsoft C.  */
-/* This used to test MSDOS, but that is a bad idea
-   since that symbol is in the user namespace.  */
-#if (defined (_MSDOS) || defined (_MSDOS_)) && !defined (__TURBOC__)
-#if 0 /* No need for malloc.h, which pollutes the namespace;
-	 instead, just don't use alloca.  */
-#include <malloc.h>
-#endif
-#else /* not MSDOS, or __TURBOC__ */
-#if defined(_AIX)
-/* I don't know what this was needed for, but it pollutes the namespace.
-   So I turned it off.   rms, 2 May 1997.  */
-/* #include <malloc.h>  */
- #pragma alloca
-#define YYSTACK_USE_ALLOCA
-#else /* not MSDOS, or __TURBOC__, or _AIX */
-#if 0
-#ifdef __hpux /* haible@ilog.fr says this works for HPUX 9.05 and up,
-		 and on HPUX 10.  Eventually we can turn this on.  */
-#define YYSTACK_USE_ALLOCA
-#define alloca __builtin_alloca
-#endif /* __hpux */
-#endif
-#endif /* not _AIX */
-#endif /* not MSDOS, or __TURBOC__ */
-#endif /* not sparc */
-#endif /* not GNU C */
-#endif /* alloca not defined */
-#endif /* YYSTACK_USE_ALLOCA not defined */
+/* All symbols defined below should begin with nss_expr_yy or YY, to avoid
+   infringing on user name space.  This should be done even for local
+   variables, as they might otherwise be expanded by user macros.
+   There are some unavoidable exceptions within include files to
+   define necessary library symbols; they are noted "INFRINGES ON
+   USER NAME SPACE" below.  */
 
-#ifdef YYSTACK_USE_ALLOCA
-#define YYSTACK_ALLOC alloca
+/* Identify Bison output.  */
+#define YYBISON 1
+
+/* Skeleton name.  */
+#define YYSKELETON_NAME "yacc.c"
+
+/* Pure parsers.  */
+#define YYPURE 0
+
+/* Using locations.  */
+#define YYLSP_NEEDED 0
+
+
+
+/* Tokens.  */
+#ifndef YYTOKENTYPE
+# define YYTOKENTYPE
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
+   enum nss_expr_yytokentype {
+     T_TRUE = 258,
+     T_FALSE = 259,
+     T_DIGIT = 260,
+     T_ID = 261,
+     T_STRING = 262,
+     T_REGEX = 263,
+     T_REGEX_I = 264,
+     T_FUNC_FILE = 265,
+     T_OP_EQ = 266,
+     T_OP_NE = 267,
+     T_OP_LT = 268,
+     T_OP_LE = 269,
+     T_OP_GT = 270,
+     T_OP_GE = 271,
+     T_OP_REG = 272,
+     T_OP_NRE = 273,
+     T_OP_IN = 274,
+     T_OP_OR = 275,
+     T_OP_AND = 276,
+     T_OP_NOT = 277
+   };
+#endif
+#define T_TRUE 258
+#define T_FALSE 259
+#define T_DIGIT 260
+#define T_ID 261
+#define T_STRING 262
+#define T_REGEX 263
+#define T_REGEX_I 264
+#define T_FUNC_FILE 265
+#define T_OP_EQ 266
+#define T_OP_NE 267
+#define T_OP_LT 268
+#define T_OP_LE 269
+#define T_OP_GT 270
+#define T_OP_GE 271
+#define T_OP_REG 272
+#define T_OP_NRE 273
+#define T_OP_IN 274
+#define T_OP_OR 275
+#define T_OP_AND 276
+#define T_OP_NOT 277
+
+
+
+
+/* Copy the first part of user declarations.  */
+#line 22 "nss_expr_parse.y"
+
+#include "mod_nss.h"
+
+
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+
+/* Enabling verbose error messages.  */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
 #else
-#define YYSTACK_ALLOC malloc
+# define YYERROR_VERBOSE 0
 #endif
 
-/* Note: there must be only one dollar sign in this file.
-   It is replaced by the list of actions, each action
-   as one case of the switch.  */
+#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
+#line 26 "nss_expr_parse.y"
+typedef union YYSTYPE {
+    char     *cpVal;
+    nss_expr *exVal;
+} YYSTYPE;
+/* Line 191 of yacc.c.  */
+#line 129 "y.tab.c"
+# define nss_expr_yystype YYSTYPE /* obsolescent; will be withdrawn */
+# define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
+#endif
+
+
+
+/* Copy the second part of user declarations.  */
+
+
+/* Line 214 of yacc.c.  */
+#line 141 "y.tab.c"
+
+#if ! defined (nss_expr_yyoverflow) || YYERROR_VERBOSE
+
+# ifndef YYFREE
+#  define YYFREE free
+# endif
+# ifndef YYMALLOC
+#  define YYMALLOC malloc
+# endif
+
+/* The parser invokes alloca or malloc; define the necessary symbols.  */
+
+# ifdef YYSTACK_USE_ALLOCA
+#  if YYSTACK_USE_ALLOCA
+#   define YYSTACK_ALLOC alloca
+#  endif
+# else
+#  if defined (alloca) || defined (_ALLOCA_H)
+#   define YYSTACK_ALLOC alloca
+#  else
+#   ifdef __GNUC__
+#    define YYSTACK_ALLOC __builtin_alloca
+#   endif
+#  endif
+# endif
+
+# ifdef YYSTACK_ALLOC
+   /* Pacify GCC's `empty if-body' warning. */
+#  define YYSTACK_FREE(Ptr) do { /* empty */; } while (0)
+# else
+#  if defined (__STDC__) || defined (__cplusplus)
+#   include <stdlib.h> /* INFRINGES ON USER NAME SPACE */
+#   define YYSIZE_T size_t
+#  endif
+#  define YYSTACK_ALLOC YYMALLOC
+#  define YYSTACK_FREE YYFREE
+# endif
+#endif /* ! defined (nss_expr_yyoverflow) || YYERROR_VERBOSE */
+
+
+#if (! defined (nss_expr_yyoverflow) \
+     && (! defined (__cplusplus) \
+	 || (defined (YYSTYPE_IS_TRIVIAL) && YYSTYPE_IS_TRIVIAL)))
+
+/* A type that is properly aligned for any stack member.  */
+union nss_expr_yyalloc
+{
+  short nss_expr_yyss;
+  YYSTYPE nss_expr_yyvs;
+  };
+
+/* The size of the maximum gap between one aligned stack and the next.  */
+# define YYSTACK_GAP_MAXIMUM (sizeof (union nss_expr_yyalloc) - 1)
+
+/* The size of an array large to enough to hold all stacks, each with
+   N elements.  */
+# define YYSTACK_BYTES(N) \
+     ((N) * (sizeof (short) + sizeof (YYSTYPE))				\
+      + YYSTACK_GAP_MAXIMUM)
+
+/* Copy COUNT objects from FROM to TO.  The source and destination do
+   not overlap.  */
+# ifndef YYCOPY
+#  if defined (__GNUC__) && 1 < __GNUC__
+#   define YYCOPY(To, From, Count) \
+      __builtin_memcpy (To, From, (Count) * sizeof (*(From)))
+#  else
+#   define YYCOPY(To, From, Count)		\
+      do					\
+	{					\
+	  register YYSIZE_T nss_expr_yyi;		\
+	  for (nss_expr_yyi = 0; nss_expr_yyi < (Count); nss_expr_yyi++)	\
+	    (To)[nss_expr_yyi] = (From)[nss_expr_yyi];		\
+	}					\
+      while (0)
+#  endif
+# endif
+
+/* Relocate STACK from its old location to the new one.  The
+   local variables YYSIZE and YYSTACKSIZE give the old and new number of
+   elements in the stack, and YYPTR gives the new location of the
+   stack.  Advance YYPTR to a properly aligned location for the next
+   stack.  */
+# define YYSTACK_RELOCATE(Stack)					\
+    do									\
+      {									\
+	YYSIZE_T nss_expr_yynewbytes;						\
+	YYCOPY (&nss_expr_yyptr->Stack, Stack, nss_expr_yysize);				\
+	Stack = &nss_expr_yyptr->Stack;						\
+	nss_expr_yynewbytes = nss_expr_yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
+	nss_expr_yyptr += nss_expr_yynewbytes / sizeof (*nss_expr_yyptr);				\
+      }									\
+    while (0)
+
+#endif
+
+#if defined (__STDC__) || defined (__cplusplus)
+   typedef signed char nss_expr_yysigned_char;
+#else
+   typedef short nss_expr_yysigned_char;
+#endif
+
+/* YYFINAL -- State number of the termination state. */
+#define YYFINAL  18
+/* YYLAST -- Last index in YYTABLE.  */
+#define YYLAST   52
+
+/* YYNTOKENS -- Number of terminals. */
+#define YYNTOKENS  29
+/* YYNNTS -- Number of nonterminals. */
+#define YYNNTS  8
+/* YYNRULES -- Number of rules. */
+#define YYNRULES  27
+/* YYNRULES -- Number of states. */
+#define YYNSTATES  53
+
+/* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
+#define YYUNDEFTOK  2
+#define YYMAXUTOK   277
+
+#define YYTRANSLATE(YYX) 						\
+  ((unsigned int) (YYX) <= YYMAXUTOK ? nss_expr_yytranslate[YYX] : YYUNDEFTOK)
+
+/* YYTRANSLATE[YYLEX] -- Bison symbol number corresponding to YYLEX.  */
+static const unsigned char nss_expr_yytranslate[] =
+{
+       0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,    28,     2,     2,
+      23,    24,     2,     2,    27,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,    25,     2,    26,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
+       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
+      15,    16,    17,    18,    19,    20,    21,    22
+};
+
+#if YYDEBUG
+/* YYPRHS[YYN] -- Index of the first RHS symbol of rule number YYN in
+   YYRHS.  */
+static const unsigned char nss_expr_yyprhs[] =
+{
+       0,     0,     3,     5,     7,     9,    12,    16,    20,    22,
+      26,    30,    34,    38,    42,    46,    50,    56,    60,    64,
+      66,    70,    72,    74,    79,    81,    83,    85
+};
+
+/* YYRHS -- A `-1'-separated list of the rules' RHS. */
+static const nss_expr_yysigned_char nss_expr_yyrhs[] =
+{
+      30,     0,    -1,    31,    -1,     3,    -1,     4,    -1,    22,
+      31,    -1,    31,    20,    31,    -1,    31,    21,    31,    -1,
+      32,    -1,    23,    31,    24,    -1,    34,    11,    34,    -1,
+      34,    12,    34,    -1,    34,    13,    34,    -1,    34,    14,
+      34,    -1,    34,    15,    34,    -1,    34,    16,    34,    -1,
+      34,    19,    25,    33,    26,    -1,    34,    17,    35,    -1,
+      34,    18,    35,    -1,    34,    -1,    33,    27,    34,    -1,
+       5,    -1,     7,    -1,    28,    25,     6,    26,    -1,    36,
+      -1,     8,    -1,     9,    -1,    10,    23,     7,    24,    -1
+};
+
+/* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
+static const unsigned char nss_expr_yyrline[] =
+{
+       0,    69,    69,    72,    73,    74,    75,    76,    77,    78,
+      81,    82,    83,    84,    85,    86,    87,    88,    89,    92,
+      93,    96,    97,    98,    99,   102,   111,   122
+};
+#endif
+
+#if YYDEBUG || YYERROR_VERBOSE
+/* YYTNME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
+   First, the terminals, then, starting at YYNTOKENS, nonterminals. */
+static const char *const nss_expr_yytname[] =
+{
+  "$end", "error", "$undefined", "T_TRUE", "T_FALSE", "T_DIGIT", "T_ID",
+  "T_STRING", "T_REGEX", "T_REGEX_I", "T_FUNC_FILE", "T_OP_EQ", "T_OP_NE",
+  "T_OP_LT", "T_OP_LE", "T_OP_GT", "T_OP_GE", "T_OP_REG", "T_OP_NRE",
+  "T_OP_IN", "T_OP_OR", "T_OP_AND", "T_OP_NOT", "'('", "')'", "'{'", "'}'",
+  "','", "'%'", "$accept", "root", "expr", "comparison", "words", "word",
+  "regex", "funccall", 0
+};
+#endif
+
+# ifdef YYPRINT
+/* YYTOKNUM[YYLEX-NUM] -- Internal token number corresponding to
+   token YYLEX-NUM.  */
+static const unsigned short nss_expr_yytoknum[] =
+{
+       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
+     265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
+     275,   276,   277,    40,    41,   123,   125,    44,    37
+};
+# endif
+
+/* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
+static const unsigned char nss_expr_yyr1[] =
+{
+       0,    29,    30,    31,    31,    31,    31,    31,    31,    31,
+      32,    32,    32,    32,    32,    32,    32,    32,    32,    33,
+      33,    34,    34,    34,    34,    35,    35,    36
+};
+
+/* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
+static const unsigned char nss_expr_yyr2[] =
+{
+       0,     2,     1,     1,     1,     2,     3,     3,     1,     3,
+       3,     3,     3,     3,     3,     3,     5,     3,     3,     1,
+       3,     1,     1,     4,     1,     1,     1,     4
+};
+
+/* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
+   STATE-NUM when YYTABLE doesn't specify something else to do.  Zero
+   means the default is an error.  */
+static const unsigned char nss_expr_yydefact[] =
+{
+       0,     3,     4,    21,    22,     0,     0,     0,     0,     0,
+       2,     8,     0,    24,     0,     5,     0,     0,     1,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     9,     0,     6,     7,    10,    11,    12,    13,    14,
+      15,    25,    26,    17,    18,     0,    27,    23,     0,    19,
+      16,     0,    20
+};
+
+/* YYDEFGOTO[NTERM-NUM]. */
+static const nss_expr_yysigned_char nss_expr_yydefgoto[] =
+{
+      -1,     9,    10,    11,    48,    12,    43,    13
+};
+
+/* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
+   STATE-NUM.  */
+#define YYPACT_NINF -22
+static const nss_expr_yysigned_char nss_expr_yypact[] =
+{
+       3,   -22,   -22,   -22,   -22,   -11,     3,     3,     2,    44,
+      -1,   -22,    22,   -22,    38,   -22,    -3,    40,   -22,     3,
+       3,     4,     4,     4,     4,     4,     4,    14,    14,    23,
+      25,   -22,    21,    29,   -22,   -22,   -22,   -22,   -22,   -22,
+     -22,   -22,   -22,   -22,   -22,     4,   -22,   -22,    16,   -22,
+     -22,     4,   -22
+};
+
+/* YYPGOTO[NTERM-NUM].  */
+static const nss_expr_yysigned_char nss_expr_yypgoto[] =
+{
+     -22,   -22,     9,   -22,   -22,   -21,    24,   -22
+};
+
+/* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
+   positive, shift that token.  If negative, reduce the rule which
+   number is the opposite.  If zero, do what YYDEFACT says.
+   If YYTABLE_NINF, syntax error.  */
+#define YYTABLE_NINF -1
+static const unsigned char nss_expr_yytable[] =
+{
+      35,    36,    37,    38,    39,    40,     1,     2,     3,     3,
+       4,     4,    14,     5,     5,    15,    16,    19,    20,    19,
+      20,    31,    41,    42,    49,     6,     7,    17,    33,    34,
+      52,     8,     8,    21,    22,    23,    24,    25,    26,    27,
+      28,    29,    50,    51,    18,    30,    32,    47,    45,    46,
+      20,     0,    44
+};
+
+static const nss_expr_yysigned_char nss_expr_yycheck[] =
+{
+      21,    22,    23,    24,    25,    26,     3,     4,     5,     5,
+       7,     7,    23,    10,    10,     6,     7,    20,    21,    20,
+      21,    24,     8,     9,    45,    22,    23,    25,    19,    20,
+      51,    28,    28,    11,    12,    13,    14,    15,    16,    17,
+      18,    19,    26,    27,     0,     7,     6,    26,    25,    24,
+      21,    -1,    28
+};
+
+/* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
+   symbol of state STATE-NUM.  */
+static const unsigned char nss_expr_yystos[] =
+{
+       0,     3,     4,     5,     7,    10,    22,    23,    28,    30,
+      31,    32,    34,    36,    23,    31,    31,    25,     0,    20,
+      21,    11,    12,    13,    14,    15,    16,    17,    18,    19,
+       7,    24,     6,    31,    31,    34,    34,    34,    34,    34,
+      34,     8,     9,    35,    35,    25,    24,    26,    33,    34,
+      26,    27,    34
+};
+
+#if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
+# define YYSIZE_T __SIZE_TYPE__
+#endif
+#if ! defined (YYSIZE_T) && defined (size_t)
+# define YYSIZE_T size_t
+#endif
+#if ! defined (YYSIZE_T)
+# if defined (__STDC__) || defined (__cplusplus)
+#  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
+#  define YYSIZE_T size_t
+# endif
+#endif
+#if ! defined (YYSIZE_T)
+# define YYSIZE_T unsigned int
+#endif
 
 #define nss_expr_yyerrok		(nss_expr_yyerrstatus = 0)
 #define nss_expr_yyclearin	(nss_expr_yychar = YYEMPTY)
-#define YYEMPTY		-2
+#define YYEMPTY		(-2)
 #define YYEOF		0
+
 #define YYACCEPT	goto nss_expr_yyacceptlab
-#define YYABORT 	goto nss_expr_yyabortlab
-#define YYERROR		goto nss_expr_yyerrlab1
-/* Like YYERROR except do call nss_expr_yyerror.
-   This remains here temporarily to ease the
-   transition to the new meaning of YYERROR, for GCC.
+#define YYABORT		goto nss_expr_yyabortlab
+#define YYERROR		goto nss_expr_yyerrorlab
+
+
+/* Like YYERROR except do call nss_expr_yyerror.  This remains here temporarily
+   to ease the transition to the new meaning of YYERROR, for GCC.
    Once GCC version 2 has supplanted version 1, this can go.  */
+
 #define YYFAIL		goto nss_expr_yyerrlab
+
 #define YYRECOVERING()  (!!nss_expr_yyerrstatus)
-#define YYBACKUP(token, value) \
+
+#define YYBACKUP(Token, Value)					\
 do								\
   if (nss_expr_yychar == YYEMPTY && nss_expr_yylen == 1)				\
-    { nss_expr_yychar = (token), nss_expr_yylval = (value);			\
-      nss_expr_yychar1 = YYTRANSLATE (nss_expr_yychar);				\
+    {								\
+      nss_expr_yychar = (Token);						\
+      nss_expr_yylval = (Value);						\
+      nss_expr_yytoken = YYTRANSLATE (nss_expr_yychar);				\
       YYPOPSTACK;						\
       goto nss_expr_yybackup;						\
     }								\
   else								\
-    { nss_expr_yyerror ("syntax error: cannot back up"); YYERROR; }	\
+    { 								\
+      nss_expr_yyerror ("syntax error: cannot back up");\
+      YYERROR;							\
+    }								\
 while (0)
 
 #define YYTERROR	1
 #define YYERRCODE	256
 
-#ifndef YYPURE
-#define YYLEX		nss_expr_yylex()
+/* YYLLOC_DEFAULT -- Compute the default location (before the actions
+   are run).  */
+
+#ifndef YYLLOC_DEFAULT
+# define YYLLOC_DEFAULT(Current, Rhs, N)		\
+   ((Current).first_line   = (Rhs)[1].first_line,	\
+    (Current).first_column = (Rhs)[1].first_column,	\
+    (Current).last_line    = (Rhs)[N].last_line,	\
+    (Current).last_column  = (Rhs)[N].last_column)
 #endif
 
-#ifdef YYPURE
-#ifdef YYLSP_NEEDED
+/* YYLEX -- calling `nss_expr_yylex' with the right arguments.  */
+
 #ifdef YYLEX_PARAM
-#define YYLEX		nss_expr_yylex(&nss_expr_yylval, &nss_expr_yylloc, YYLEX_PARAM)
+# define YYLEX nss_expr_yylex (YYLEX_PARAM)
 #else
-#define YYLEX		nss_expr_yylex(&nss_expr_yylval, &nss_expr_yylloc)
+# define YYLEX nss_expr_yylex ()
 #endif
-#else /* not YYLSP_NEEDED */
-#ifdef YYLEX_PARAM
-#define YYLEX		nss_expr_yylex(&nss_expr_yylval, YYLEX_PARAM)
+
+/* Enable debugging if requested.  */
+#if YYDEBUG
+
+# ifndef YYFPRINTF
+#  include <stdio.h> /* INFRINGES ON USER NAME SPACE */
+#  define YYFPRINTF fprintf
+# endif
+
+# define YYDPRINTF(Args)			\
+do {						\
+  if (nss_expr_yydebug)					\
+    YYFPRINTF Args;				\
+} while (0)
+
+# define YYDSYMPRINT(Args)			\
+do {						\
+  if (nss_expr_yydebug)					\
+    nss_expr_yysymprint Args;				\
+} while (0)
+
+# define YYDSYMPRINTF(Title, Token, Value, Location)		\
+do {								\
+  if (nss_expr_yydebug)							\
+    {								\
+      YYFPRINTF (stderr, "%s ", Title);				\
+      nss_expr_yysymprint (stderr, 					\
+                  Token, Value);	\
+      YYFPRINTF (stderr, "\n");					\
+    }								\
+} while (0)
+
+/*------------------------------------------------------------------.
+| nss_expr_yy_stack_print -- Print the state stack from its BOTTOM up to its |
+| TOP (included).                                                   |
+`------------------------------------------------------------------*/
+
+#if defined (__STDC__) || defined (__cplusplus)
+static void
+nss_expr_yy_stack_print (short *bottom, short *top)
 #else
-#define YYLEX		nss_expr_yylex(&nss_expr_yylval)
+static void
+nss_expr_yy_stack_print (bottom, top)
+    short *bottom;
+    short *top;
 #endif
-#endif /* not YYLSP_NEEDED */
+{
+  YYFPRINTF (stderr, "Stack now");
+  for (/* Nothing. */; bottom <= top; ++bottom)
+    YYFPRINTF (stderr, " %d", *bottom);
+  YYFPRINTF (stderr, "\n");
+}
+
+# define YY_STACK_PRINT(Bottom, Top)				\
+do {								\
+  if (nss_expr_yydebug)							\
+    nss_expr_yy_stack_print ((Bottom), (Top));				\
+} while (0)
+
+
+/*------------------------------------------------.
+| Report that the YYRULE is going to be reduced.  |
+`------------------------------------------------*/
+
+#if defined (__STDC__) || defined (__cplusplus)
+static void
+nss_expr_yy_reduce_print (int nss_expr_yyrule)
+#else
+static void
+nss_expr_yy_reduce_print (nss_expr_yyrule)
+    int nss_expr_yyrule;
 #endif
+{
+  int nss_expr_yyi;
+  unsigned int nss_expr_yylno = nss_expr_yyrline[nss_expr_yyrule];
+  YYFPRINTF (stderr, "Reducing stack by rule %d (line %u), ",
+             nss_expr_yyrule - 1, nss_expr_yylno);
+  /* Print the symbols being reduced, and their result.  */
+  for (nss_expr_yyi = nss_expr_yyprhs[nss_expr_yyrule]; 0 <= nss_expr_yyrhs[nss_expr_yyi]; nss_expr_yyi++)
+    YYFPRINTF (stderr, "%s ", nss_expr_yytname [nss_expr_yyrhs[nss_expr_yyi]]);
+  YYFPRINTF (stderr, "-> %s\n", nss_expr_yytname [nss_expr_yyr1[nss_expr_yyrule]]);
+}
 
-/* If nonreentrant, generate the variables here */
+# define YY_REDUCE_PRINT(Rule)		\
+do {					\
+  if (nss_expr_yydebug)				\
+    nss_expr_yy_reduce_print (Rule);		\
+} while (0)
 
-#ifndef YYPURE
+/* Nonzero means print parse trace.  It is left uninitialized so that
+   multiple parsers can coexist.  */
+int nss_expr_yydebug;
+#else /* !YYDEBUG */
+# define YYDPRINTF(Args)
+# define YYDSYMPRINT(Args)
+# define YYDSYMPRINTF(Title, Token, Value, Location)
+# define YY_STACK_PRINT(Bottom, Top)
+# define YY_REDUCE_PRINT(Rule)
+#endif /* !YYDEBUG */
 
-int	nss_expr_yychar;			/*  the lookahead symbol		*/
-YYSTYPE	nss_expr_yylval;			/*  the semantic value of the		*/
-				/*  lookahead symbol			*/
 
-#ifdef YYLSP_NEEDED
-YYLTYPE nss_expr_yylloc;			/*  location data for the lookahead	*/
-				/*  symbol				*/
-#endif
-
-int nss_expr_yynerrs;			/*  number of parse errors so far       */
-#endif  /* not YYPURE */
-
-#if YYDEBUG != 0
-int nss_expr_yydebug;			/*  nonzero means print parse trace	*/
-/* Since this is uninitialized, it does not stop multiple parsers
-   from coexisting.  */
-#endif
-
-/*  YYINITDEPTH indicates the initial size of the parser's stacks	*/
-
+/* YYINITDEPTH -- initial size of the parser's stacks.  */
 #ifndef	YYINITDEPTH
-#define YYINITDEPTH 200
+# define YYINITDEPTH 200
 #endif
 
-/*  YYMAXDEPTH is the maximum size the stacks can grow to
-    (effective only if the built-in stack extension method is used).  */
+/* YYMAXDEPTH -- maximum size the stacks can grow to (effective only
+   if the built-in stack extension method is used).
 
-#if YYMAXDEPTH == 0
-#undef YYMAXDEPTH
+   Do not make this value too large; the results are undefined if
+   SIZE_MAX < YYSTACK_BYTES (YYMAXDEPTH)
+   evaluated with infinite-precision integer arithmetic.  */
+
+#if defined (YYMAXDEPTH) && YYMAXDEPTH == 0
+# undef YYMAXDEPTH
 #endif
 
 #ifndef YYMAXDEPTH
-#define YYMAXDEPTH 10000
+# define YYMAXDEPTH 10000
 #endif
+
 
-/* Define __nss_expr_yy_memcpy.  Note that the size argument
-   should be passed with type unsigned int, because that is what the non-GCC
-   definitions require.  With GCC, __builtin_memcpy takes an arg
-   of type size_t, but it can handle unsigned int.  */
 
-#if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
-#define __nss_expr_yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
-#else				/* not GNU C or C++ */
-#ifndef __cplusplus
+#if YYERROR_VERBOSE
 
-/* This is the most reliable way to avoid incompatibilities
-   in available built-in functions on various systems.  */
-static void
-__nss_expr_yy_memcpy (to, from, count)
-     char *to;
-     char *from;
-     unsigned int count;
+# ifndef nss_expr_yystrlen
+#  if defined (__GLIBC__) && defined (_STRING_H)
+#   define nss_expr_yystrlen strlen
+#  else
+/* Return the length of YYSTR.  */
+static YYSIZE_T
+#   if defined (__STDC__) || defined (__cplusplus)
+nss_expr_yystrlen (const char *nss_expr_yystr)
+#   else
+nss_expr_yystrlen (nss_expr_yystr)
+     const char *nss_expr_yystr;
+#   endif
 {
-  register char *f = from;
-  register char *t = to;
-  register int i = count;
+  register const char *nss_expr_yys = nss_expr_yystr;
 
-  while (i-- > 0)
-    *t++ = *f++;
+  while (*nss_expr_yys++ != '\0')
+    continue;
+
+  return nss_expr_yys - nss_expr_yystr - 1;
 }
+#  endif
+# endif
 
-#else /* __cplusplus */
-
-/* This is the most reliable way to avoid incompatibilities
-   in available built-in functions on various systems.  */
-static void
-__nss_expr_yy_memcpy (char *to, char *from, unsigned int count)
+# ifndef nss_expr_yystpcpy
+#  if defined (__GLIBC__) && defined (_STRING_H) && defined (_GNU_SOURCE)
+#   define nss_expr_yystpcpy stpcpy
+#  else
+/* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
+   YYDEST.  */
+static char *
+#   if defined (__STDC__) || defined (__cplusplus)
+nss_expr_yystpcpy (char *nss_expr_yydest, const char *nss_expr_yysrc)
+#   else
+nss_expr_yystpcpy (nss_expr_yydest, nss_expr_yysrc)
+     char *nss_expr_yydest;
+     const char *nss_expr_yysrc;
+#   endif
 {
-  register char *t = to;
-  register char *f = from;
-  register int i = count;
+  register char *nss_expr_yyd = nss_expr_yydest;
+  register const char *nss_expr_yys = nss_expr_yysrc;
 
-  while (i-- > 0)
-    *t++ = *f++;
+  while ((*nss_expr_yyd++ = *nss_expr_yys++) != '\0')
+    continue;
+
+  return nss_expr_yyd - 1;
 }
+#  endif
+# endif
 
-#endif
-#endif
+#endif /* !YYERROR_VERBOSE */
+
 
-#line 217 "/usr/lib/bison.simple"
 
-/* The user can define YYPARSE_PARAM as the name of an argument to be passed
-   into nss_expr_yyparse.  The argument should have type void *.
-   It should actually point to an object.
-   Grammar actions can access the variable by casting it
-   to the proper pointer type.  */
+#if YYDEBUG
+/*--------------------------------.
+| Print this symbol on YYOUTPUT.  |
+`--------------------------------*/
 
-#ifdef YYPARSE_PARAM
-#ifdef __cplusplus
-#define YYPARSE_PARAM_ARG void *YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL
-#else /* not __cplusplus */
-#define YYPARSE_PARAM_ARG YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL void *YYPARSE_PARAM;
-#endif /* not __cplusplus */
-#else /* not YYPARSE_PARAM */
-#define YYPARSE_PARAM_ARG
-#define YYPARSE_PARAM_DECL
-#endif /* not YYPARSE_PARAM */
-
-/* Prevent warning if -Wstrict-prototypes.  */
-#ifdef __GNUC__
-#ifdef YYPARSE_PARAM
-int nss_expr_yyparse (void *);
+#if defined (__STDC__) || defined (__cplusplus)
+static void
+nss_expr_yysymprint (FILE *nss_expr_yyoutput, int nss_expr_yytype, YYSTYPE *nss_expr_yyvaluep)
 #else
-int nss_expr_yyparse (void);
+static void
+nss_expr_yysymprint (nss_expr_yyoutput, nss_expr_yytype, nss_expr_yyvaluep)
+    FILE *nss_expr_yyoutput;
+    int nss_expr_yytype;
+    YYSTYPE *nss_expr_yyvaluep;
 #endif
-#endif
-
-int
-nss_expr_yyparse(YYPARSE_PARAM_ARG)
-     YYPARSE_PARAM_DECL
 {
+  /* Pacify ``unused variable'' warnings.  */
+  (void) nss_expr_yyvaluep;
+
+  if (nss_expr_yytype < YYNTOKENS)
+    {
+      YYFPRINTF (nss_expr_yyoutput, "token %s (", nss_expr_yytname[nss_expr_yytype]);
+# ifdef YYPRINT
+      YYPRINT (nss_expr_yyoutput, nss_expr_yytoknum[nss_expr_yytype], *nss_expr_yyvaluep);
+# endif
+    }
+  else
+    YYFPRINTF (nss_expr_yyoutput, "nterm %s (", nss_expr_yytname[nss_expr_yytype]);
+
+  switch (nss_expr_yytype)
+    {
+      default:
+        break;
+    }
+  YYFPRINTF (nss_expr_yyoutput, ")");
+}
+
+#endif /* ! YYDEBUG */
+/*-----------------------------------------------.
+| Release the memory associated to this symbol.  |
+`-----------------------------------------------*/
+
+#if defined (__STDC__) || defined (__cplusplus)
+static void
+nss_expr_yydestruct (int nss_expr_yytype, YYSTYPE *nss_expr_yyvaluep)
+#else
+static void
+nss_expr_yydestruct (nss_expr_yytype, nss_expr_yyvaluep)
+    int nss_expr_yytype;
+    YYSTYPE *nss_expr_yyvaluep;
+#endif
+{
+  /* Pacify ``unused variable'' warnings.  */
+  (void) nss_expr_yyvaluep;
+
+  switch (nss_expr_yytype)
+    {
+
+      default:
+        break;
+    }
+}
+
+
+/* Prevent warnings from -Wmissing-prototypes.  */
+
+#ifdef YYPARSE_PARAM
+# if defined (__STDC__) || defined (__cplusplus)
+int nss_expr_yyparse (void *YYPARSE_PARAM);
+# else
+int nss_expr_yyparse ();
+# endif
+#else /* ! YYPARSE_PARAM */
+#if defined (__STDC__) || defined (__cplusplus)
+int nss_expr_yyparse (void);
+#else
+int nss_expr_yyparse ();
+#endif
+#endif /* ! YYPARSE_PARAM */
+
+
+
+/* The lookahead symbol.  */
+int nss_expr_yychar;
+
+/* The semantic value of the lookahead symbol.  */
+YYSTYPE nss_expr_yylval;
+
+/* Number of syntax errors so far.  */
+int nss_expr_yynerrs;
+
+
+
+/*----------.
+| nss_expr_yyparse.  |
+`----------*/
+
+#ifdef YYPARSE_PARAM
+# if defined (__STDC__) || defined (__cplusplus)
+int nss_expr_yyparse (void *YYPARSE_PARAM)
+# else
+int nss_expr_yyparse (YYPARSE_PARAM)
+  void *YYPARSE_PARAM;
+# endif
+#else /* ! YYPARSE_PARAM */
+#if defined (__STDC__) || defined (__cplusplus)
+int
+nss_expr_yyparse (void)
+#else
+int
+nss_expr_yyparse ()
+
+#endif
+#endif
+{
+  
   register int nss_expr_yystate;
   register int nss_expr_yyn;
+  int nss_expr_yyresult;
+  /* Number of tokens to shift before error messages enabled.  */
+  int nss_expr_yyerrstatus;
+  /* Lookahead token as an internal (translated) token number.  */
+  int nss_expr_yytoken = 0;
+
+  /* Three stacks and their tools:
+     `nss_expr_yyss': related to states,
+     `nss_expr_yyvs': related to semantic values,
+     `nss_expr_yyls': related to locations.
+
+     Refer to the stacks thru separate pointers, to allow nss_expr_yyoverflow
+     to reallocate them elsewhere.  */
+
+  /* The state stack.  */
+  short	nss_expr_yyssa[YYINITDEPTH];
+  short *nss_expr_yyss = nss_expr_yyssa;
   register short *nss_expr_yyssp;
+
+  /* The semantic value stack.  */
+  YYSTYPE nss_expr_yyvsa[YYINITDEPTH];
+  YYSTYPE *nss_expr_yyvs = nss_expr_yyvsa;
   register YYSTYPE *nss_expr_yyvsp;
-  int nss_expr_yyerrstatus;	/*  number of tokens to shift before error messages enabled */
-  int nss_expr_yychar1 = 0;		/*  lookahead token as an internal (translated) token number */
 
-  short	nss_expr_yyssa[YYINITDEPTH];	/*  the state stack			*/
-  YYSTYPE nss_expr_yyvsa[YYINITDEPTH];	/*  the semantic value stack		*/
 
-  short *nss_expr_yyss = nss_expr_yyssa;		/*  refer to the stacks thru separate pointers */
-  YYSTYPE *nss_expr_yyvs = nss_expr_yyvsa;	/*  to allow nss_expr_yyoverflow to reallocate them elsewhere */
 
-#ifdef YYLSP_NEEDED
-  YYLTYPE nss_expr_yylsa[YYINITDEPTH];	/*  the location stack			*/
-  YYLTYPE *nss_expr_yyls = nss_expr_yylsa;
-  YYLTYPE *nss_expr_yylsp;
-
-#define YYPOPSTACK   (nss_expr_yyvsp--, nss_expr_yyssp--, nss_expr_yylsp--)
-#else
 #define YYPOPSTACK   (nss_expr_yyvsp--, nss_expr_yyssp--)
-#endif
 
-  int nss_expr_yystacksize = YYINITDEPTH;
-  int nss_expr_yyfree_stacks = 0;
+  YYSIZE_T nss_expr_yystacksize = YYINITDEPTH;
 
-#ifdef YYPURE
-  int nss_expr_yychar;
-  YYSTYPE nss_expr_yylval;
-  int nss_expr_yynerrs;
-#ifdef YYLSP_NEEDED
-  YYLTYPE nss_expr_yylloc;
-#endif
-#endif
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE nss_expr_yyval;
 
-  YYSTYPE nss_expr_yyval;		/*  the variable used to return		*/
-				/*  semantic values from the action	*/
-				/*  routines				*/
 
+  /* When reducing, the number of symbols on the RHS of the reduced
+     rule.  */
   int nss_expr_yylen;
 
-#if YYDEBUG != 0
-  if (nss_expr_yydebug)
-    fprintf(stderr, "Starting parse\n");
-#endif
+  YYDPRINTF ((stderr, "Starting parse\n"));
 
   nss_expr_yystate = 0;
   nss_expr_yyerrstatus = 0;
@@ -485,110 +862,96 @@ nss_expr_yyparse(YYPARSE_PARAM_ARG)
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
 
-  nss_expr_yyssp = nss_expr_yyss - 1;
+  nss_expr_yyssp = nss_expr_yyss;
   nss_expr_yyvsp = nss_expr_yyvs;
-#ifdef YYLSP_NEEDED
-  nss_expr_yylsp = nss_expr_yyls;
-#endif
 
-/* Push a new state, which is found in  nss_expr_yystate  .  */
-/* In all cases, when you get here, the value and location stacks
-   have just been pushed. so pushing a state here evens the stacks.  */
-nss_expr_yynewstate:
+  goto nss_expr_yysetstate;
 
-  *++nss_expr_yyssp = nss_expr_yystate;
+/*------------------------------------------------------------.
+| nss_expr_yynewstate -- Push a new state, which is found in nss_expr_yystate.  |
+`------------------------------------------------------------*/
+ nss_expr_yynewstate:
+  /* In all cases, when you get here, the value and location stacks
+     have just been pushed. so pushing a state here evens the stacks.
+     */
+  nss_expr_yyssp++;
 
-  if (nss_expr_yyssp >= nss_expr_yyss + nss_expr_yystacksize - 1)
+ nss_expr_yysetstate:
+  *nss_expr_yyssp = nss_expr_yystate;
+
+  if (nss_expr_yyss + nss_expr_yystacksize - 1 <= nss_expr_yyssp)
     {
-      /* Give user a chance to reallocate the stack */
-      /* Use copies of these so that the &'s don't force the real ones into memory. */
-      YYSTYPE *nss_expr_yyvs1 = nss_expr_yyvs;
-      short *nss_expr_yyss1 = nss_expr_yyss;
-#ifdef YYLSP_NEEDED
-      YYLTYPE *nss_expr_yyls1 = nss_expr_yyls;
-#endif
-
       /* Get the current used size of the three stacks, in elements.  */
-      int size = nss_expr_yyssp - nss_expr_yyss + 1;
+      YYSIZE_T nss_expr_yysize = nss_expr_yyssp - nss_expr_yyss + 1;
 
 #ifdef nss_expr_yyoverflow
-      /* Each stack pointer address is followed by the size of
-	 the data in use in that stack, in bytes.  */
-#ifdef YYLSP_NEEDED
-      /* This used to be a conditional around just the two extra args,
-	 but that might be undefined if nss_expr_yyoverflow is a macro.  */
-      nss_expr_yyoverflow("parser stack overflow",
-		 &nss_expr_yyss1, size * sizeof (*nss_expr_yyssp),
-		 &nss_expr_yyvs1, size * sizeof (*nss_expr_yyvsp),
-		 &nss_expr_yyls1, size * sizeof (*nss_expr_yylsp),
-		 &nss_expr_yystacksize);
-#else
-      nss_expr_yyoverflow("parser stack overflow",
-		 &nss_expr_yyss1, size * sizeof (*nss_expr_yyssp),
-		 &nss_expr_yyvs1, size * sizeof (*nss_expr_yyvsp),
-		 &nss_expr_yystacksize);
-#endif
+      {
+	/* Give user a chance to reallocate the stack. Use copies of
+	   these so that the &'s don't force the real ones into
+	   memory.  */
+	YYSTYPE *nss_expr_yyvs1 = nss_expr_yyvs;
+	short *nss_expr_yyss1 = nss_expr_yyss;
 
-      nss_expr_yyss = nss_expr_yyss1; nss_expr_yyvs = nss_expr_yyvs1;
-#ifdef YYLSP_NEEDED
-      nss_expr_yyls = nss_expr_yyls1;
-#endif
+
+	/* Each stack pointer address is followed by the size of the
+	   data in use in that stack, in bytes.  This used to be a
+	   conditional around just the two extra args, but that might
+	   be undefined if nss_expr_yyoverflow is a macro.  */
+	nss_expr_yyoverflow ("parser stack overflow",
+		    &nss_expr_yyss1, nss_expr_yysize * sizeof (*nss_expr_yyssp),
+		    &nss_expr_yyvs1, nss_expr_yysize * sizeof (*nss_expr_yyvsp),
+
+		    &nss_expr_yystacksize);
+
+	nss_expr_yyss = nss_expr_yyss1;
+	nss_expr_yyvs = nss_expr_yyvs1;
+      }
 #else /* no nss_expr_yyoverflow */
+# ifndef YYSTACK_RELOCATE
+      goto nss_expr_yyoverflowlab;
+# else
       /* Extend the stack our own way.  */
-      if (nss_expr_yystacksize >= YYMAXDEPTH)
-	{
-	  nss_expr_yyerror("parser stack overflow");
-	  if (nss_expr_yyfree_stacks)
-	    {
-	      free (nss_expr_yyss);
-	      free (nss_expr_yyvs);
-#ifdef YYLSP_NEEDED
-	      free (nss_expr_yyls);
-#endif
-	    }
-	  return 2;
-	}
+      if (YYMAXDEPTH <= nss_expr_yystacksize)
+	goto nss_expr_yyoverflowlab;
       nss_expr_yystacksize *= 2;
-      if (nss_expr_yystacksize > YYMAXDEPTH)
+      if (YYMAXDEPTH < nss_expr_yystacksize)
 	nss_expr_yystacksize = YYMAXDEPTH;
-#ifndef YYSTACK_USE_ALLOCA
-      nss_expr_yyfree_stacks = 1;
-#endif
-      nss_expr_yyss = (short *) YYSTACK_ALLOC (nss_expr_yystacksize * sizeof (*nss_expr_yyssp));
-      __nss_expr_yy_memcpy ((char *)nss_expr_yyss, (char *)nss_expr_yyss1,
-		   size * (unsigned int) sizeof (*nss_expr_yyssp));
-      nss_expr_yyvs = (YYSTYPE *) YYSTACK_ALLOC (nss_expr_yystacksize * sizeof (*nss_expr_yyvsp));
-      __nss_expr_yy_memcpy ((char *)nss_expr_yyvs, (char *)nss_expr_yyvs1,
-		   size * (unsigned int) sizeof (*nss_expr_yyvsp));
-#ifdef YYLSP_NEEDED
-      nss_expr_yyls = (YYLTYPE *) YYSTACK_ALLOC (nss_expr_yystacksize * sizeof (*nss_expr_yylsp));
-      __nss_expr_yy_memcpy ((char *)nss_expr_yyls, (char *)nss_expr_yyls1,
-		   size * (unsigned int) sizeof (*nss_expr_yylsp));
-#endif
+
+      {
+	short *nss_expr_yyss1 = nss_expr_yyss;
+	union nss_expr_yyalloc *nss_expr_yyptr =
+	  (union nss_expr_yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (nss_expr_yystacksize));
+	if (! nss_expr_yyptr)
+	  goto nss_expr_yyoverflowlab;
+	YYSTACK_RELOCATE (nss_expr_yyss);
+	YYSTACK_RELOCATE (nss_expr_yyvs);
+
+#  undef YYSTACK_RELOCATE
+	if (nss_expr_yyss1 != nss_expr_yyssa)
+	  YYSTACK_FREE (nss_expr_yyss1);
+      }
+# endif
 #endif /* no nss_expr_yyoverflow */
 
-      nss_expr_yyssp = nss_expr_yyss + size - 1;
-      nss_expr_yyvsp = nss_expr_yyvs + size - 1;
-#ifdef YYLSP_NEEDED
-      nss_expr_yylsp = nss_expr_yyls + size - 1;
-#endif
+      nss_expr_yyssp = nss_expr_yyss + nss_expr_yysize - 1;
+      nss_expr_yyvsp = nss_expr_yyvs + nss_expr_yysize - 1;
 
-#if YYDEBUG != 0
-      if (nss_expr_yydebug)
-	fprintf(stderr, "Stack size increased to %d\n", nss_expr_yystacksize);
-#endif
 
-      if (nss_expr_yyssp >= nss_expr_yyss + nss_expr_yystacksize - 1)
+      YYDPRINTF ((stderr, "Stack size increased to %lu\n",
+		  (unsigned long int) nss_expr_yystacksize));
+
+      if (nss_expr_yyss + nss_expr_yystacksize - 1 <= nss_expr_yyssp)
 	YYABORT;
     }
 
-#if YYDEBUG != 0
-  if (nss_expr_yydebug)
-    fprintf(stderr, "Entering state %d\n", nss_expr_yystate);
-#endif
+  YYDPRINTF ((stderr, "Entering state %d\n", nss_expr_yystate));
 
   goto nss_expr_yybackup;
- nss_expr_yybackup:
+
+/*-----------.
+| nss_expr_yybackup.  |
+`-----------*/
+nss_expr_yybackup:
 
 /* Do appropriate processing given the current state.  */
 /* Read a lookahead token if we need one and don't already have one.  */
@@ -597,477 +960,474 @@ nss_expr_yynewstate:
   /* First try to decide what to do without reference to lookahead token.  */
 
   nss_expr_yyn = nss_expr_yypact[nss_expr_yystate];
-  if (nss_expr_yyn == YYFLAG)
+  if (nss_expr_yyn == YYPACT_NINF)
     goto nss_expr_yydefault;
 
   /* Not known => get a lookahead token if don't already have one.  */
 
-  /* nss_expr_yychar is either YYEMPTY or YYEOF
-     or a valid token in external form.  */
-
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
   if (nss_expr_yychar == YYEMPTY)
     {
-#if YYDEBUG != 0
-      if (nss_expr_yydebug)
-	fprintf(stderr, "Reading a token: ");
-#endif
+      YYDPRINTF ((stderr, "Reading a token: "));
       nss_expr_yychar = YYLEX;
     }
 
-  /* Convert token to internal form (in nss_expr_yychar1) for indexing tables with */
-
-  if (nss_expr_yychar <= 0)		/* This means end of input. */
+  if (nss_expr_yychar <= YYEOF)
     {
-      nss_expr_yychar1 = 0;
-      nss_expr_yychar = YYEOF;		/* Don't call YYLEX any more */
-
-#if YYDEBUG != 0
-      if (nss_expr_yydebug)
-	fprintf(stderr, "Now at end of input.\n");
-#endif
+      nss_expr_yychar = nss_expr_yytoken = YYEOF;
+      YYDPRINTF ((stderr, "Now at end of input.\n"));
     }
   else
     {
-      nss_expr_yychar1 = YYTRANSLATE(nss_expr_yychar);
-
-#if YYDEBUG != 0
-      if (nss_expr_yydebug)
-	{
-	  fprintf (stderr, "Next token is %d (%s", nss_expr_yychar, nss_expr_yytname[nss_expr_yychar1]);
-	  /* Give the individual parser a way to print the precise meaning
-	     of a token, for further debugging info.  */
-#ifdef YYPRINT
-	  YYPRINT (stderr, nss_expr_yychar, nss_expr_yylval);
-#endif
-	  fprintf (stderr, ")\n");
-	}
-#endif
+      nss_expr_yytoken = YYTRANSLATE (nss_expr_yychar);
+      YYDSYMPRINTF ("Next token is", nss_expr_yytoken, &nss_expr_yylval, &nss_expr_yylloc);
     }
 
-  nss_expr_yyn += nss_expr_yychar1;
-  if (nss_expr_yyn < 0 || nss_expr_yyn > YYLAST || nss_expr_yycheck[nss_expr_yyn] != nss_expr_yychar1)
+  /* If the proper action on seeing token YYTOKEN is to reduce or to
+     detect an error, take that action.  */
+  nss_expr_yyn += nss_expr_yytoken;
+  if (nss_expr_yyn < 0 || YYLAST < nss_expr_yyn || nss_expr_yycheck[nss_expr_yyn] != nss_expr_yytoken)
     goto nss_expr_yydefault;
-
   nss_expr_yyn = nss_expr_yytable[nss_expr_yyn];
-
-  /* nss_expr_yyn is what to do for this token type in this state.
-     Negative => reduce, -nss_expr_yyn is rule number.
-     Positive => shift, nss_expr_yyn is new state.
-       New state is final state => don't bother to shift,
-       just return success.
-     0, or most negative number => error.  */
-
-  if (nss_expr_yyn < 0)
+  if (nss_expr_yyn <= 0)
     {
-      if (nss_expr_yyn == YYFLAG)
+      if (nss_expr_yyn == 0 || nss_expr_yyn == YYTABLE_NINF)
 	goto nss_expr_yyerrlab;
       nss_expr_yyn = -nss_expr_yyn;
       goto nss_expr_yyreduce;
     }
-  else if (nss_expr_yyn == 0)
-    goto nss_expr_yyerrlab;
 
   if (nss_expr_yyn == YYFINAL)
     YYACCEPT;
 
   /* Shift the lookahead token.  */
-
-#if YYDEBUG != 0
-  if (nss_expr_yydebug)
-    fprintf(stderr, "Shifting token %d (%s), ", nss_expr_yychar, nss_expr_yytname[nss_expr_yychar1]);
-#endif
+  YYDPRINTF ((stderr, "Shifting token %s, ", nss_expr_yytname[nss_expr_yytoken]));
 
   /* Discard the token being shifted unless it is eof.  */
   if (nss_expr_yychar != YYEOF)
     nss_expr_yychar = YYEMPTY;
 
   *++nss_expr_yyvsp = nss_expr_yylval;
-#ifdef YYLSP_NEEDED
-  *++nss_expr_yylsp = nss_expr_yylloc;
-#endif
 
-  /* count tokens shifted since error; after three, turn off error status.  */
-  if (nss_expr_yyerrstatus) nss_expr_yyerrstatus--;
+
+  /* Count tokens shifted since error; after three, turn off error
+     status.  */
+  if (nss_expr_yyerrstatus)
+    nss_expr_yyerrstatus--;
 
   nss_expr_yystate = nss_expr_yyn;
   goto nss_expr_yynewstate;
 
-/* Do the default action for the current state.  */
-nss_expr_yydefault:
 
+/*-----------------------------------------------------------.
+| nss_expr_yydefault -- do the default action for the current state.  |
+`-----------------------------------------------------------*/
+nss_expr_yydefault:
   nss_expr_yyn = nss_expr_yydefact[nss_expr_yystate];
   if (nss_expr_yyn == 0)
     goto nss_expr_yyerrlab;
+  goto nss_expr_yyreduce;
 
-/* Do a reduction.  nss_expr_yyn is the number of a rule to reduce with.  */
+
+/*-----------------------------.
+| nss_expr_yyreduce -- Do a reduction.  |
+`-----------------------------*/
 nss_expr_yyreduce:
+  /* nss_expr_yyn is the number of a rule to reduce with.  */
   nss_expr_yylen = nss_expr_yyr2[nss_expr_yyn];
-  if (nss_expr_yylen > 0)
-    nss_expr_yyval = nss_expr_yyvsp[1-nss_expr_yylen]; /* implement default value of the action */
 
-#if YYDEBUG != 0
-  if (nss_expr_yydebug)
+  /* If YYLEN is nonzero, implement the default value of the action:
+     `$$ = $1'.
+
+     Otherwise, the following line sets YYVAL to garbage.
+     This behavior is undocumented and Bison
+     users should not rely upon it.  Assigning to YYVAL
+     unconditionally makes the parser a bit smaller, and it avoids a
+     GCC warning that YYVAL may be used uninitialized.  */
+  nss_expr_yyval = nss_expr_yyvsp[1-nss_expr_yylen];
+
+
+  YY_REDUCE_PRINT (nss_expr_yyn);
+  switch (nss_expr_yyn)
     {
-      int i;
-
-      fprintf (stderr, "Reducing via rule %d (line %d), ",
-	       nss_expr_yyn, nss_expr_yyrline[nss_expr_yyn]);
-
-      /* Print the symbols being reduced, and their result.  */
-      for (i = nss_expr_yyprhs[nss_expr_yyn]; nss_expr_yyrhs[i] > 0; i++)
-	fprintf (stderr, "%s ", nss_expr_yytname[nss_expr_yyrhs[i]]);
-      fprintf (stderr, " -> %s\n", nss_expr_yytname[nss_expr_yyr1[nss_expr_yyn]]);
-    }
-#endif
-
-
-  switch (nss_expr_yyn) {
-
-case 1:
+        case 2:
 #line 69 "nss_expr_parse.y"
-{ nss_expr_info.expr = nss_expr_yyvsp[0].exVal; ;
-    break;}
-case 2:
+    { nss_expr_info.expr = nss_expr_yyvsp[0].exVal; }
+    break;
+
+  case 3:
 #line 72 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_True,  NULL, NULL); ;
-    break;}
-case 3:
+    { nss_expr_yyval.exVal = nss_expr_make(op_True,  NULL, NULL); }
+    break;
+
+  case 4:
 #line 73 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_False, NULL, NULL); ;
-    break;}
-case 4:
+    { nss_expr_yyval.exVal = nss_expr_make(op_False, NULL, NULL); }
+    break;
+
+  case 5:
 #line 74 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_Not,   nss_expr_yyvsp[0].exVal,   NULL); ;
-    break;}
-case 5:
+    { nss_expr_yyval.exVal = nss_expr_make(op_Not,   nss_expr_yyvsp[0].exVal,   NULL); }
+    break;
+
+  case 6:
 #line 75 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_Or,    nss_expr_yyvsp[-2].exVal,   nss_expr_yyvsp[0].exVal);   ;
-    break;}
-case 6:
+    { nss_expr_yyval.exVal = nss_expr_make(op_Or,    nss_expr_yyvsp[-2].exVal,   nss_expr_yyvsp[0].exVal);   }
+    break;
+
+  case 7:
 #line 76 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_And,   nss_expr_yyvsp[-2].exVal,   nss_expr_yyvsp[0].exVal);   ;
-    break;}
-case 7:
+    { nss_expr_yyval.exVal = nss_expr_make(op_And,   nss_expr_yyvsp[-2].exVal,   nss_expr_yyvsp[0].exVal);   }
+    break;
+
+  case 8:
 #line 77 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_Comp,  nss_expr_yyvsp[0].exVal,   NULL); ;
-    break;}
-case 8:
+    { nss_expr_yyval.exVal = nss_expr_make(op_Comp,  nss_expr_yyvsp[0].exVal,   NULL); }
+    break;
+
+  case 9:
 #line 78 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_yyvsp[-1].exVal; ;
-    break;}
-case 9:
+    { nss_expr_yyval.exVal = nss_expr_yyvsp[-1].exVal; }
+    break;
+
+  case 10:
 #line 81 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_EQ,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); ;
-    break;}
-case 10:
+    { nss_expr_yyval.exVal = nss_expr_make(op_EQ,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); }
+    break;
+
+  case 11:
 #line 82 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_NE,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); ;
-    break;}
-case 11:
+    { nss_expr_yyval.exVal = nss_expr_make(op_NE,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); }
+    break;
+
+  case 12:
 #line 83 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_LT,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); ;
-    break;}
-case 12:
+    { nss_expr_yyval.exVal = nss_expr_make(op_LT,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); }
+    break;
+
+  case 13:
 #line 84 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_LE,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); ;
-    break;}
-case 13:
+    { nss_expr_yyval.exVal = nss_expr_make(op_LE,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); }
+    break;
+
+  case 14:
 #line 85 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_GT,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); ;
-    break;}
-case 14:
+    { nss_expr_yyval.exVal = nss_expr_make(op_GT,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); }
+    break;
+
+  case 15:
 #line 86 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_GE,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); ;
-    break;}
-case 15:
+    { nss_expr_yyval.exVal = nss_expr_make(op_GE,  nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); }
+    break;
+
+  case 16:
 #line 87 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_IN,  nss_expr_yyvsp[-4].exVal, nss_expr_yyvsp[-1].exVal); ;
-    break;}
-case 16:
+    { nss_expr_yyval.exVal = nss_expr_make(op_IN,  nss_expr_yyvsp[-4].exVal, nss_expr_yyvsp[-1].exVal); }
+    break;
+
+  case 17:
 #line 88 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_REG, nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); ;
-    break;}
-case 17:
+    { nss_expr_yyval.exVal = nss_expr_make(op_REG, nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); }
+    break;
+
+  case 18:
 #line 89 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_NRE, nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); ;
-    break;}
-case 18:
+    { nss_expr_yyval.exVal = nss_expr_make(op_NRE, nss_expr_yyvsp[-2].exVal, nss_expr_yyvsp[0].exVal); }
+    break;
+
+  case 19:
 #line 92 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_ListElement, nss_expr_yyvsp[0].exVal, NULL); ;
-    break;}
-case 19:
+    { nss_expr_yyval.exVal = nss_expr_make(op_ListElement, nss_expr_yyvsp[0].exVal, NULL); }
+    break;
+
+  case 20:
 #line 93 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_ListElement, nss_expr_yyvsp[0].exVal, nss_expr_yyvsp[-2].exVal);   ;
-    break;}
-case 20:
+    { nss_expr_yyval.exVal = nss_expr_make(op_ListElement, nss_expr_yyvsp[0].exVal, nss_expr_yyvsp[-2].exVal);   }
+    break;
+
+  case 21:
 #line 96 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_Digit,  nss_expr_yyvsp[0].cpVal, NULL); ;
-    break;}
-case 21:
+    { nss_expr_yyval.exVal = nss_expr_make(op_Digit,  nss_expr_yyvsp[0].cpVal, NULL); }
+    break;
+
+  case 22:
 #line 97 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_String, nss_expr_yyvsp[0].cpVal, NULL); ;
-    break;}
-case 22:
+    { nss_expr_yyval.exVal = nss_expr_make(op_String, nss_expr_yyvsp[0].cpVal, NULL); }
+    break;
+
+  case 23:
 #line 98 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_make(op_Var,    nss_expr_yyvsp[-1].cpVal, NULL); ;
-    break;}
-case 23:
+    { nss_expr_yyval.exVal = nss_expr_make(op_Var,    nss_expr_yyvsp[-1].cpVal, NULL); }
+    break;
+
+  case 24:
 #line 99 "nss_expr_parse.y"
-{ nss_expr_yyval.exVal = nss_expr_yyvsp[0].exVal; ;
-    break;}
-case 24:
+    { nss_expr_yyval.exVal = nss_expr_yyvsp[0].exVal; }
+    break;
+
+  case 25:
 #line 102 "nss_expr_parse.y"
-{ 
-                regex_t *regex;
+    { 
+                ap_regex_t *regex;
                 if ((regex = ap_pregcomp(nss_expr_info.pool, nss_expr_yyvsp[0].cpVal, 
-                                         REG_EXTENDED|REG_NOSUB)) == NULL) {
+                                         AP_REG_EXTENDED|AP_REG_NOSUB)) == NULL) {
                     nss_expr_error = "Failed to compile regular expression";
                     YYERROR;
                 }
                 nss_expr_yyval.exVal = nss_expr_make(op_Regex, regex, NULL);
-            ;
-    break;}
-case 25:
+            }
+    break;
+
+  case 26:
 #line 111 "nss_expr_parse.y"
-{
-                regex_t *regex;
+    {
+                ap_regex_t *regex;
                 if ((regex = ap_pregcomp(nss_expr_info.pool, nss_expr_yyvsp[0].cpVal, 
-                                         REG_EXTENDED|REG_NOSUB|REG_ICASE)) == NULL) {
+                                         AP_REG_EXTENDED|AP_REG_NOSUB|AP_REG_ICASE)) == NULL) {
                     nss_expr_error = "Failed to compile regular expression";
                     YYERROR;
                 }
                 nss_expr_yyval.exVal = nss_expr_make(op_Regex, regex, NULL);
-            ;
-    break;}
-case 26:
+            }
+    break;
+
+  case 27:
 #line 122 "nss_expr_parse.y"
-{ 
+    { 
                nss_expr *args = nss_expr_make(op_ListElement, nss_expr_yyvsp[-1].cpVal, NULL);
                nss_expr_yyval.exVal = nss_expr_make(op_Func, "file", args);
-            ;
-    break;}
-}
-   /* the action file gets copied in in place of this dollarsign */
-#line 543 "/usr/lib/bison.simple"
+            }
+    break;
+
+
+    }
+
+/* Line 1000 of yacc.c.  */
+#line 1207 "y.tab.c"
 
   nss_expr_yyvsp -= nss_expr_yylen;
   nss_expr_yyssp -= nss_expr_yylen;
-#ifdef YYLSP_NEEDED
-  nss_expr_yylsp -= nss_expr_yylen;
-#endif
 
-#if YYDEBUG != 0
-  if (nss_expr_yydebug)
-    {
-      short *ssp1 = nss_expr_yyss - 1;
-      fprintf (stderr, "state stack now");
-      while (ssp1 != nss_expr_yyssp)
-	fprintf (stderr, " %d", *++ssp1);
-      fprintf (stderr, "\n");
-    }
-#endif
+
+  YY_STACK_PRINT (nss_expr_yyss, nss_expr_yyssp);
 
   *++nss_expr_yyvsp = nss_expr_yyval;
 
-#ifdef YYLSP_NEEDED
-  nss_expr_yylsp++;
-  if (nss_expr_yylen == 0)
-    {
-      nss_expr_yylsp->first_line = nss_expr_yylloc.first_line;
-      nss_expr_yylsp->first_column = nss_expr_yylloc.first_column;
-      nss_expr_yylsp->last_line = (nss_expr_yylsp-1)->last_line;
-      nss_expr_yylsp->last_column = (nss_expr_yylsp-1)->last_column;
-      nss_expr_yylsp->text = 0;
-    }
-  else
-    {
-      nss_expr_yylsp->last_line = (nss_expr_yylsp+nss_expr_yylen-1)->last_line;
-      nss_expr_yylsp->last_column = (nss_expr_yylsp+nss_expr_yylen-1)->last_column;
-    }
-#endif
 
-  /* Now "shift" the result of the reduction.
-     Determine what state that goes to,
-     based on the state we popped back to
-     and the rule number reduced by.  */
+  /* Now `shift' the result of the reduction.  Determine what state
+     that goes to, based on the state we popped back to and the rule
+     number reduced by.  */
 
   nss_expr_yyn = nss_expr_yyr1[nss_expr_yyn];
 
-  nss_expr_yystate = nss_expr_yypgoto[nss_expr_yyn - YYNTBASE] + *nss_expr_yyssp;
-  if (nss_expr_yystate >= 0 && nss_expr_yystate <= YYLAST && nss_expr_yycheck[nss_expr_yystate] == *nss_expr_yyssp)
+  nss_expr_yystate = nss_expr_yypgoto[nss_expr_yyn - YYNTOKENS] + *nss_expr_yyssp;
+  if (0 <= nss_expr_yystate && nss_expr_yystate <= YYLAST && nss_expr_yycheck[nss_expr_yystate] == *nss_expr_yyssp)
     nss_expr_yystate = nss_expr_yytable[nss_expr_yystate];
   else
-    nss_expr_yystate = nss_expr_yydefgoto[nss_expr_yyn - YYNTBASE];
+    nss_expr_yystate = nss_expr_yydefgoto[nss_expr_yyn - YYNTOKENS];
 
   goto nss_expr_yynewstate;
 
-nss_expr_yyerrlab:   /* here on detecting error */
 
-  if (! nss_expr_yyerrstatus)
-    /* If not already recovering from an error, report this error.  */
+/*------------------------------------.
+| nss_expr_yyerrlab -- here on detecting error |
+`------------------------------------*/
+nss_expr_yyerrlab:
+  /* If not already recovering from an error, report this error.  */
+  if (!nss_expr_yyerrstatus)
     {
       ++nss_expr_yynerrs;
-
-#ifdef YYERROR_VERBOSE
+#if YYERROR_VERBOSE
       nss_expr_yyn = nss_expr_yypact[nss_expr_yystate];
 
-      if (nss_expr_yyn > YYFLAG && nss_expr_yyn < YYLAST)
+      if (YYPACT_NINF < nss_expr_yyn && nss_expr_yyn < YYLAST)
 	{
-	  int size = 0;
-	  char *msg;
-	  int x, count;
+	  YYSIZE_T nss_expr_yysize = 0;
+	  int nss_expr_yytype = YYTRANSLATE (nss_expr_yychar);
+	  const char* nss_expr_yyprefix;
+	  char *nss_expr_yymsg;
+	  int nss_expr_yyx;
 
-	  count = 0;
-	  /* Start X at -nss_expr_yyn if nec to avoid negative indexes in nss_expr_yycheck.  */
-	  for (x = (nss_expr_yyn < 0 ? -nss_expr_yyn : 0);
-	       x < (sizeof(nss_expr_yytname) / sizeof(char *)); x++)
-	    if (nss_expr_yycheck[x + nss_expr_yyn] == x)
-	      size += strlen(nss_expr_yytname[x]) + 15, count++;
-	  msg = (char *) malloc(size + 15);
-	  if (msg != 0)
+	  /* Start YYX at -YYN if negative to avoid negative indexes in
+	     YYCHECK.  */
+	  int nss_expr_yyxbegin = nss_expr_yyn < 0 ? -nss_expr_yyn : 0;
+
+	  /* Stay within bounds of both nss_expr_yycheck and nss_expr_yytname.  */
+	  int nss_expr_yychecklim = YYLAST - nss_expr_yyn;
+	  int nss_expr_yyxend = nss_expr_yychecklim < YYNTOKENS ? nss_expr_yychecklim : YYNTOKENS;
+	  int nss_expr_yycount = 0;
+
+	  nss_expr_yyprefix = ", expecting ";
+	  for (nss_expr_yyx = nss_expr_yyxbegin; nss_expr_yyx < nss_expr_yyxend; ++nss_expr_yyx)
+	    if (nss_expr_yycheck[nss_expr_yyx + nss_expr_yyn] == nss_expr_yyx && nss_expr_yyx != YYTERROR)
+	      {
+		nss_expr_yysize += nss_expr_yystrlen (nss_expr_yyprefix) + nss_expr_yystrlen (nss_expr_yytname [nss_expr_yyx]);
+		nss_expr_yycount += 1;
+		if (nss_expr_yycount == 5)
+		  {
+		    nss_expr_yysize = 0;
+		    break;
+		  }
+	      }
+	  nss_expr_yysize += (sizeof ("syntax error, unexpected ")
+		     + nss_expr_yystrlen (nss_expr_yytname[nss_expr_yytype]));
+	  nss_expr_yymsg = (char *) YYSTACK_ALLOC (nss_expr_yysize);
+	  if (nss_expr_yymsg != 0)
 	    {
-	      strcpy(msg, "parse error");
+	      char *nss_expr_yyp = nss_expr_yystpcpy (nss_expr_yymsg, "syntax error, unexpected ");
+	      nss_expr_yyp = nss_expr_yystpcpy (nss_expr_yyp, nss_expr_yytname[nss_expr_yytype]);
 
-	      if (count < 5)
+	      if (nss_expr_yycount < 5)
 		{
-		  count = 0;
-		  for (x = (nss_expr_yyn < 0 ? -nss_expr_yyn : 0);
-		       x < (sizeof(nss_expr_yytname) / sizeof(char *)); x++)
-		    if (nss_expr_yycheck[x + nss_expr_yyn] == x)
+		  nss_expr_yyprefix = ", expecting ";
+		  for (nss_expr_yyx = nss_expr_yyxbegin; nss_expr_yyx < nss_expr_yyxend; ++nss_expr_yyx)
+		    if (nss_expr_yycheck[nss_expr_yyx + nss_expr_yyn] == nss_expr_yyx && nss_expr_yyx != YYTERROR)
 		      {
-			strcat(msg, count == 0 ? ", expecting `" : " or `");
-			strcat(msg, nss_expr_yytname[x]);
-			strcat(msg, "'");
-			count++;
+			nss_expr_yyp = nss_expr_yystpcpy (nss_expr_yyp, nss_expr_yyprefix);
+			nss_expr_yyp = nss_expr_yystpcpy (nss_expr_yyp, nss_expr_yytname[nss_expr_yyx]);
+			nss_expr_yyprefix = " or ";
 		      }
 		}
-	      nss_expr_yyerror(msg);
-	      free(msg);
+	      nss_expr_yyerror (nss_expr_yymsg);
+	      YYSTACK_FREE (nss_expr_yymsg);
 	    }
 	  else
-	    nss_expr_yyerror ("parse error; also virtual memory exceeded");
+	    nss_expr_yyerror ("syntax error; also virtual memory exhausted");
 	}
       else
 #endif /* YYERROR_VERBOSE */
-	nss_expr_yyerror("parse error");
+	nss_expr_yyerror ("syntax error");
     }
 
-  goto nss_expr_yyerrlab1;
-nss_expr_yyerrlab1:   /* here on error raised explicitly by an action */
+
 
   if (nss_expr_yyerrstatus == 3)
     {
-      /* if just tried and failed to reuse lookahead token after an error, discard it.  */
+      /* If just tried and failed to reuse lookahead token after an
+	 error, discard it.  */
 
-      /* return failure if at end of input */
-      if (nss_expr_yychar == YYEOF)
+      if (nss_expr_yychar <= YYEOF)
+        {
+          /* If at end of input, pop the error token,
+	     then the rest of the stack, then return failure.  */
+	  if (nss_expr_yychar == YYEOF)
+	     for (;;)
+	       {
+		 YYPOPSTACK;
+		 if (nss_expr_yyssp == nss_expr_yyss)
+		   YYABORT;
+		 YYDSYMPRINTF ("Error: popping", nss_expr_yystos[*nss_expr_yyssp], nss_expr_yyvsp, nss_expr_yylsp);
+		 nss_expr_yydestruct (nss_expr_yystos[*nss_expr_yyssp], nss_expr_yyvsp);
+	       }
+        }
+      else
+	{
+	  YYDSYMPRINTF ("Error: discarding", nss_expr_yytoken, &nss_expr_yylval, &nss_expr_yylloc);
+	  nss_expr_yydestruct (nss_expr_yytoken, &nss_expr_yylval);
+	  nss_expr_yychar = YYEMPTY;
+
+	}
+    }
+
+  /* Else will try to reuse lookahead token after shifting the error
+     token.  */
+  goto nss_expr_yyerrlab1;
+
+
+/*---------------------------------------------------.
+| nss_expr_yyerrorlab -- error raised explicitly by YYERROR.  |
+`---------------------------------------------------*/
+nss_expr_yyerrorlab:
+
+#ifdef __GNUC__
+  /* Pacify GCC when the user code never invokes YYERROR and the label
+     nss_expr_yyerrorlab therefore never appears in user code.  */
+  if (0)
+     goto nss_expr_yyerrorlab;
+#endif
+
+  nss_expr_yyvsp -= nss_expr_yylen;
+  nss_expr_yyssp -= nss_expr_yylen;
+  nss_expr_yystate = *nss_expr_yyssp;
+  goto nss_expr_yyerrlab1;
+
+
+/*-------------------------------------------------------------.
+| nss_expr_yyerrlab1 -- common code for both syntax error and YYERROR.  |
+`-------------------------------------------------------------*/
+nss_expr_yyerrlab1:
+  nss_expr_yyerrstatus = 3;	/* Each real token shifted decrements this.  */
+
+  for (;;)
+    {
+      nss_expr_yyn = nss_expr_yypact[nss_expr_yystate];
+      if (nss_expr_yyn != YYPACT_NINF)
+	{
+	  nss_expr_yyn += YYTERROR;
+	  if (0 <= nss_expr_yyn && nss_expr_yyn <= YYLAST && nss_expr_yycheck[nss_expr_yyn] == YYTERROR)
+	    {
+	      nss_expr_yyn = nss_expr_yytable[nss_expr_yyn];
+	      if (0 < nss_expr_yyn)
+		break;
+	    }
+	}
+
+      /* Pop the current state because it cannot handle the error token.  */
+      if (nss_expr_yyssp == nss_expr_yyss)
 	YYABORT;
 
-#if YYDEBUG != 0
-      if (nss_expr_yydebug)
-	fprintf(stderr, "Discarding token %d (%s).\n", nss_expr_yychar, nss_expr_yytname[nss_expr_yychar1]);
-#endif
-
-      nss_expr_yychar = YYEMPTY;
+      YYDSYMPRINTF ("Error: popping", nss_expr_yystos[*nss_expr_yyssp], nss_expr_yyvsp, nss_expr_yylsp);
+      nss_expr_yydestruct (nss_expr_yystos[nss_expr_yystate], nss_expr_yyvsp);
+      YYPOPSTACK;
+      nss_expr_yystate = *nss_expr_yyssp;
+      YY_STACK_PRINT (nss_expr_yyss, nss_expr_yyssp);
     }
-
-  /* Else will try to reuse lookahead token
-     after shifting the error token.  */
-
-  nss_expr_yyerrstatus = 3;		/* Each real token shifted decrements this */
-
-  goto nss_expr_yyerrhandle;
-
-nss_expr_yyerrdefault:  /* current state does not do anything special for the error token. */
-
-#if 0
-  /* This is wrong; only states that explicitly want error tokens
-     should shift them.  */
-  nss_expr_yyn = nss_expr_yydefact[nss_expr_yystate];  /* If its default is to accept any token, ok.  Otherwise pop it.*/
-  if (nss_expr_yyn) goto nss_expr_yydefault;
-#endif
-
-nss_expr_yyerrpop:   /* pop the current state because it cannot handle the error token */
-
-  if (nss_expr_yyssp == nss_expr_yyss) YYABORT;
-  nss_expr_yyvsp--;
-  nss_expr_yystate = *--nss_expr_yyssp;
-#ifdef YYLSP_NEEDED
-  nss_expr_yylsp--;
-#endif
-
-#if YYDEBUG != 0
-  if (nss_expr_yydebug)
-    {
-      short *ssp1 = nss_expr_yyss - 1;
-      fprintf (stderr, "Error: state stack now");
-      while (ssp1 != nss_expr_yyssp)
-	fprintf (stderr, " %d", *++ssp1);
-      fprintf (stderr, "\n");
-    }
-#endif
-
-nss_expr_yyerrhandle:
-
-  nss_expr_yyn = nss_expr_yypact[nss_expr_yystate];
-  if (nss_expr_yyn == YYFLAG)
-    goto nss_expr_yyerrdefault;
-
-  nss_expr_yyn += YYTERROR;
-  if (nss_expr_yyn < 0 || nss_expr_yyn > YYLAST || nss_expr_yycheck[nss_expr_yyn] != YYTERROR)
-    goto nss_expr_yyerrdefault;
-
-  nss_expr_yyn = nss_expr_yytable[nss_expr_yyn];
-  if (nss_expr_yyn < 0)
-    {
-      if (nss_expr_yyn == YYFLAG)
-	goto nss_expr_yyerrpop;
-      nss_expr_yyn = -nss_expr_yyn;
-      goto nss_expr_yyreduce;
-    }
-  else if (nss_expr_yyn == 0)
-    goto nss_expr_yyerrpop;
 
   if (nss_expr_yyn == YYFINAL)
     YYACCEPT;
 
-#if YYDEBUG != 0
-  if (nss_expr_yydebug)
-    fprintf(stderr, "Shifting error token, ");
-#endif
+  YYDPRINTF ((stderr, "Shifting error token, "));
 
   *++nss_expr_yyvsp = nss_expr_yylval;
-#ifdef YYLSP_NEEDED
-  *++nss_expr_yylsp = nss_expr_yylloc;
-#endif
+
 
   nss_expr_yystate = nss_expr_yyn;
   goto nss_expr_yynewstate;
 
- nss_expr_yyacceptlab:
-  /* YYACCEPT comes here.  */
-  if (nss_expr_yyfree_stacks)
-    {
-      free (nss_expr_yyss);
-      free (nss_expr_yyvs);
-#ifdef YYLSP_NEEDED
-      free (nss_expr_yyls);
-#endif
-    }
-  return 0;
 
- nss_expr_yyabortlab:
-  /* YYABORT comes here.  */
-  if (nss_expr_yyfree_stacks)
-    {
-      free (nss_expr_yyss);
-      free (nss_expr_yyvs);
-#ifdef YYLSP_NEEDED
-      free (nss_expr_yyls);
+/*-------------------------------------.
+| nss_expr_yyacceptlab -- YYACCEPT comes here.  |
+`-------------------------------------*/
+nss_expr_yyacceptlab:
+  nss_expr_yyresult = 0;
+  goto nss_expr_yyreturn;
+
+/*-----------------------------------.
+| nss_expr_yyabortlab -- YYABORT comes here.  |
+`-----------------------------------*/
+nss_expr_yyabortlab:
+  nss_expr_yyresult = 1;
+  goto nss_expr_yyreturn;
+
+#ifndef nss_expr_yyoverflow
+/*----------------------------------------------.
+| nss_expr_yyoverflowlab -- parser overflow comes here.  |
+`----------------------------------------------*/
+nss_expr_yyoverflowlab:
+  nss_expr_yyerror ("parser stack overflow");
+  nss_expr_yyresult = 2;
+  /* Fall through.  */
 #endif
-    }
-  return 1;
+
+nss_expr_yyreturn:
+#ifndef nss_expr_yyoverflow
+  if (nss_expr_yyss != nss_expr_yyssa)
+    YYSTACK_FREE (nss_expr_yyss);
+#endif
+  return nss_expr_yyresult;
 }
+
+
 #line 128 "nss_expr_parse.y"
 
 
@@ -1076,4 +1436,5 @@ int nss_expr_yyerror(char *s)
     nss_expr_error = s;
     return 2;
 }
+
 

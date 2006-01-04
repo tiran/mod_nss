@@ -94,6 +94,7 @@ apache_conf = @apache_conf@
 apache_inc = @apache_inc@
 apache_prefix = @apache_prefix@
 apr_inc = @apr_inc@
+extra_cppflags = @extra_cppflags@
 install_sh = @install_sh@
 nspr_dir = @nspr_dir@
 nspr_inc = @nspr_inc@
@@ -108,14 +109,16 @@ bin_PROGRAMS = nss_pcache
 nss_pcache_SOURCES = nss_pcache.c
 
 libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c nss_engine_rand.c
+libmodnss_la_LDFLAGS = -module -avoid-version
 
 INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
 LIBS = @nspr_lib@ @nss_lib@ -lssl3 -lsmime3 -lnss3 -lsoftokn3 -lplc4 -lplds4 -lnspr4
 @SSL2_TRUE@AM_CFLAGS = -DWANT_SSL2
+EXTRA_CPPFLAGS = @extra_cppflags@
 
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
 	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CFLAGS) $(CFLAGS)
+	$(AM_CFLAGS) $(CFLAGS) $(EXTRA_CPPFLAGS)
 
 
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -127,7 +130,6 @@ mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_CLEAN_FILES = nss.conf gencert
 LTLIBRARIES = $(lib_LTLIBRARIES)
 
-libmodnss_la_LDFLAGS =
 libmodnss_la_LIBADD =
 am_libmodnss_la_OBJECTS = mod_nss.lo nss_engine_config.lo \
 	nss_engine_init.lo nss_engine_io.lo nss_engine_kernel.lo \

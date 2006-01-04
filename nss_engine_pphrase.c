@@ -125,7 +125,7 @@ static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
 
         snprintf(buf, 1024, "STOR\t%s\t%s", PK11_GetTokenName(slot), passwd);
         rv = apr_file_write_full(parg->mc->proc.in, buf, strlen(buf), NULL);
-        if (!APR_STATUS_IS_SUCCESS(rv)) {
+        if (rv != APR_SUCCESS) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "Unable to write to pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
             nss_die();
@@ -139,9 +139,9 @@ static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
         memset(buf, 0, sizeof(buf));
         rv = apr_file_read(parg->mc->proc.out, buf, &nBytes);
 
-        if (APR_STATUS_IS_SUCCESS(rv))
+        if (rv = APR_SUCCESS)
            res = atoi(buf);
-        if (!APR_STATUS_IS_SUCCESS(rv) ||
+        if (rv != APR_SUCCESS ||
            (res != PIN_SUCCESS && res != PIN_INCORRECTPW)) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "Unable to read from pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
@@ -245,7 +245,7 @@ static unsigned char *nss_get_password(FILE *input, FILE *output,
 
         snprintf(buf, 1024, "RETR\t%s", token_name);
         rv = apr_file_write_full(parg->mc->proc.in, buf, strlen(buf), NULL);
-        if (!APR_STATUS_IS_SUCCESS(rv)) {
+        if (rv != APR_SUCCESS) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "Unable to write to pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
             nss_die();
@@ -256,7 +256,7 @@ static unsigned char *nss_get_password(FILE *input, FILE *output,
          */
         memset(buf, 0, sizeof(buf));
         rv = apr_file_read(parg->mc->proc.out, buf, &nBytes);
-        if (!APR_STATUS_IS_SUCCESS(rv)) {
+        if (rv != APR_SUCCESS) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "Unable to read from pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
             nss_die();

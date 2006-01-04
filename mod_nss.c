@@ -362,7 +362,7 @@ static int nss_hook_pre_connection(conn_rec *c, void *csd)
     return APR_SUCCESS;
 }
 
-static const char *nss_hook_http_method(const request_rec *r)
+static const char *nss_hook_http_scheme(const request_rec *r)
 {
     SSLSrvConfigRec *sc = mySrvConfig(r->server);
 
@@ -394,7 +394,11 @@ static void nss_register_hooks(apr_pool_t *p)
 
     ap_hook_pre_connection(nss_hook_pre_connection,NULL,NULL, APR_HOOK_MIDDLE);
     ap_hook_post_config   (nss_init_Module,        NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_http_method   (nss_hook_http_method,   NULL,NULL, APR_HOOK_MIDDLE);
+#ifndef AP_SERVER_MAJORVERSION_NUMBER
+    ap_hook_http_method   (nss_hook_http_scheme,   NULL,NULL, APR_HOOK_MIDDLE);
+#else
+    ap_hook_http_scheme   (nss_hook_http_scheme,   NULL,NULL, APR_HOOK_MIDDLE);
+#endif
     ap_hook_default_port  (nss_hook_default_port,  NULL,NULL, APR_HOOK_MIDDLE);
     ap_hook_pre_config    (nss_hook_pre_config,    NULL,NULL, APR_HOOK_MIDDLE);
     ap_hook_child_init    (nss_init_Child,         NULL,NULL, APR_HOOK_MIDDLE);

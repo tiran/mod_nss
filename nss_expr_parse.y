@@ -100,18 +100,18 @@ word      : T_DIGIT                      { $$ = nss_expr_make(op_Digit,  $1, NUL
           ;
 
 regex     : T_REGEX { 
-                regex_t *regex;
+                ap_regex_t *regex;
                 if ((regex = ap_pregcomp(nss_expr_info.pool, $1, 
-                                         REG_EXTENDED|REG_NOSUB)) == NULL) {
+                                         AP_REG_EXTENDED|AP_REG_NOSUB)) == NULL) {
                     nss_expr_error = "Failed to compile regular expression";
                     YYERROR;
                 }
                 $$ = nss_expr_make(op_Regex, regex, NULL);
             }
           | T_REGEX_I {
-                regex_t *regex;
+                ap_regex_t *regex;
                 if ((regex = ap_pregcomp(nss_expr_info.pool, $1, 
-                                         REG_EXTENDED|REG_NOSUB|REG_ICASE)) == NULL) {
+                                         AP_REG_EXTENDED|AP_REG_NOSUB|AP_REG_ICASE)) == NULL) {
                     nss_expr_error = "Failed to compile regular expression";
                     YYERROR;
                 }

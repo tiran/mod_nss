@@ -113,24 +113,24 @@ static BOOL nss_expr_eval_comp(request_rec *r, nss_expr *node)
             nss_expr *e1;
             nss_expr *e2;
             char *word;
-            regex_t *regex;
+            ap_regex_t *regex;
 
             e1 = (nss_expr *)node->node_arg1;
             e2 = (nss_expr *)node->node_arg2;
             word = nss_expr_eval_word(r, e1);
-            regex = (regex_t *)(e2->node_arg1);
+            regex = (ap_regex_t *)(e2->node_arg1);
             return (ap_regexec(regex, word, 0, NULL, 0) == 0);
         }
         case op_NRE: {
             nss_expr *e1;
             nss_expr *e2;
             char *word;
-            regex_t *regex;
+            ap_regex_t *regex;
 
             e1 = (nss_expr *)node->node_arg1;
             e2 = (nss_expr *)node->node_arg2;
             word = nss_expr_eval_word(r, e1);
-            regex = (regex_t *)(e2->node_arg1);
+            regex = (ap_regex_t *)(e2->node_arg1);
             return !(ap_regexec(regex, word, 0, NULL, 0) == 0);
         }
         default: {

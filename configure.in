@@ -25,7 +25,7 @@ AC_DECL_YYTEXT
 AC_MSG_CHECKING(for SSL2)
 AC_ARG_ENABLE(ssl2,
   [  --enable-ssl2         enable SSLv2 (default=no)],
-  ssl2=$enableval, ssl2=yes)
+  ssl2=$enableval, ssl2=no)
 if test $ssl2 = yes; then
    AC_MSG_RESULT(yes)
 else
@@ -104,6 +104,7 @@ apache_inc=`$APXS -q INCLUDEDIR`
 apache_conf=`$APXS -q SYSCONFDIR`
 apache_prefix=`$APXS -q PREFIX`
 apache_bin=`$APXS -q SBINDIR`
+extra_cppflags=`$APXS -q EXTRA_CPPFLAGS` 
 
 if ! test -f "$apache_inc/apr.h"; then
   if test -z "$apr_inc"; then
@@ -257,6 +258,7 @@ AC_SUBST(nss_inc)
 AC_SUBST(nss_lib)
 AC_SUBST(nspr_dir)
 AC_SUBST(nss_dir)
+AC_SUBST(extra_cppflags)
 
 # Write config.status and the Makefile
 AC_OUTPUT(Makefile nss.conf gencert)

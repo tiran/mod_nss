@@ -316,6 +316,15 @@ typedef struct
     int fortezza_only;
     PRInt32 version; // protocol version valid for this cipher
 } cipher_properties;
+
+/* Compatibility between Apache 2.0.x and 2.2.x. The numeric version of
+ * the version first appeared in Apache 2.2.0 */
+#ifndef AP_SERVER_MAJORVERSION_NUMBER
+typedef struct regex_t ap_regex_t;
+#define AP_REG_EXTENDED REG_EXTENDED
+#define AP_REG_NOSUB REG_NOSUB
+#define AP_REG_ICASE REG_ICASE
+#endif
  
 enum sslversion { SSL2=1, SSL3=2, TLS=4};
 
