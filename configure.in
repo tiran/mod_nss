@@ -36,28 +36,33 @@ AM_CONDITIONAL(SSL2, test x$ssl2 = xyes)
 AC_CHECKING(for apr-config)
 # check for --with-apr-config
 AC_MSG_CHECKING(for --with-apr-config)
-AC_ARG_WITH(apr-config, [  --with-apr-config 	Use apr-config to determine the APR directory],
+AC_ARG_WITH(apr-config, [  --with-apr-config       Use apr-config to determine the APR directory],
 [
   if test -x "$withval"
   then
     AC_MSG_RESULT([using $withval])
     APR_CONFIG=$withval
-  else
-    AC_PATH_PROG(APR_CONFIG, apr-config)
-  fi
-  if test -n "$APR_CONFIG"; then
-    apr_inc=`$APR_CONFIG --includes`
-  else
-    AC_MSG_ERROR([apr-config not found])
   fi
 ],
 AC_MSG_RESULT(no))
+
+if test -z "$APR_CONFIG" ; then
+  AC_MSG_CHECKING(for apr-1-config and apr-config)
+  AC_PATH_PROGS(APR_CONFIG, apr-1-config apr-config, NO_APR_CONFIG, [$PATH:/usr/local/apache/sbin:/usr/sbin])
+fi
+
+if test -n "$APR_CONFIG"; then
+  AC_MSG_RESULT([using $APR_CONFIG. Use --with-apr-config to specify another.])
+  apr_inc=`$APR_CONFIG --includes`
+else
+  AC_MSG_ERROR([neither apr-config nor apr-1-config were not found. use --with-apr-config to specify it.])
+fi
 
 AC_CHECKING(for apxs)
 
 # check for --with-apxs
 AC_MSG_CHECKING(for --with-apxs)
-AC_ARG_WITH(apxs, [  --with-apxs=PATH 	Path to apxs],
+AC_ARG_WITH(apxs, [  --with-apxs=PATH        Path to apxs],
 [
   if test -x "$withval"
   then
@@ -74,29 +79,17 @@ AC_MSG_RESULT(no))
 # since it's the default Apache location
 if test -z "$APXS"; then
   AC_MSG_CHECKING(for apxs in /usr/local/apache/sbin and /usr/sbin)
-  if test -x /usr/local/apache/sbin/apxs; then
-    APXS=/usr/local/apache/sbin/apxs
-    AC_MSG_RESULT([found $APXS. Use --with-apxs to specify another.])
-  elif test -x /usr/sbin/apxs; then
-    APXS=/usr/sbin/apxs
+  AC_PATH_PROG(APXS, apxs, NO_APXS, [/usr/local/apache/sbin:/usr/sbin:$PATH])
+  if test -x $APXS; then
     AC_MSG_RESULT([found $APXS. Use --with-apxs to specify another.])
   else
     AC_MSG_RESULT(no)
   fi
 fi
 
-# last resort
-if test -z "$APXS"; then
-  AC_MSG_CHECKING(for apxs in your PATH)
-  AC_PATH_PROG(APXS, apxs)
-  if test -n "$APXS"; then
-    AC_MSG_RESULT([found $APXS. Use --with-apxs to specify another.])
-  fi
-fi 
-
 # and finally
 if test -z "$APXS"; then
-  AC_MSG_ERROR([apxs was not found. use --with-apxs to specifiy it.])
+  AC_MSG_ERROR([apxs was not found. use --with-apxs to specify it.])
 fi
 
 # Get some variables we need for Makefile.in
