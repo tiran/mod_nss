@@ -12,7 +12,6 @@ libmodnss_la_LDFLAGS = -module -avoid-version
 ## Set the includes and libraries needed
 INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
 LIBS = @nspr_lib@ @nss_lib@ -lssl3 -lsmime3 -lnss3 -lsoftokn3 -lplc4 -lplds4 -lnspr4
-@SSL2_TRUE@AM_CFLAGS=-DWANT_SSL2
 EXTRA_CPPFLAGS=@extra_cppflags@
 
 install-libLTLIBRARIES: libmodnss.la

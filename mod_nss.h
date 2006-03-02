@@ -268,10 +268,19 @@ typedef struct {
     int tlsrollback;
     int enforce;
     const char *nickname;
+#ifdef NSS_ENABLE_ECC
+    const char *eccnickname;
+#endif
 
     CERTCertificate   *servercert;
     SECKEYPrivateKey  *serverkey;
     SSLKEAType         serverKEAType;
+
+#ifdef NSS_ENABLE_ECC
+    CERTCertificate   *eccservercert;
+    SECKEYPrivateKey  *eccserverkey;
+    SSLKEAType         eccserverKEAType;
+#endif
 
     PRFileDesc        *model;              /* used to model an SSL socket */
 
@@ -329,7 +338,11 @@ typedef struct regex_t ap_regex_t;
 enum sslversion { SSL2=1, SSL3=2, TLS=4};
 
 /* the table itself is defined in nss_engine_init.c */
+#ifdef NSS_ENABLE_ECC
+#define ciphernum 48
+#else
 #define ciphernum 23
+#endif
 
 /*
  *  function prototypes
@@ -353,6 +366,9 @@ const char *nss_cmd_NSSCipherSuite(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSVerifyClient(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSProtocol(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSNickname(cmd_parms *cmd, void *dcfg, const char *arg);
+#ifdef NSS_ENABLE_ECC
+const char *nss_cmd_NSSECCNickname(cmd_parms *cmd, void *dcfg, const char *arg);
+#endif
 const char *nss_cmd_NSSEnforceValidCerts(cmd_parms *, void *, int);
 const char *nss_cmd_NSSSessionCacheTimeout(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSSession3CacheTimeout(cmd_parms *cmd, void *dcfg, const char *arg);

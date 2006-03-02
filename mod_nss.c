@@ -86,8 +86,13 @@ static const command_rec nss_config_cmds[] = {
                 "SSL Client Authentication "
                 "(`none', `optional', `require'")
     SSL_CMD_SRV(Nickname, TAKE1,
-                "SSL Server Certificate nickname "
+                "SSL RSA Server Certificate nickname "
                 "(`Server-Cert'")
+#ifdef NSS_ENABLE_ECC
+    SSL_CMD_SRV(ECCNickname, TAKE1,
+                "SSL ECC Server Certificate nickname "
+                "(`Server-Cert'")
+#endif
     SSL_CMD_SRV(EnforceValidCerts, FLAG,
                 "Require a valid, trust, non-expired server certificate (default on)"
                 "(`on', `off'")

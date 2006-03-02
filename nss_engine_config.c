@@ -80,6 +80,9 @@ static void modnss_ctx_init(modnss_ctx_t *mctx)
 
     mctx->enforce             = PR_TRUE;
     mctx->nickname            = NULL;
+#ifdef NSS_ENABLE_ECC
+    mctx->eccnickname         = NULL;
+#endif
     mctx->servercert          = NULL;
     mctx->serverkey           = NULL;
 
@@ -162,6 +165,9 @@ static void modnss_ctx_cfg_merge(modnss_ctx_t *base,
     cfgMerge(auth.verify_mode, SSL_CVERIFY_UNSET);
 
     cfgMerge(nickname, NULL);
+#ifdef NSS_ENABLE_ECC
+    cfgMerge(eccnickname, NULL);
+#endif
     cfgMerge(enforce, PR_TRUE);
 }
 
@@ -415,6 +421,19 @@ const char *nss_cmd_NSSNickname(cmd_parms *cmd,
 
     return NULL;
 }
+
+#ifdef NSS_ENABLE_ECC
+const char *nss_cmd_NSSECCNickname(cmd_parms *cmd,
+                                void *dcfg,
+                                const char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->server->eccnickname = arg;
+
+    return NULL;
+}
+#endif
 
 const char *nss_cmd_NSSProxyEngine(cmd_parms *cmd, void *dcfg, int flag)
 {

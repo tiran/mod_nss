@@ -446,6 +446,9 @@ int nss_hook_Access(request_rec *r)
                          "Performing full renegotiation: "
                          "complete handshake protocol");
 
+            /* Do NOT call SSL_ResetHandshake as this will tear down the
+             * existing connection.
+             */
             if (SSL_HandshakeCallback(ssl, HandshakeDone, (void *)&handshake_done) || SSL_ReHandshake(ssl, PR_TRUE)) {
                 int errCode = PR_GetError();
                 if (errCode == SEC_ERROR_INVALID_ARGS) {
@@ -461,7 +464,7 @@ int nss_hook_Access(request_rec *r)
                 return HTTP_FORBIDDEN;
             }
 
-            ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
                          "Awaiting re-negotiation handshake");
 
             while (!handshake_done) {
@@ -500,7 +503,9 @@ int nss_hook_Access(request_rec *r)
                              "Re-negotiation handshake failed: "
                         "Not accepted by client!?");
 
+#if 0
                 r->connection->aborted = 1;
+#endif
                 return HTTP_FORBIDDEN;
             }
         }
@@ -724,6 +729,7 @@ static const char *nss_hook_Fixup_vars[] = {
     "SSL_VERSION_LIBRARY",
     "SSL_PROTOCOL",
     "SSL_CIPHER",
+    "SSL_CIPHER_NAME",
     "SSL_CIPHER_EXPORT",
     "SSL_CIPHER_USEKEYSIZE",
     "SSL_CIPHER_ALGKEYSIZE",

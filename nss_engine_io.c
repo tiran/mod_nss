@@ -652,7 +652,7 @@ static apr_status_t nss_io_filter_cleanup(void *data)
         conn_rec *c = filter_ctx->c;
         SSLConnRec *sslconn = myConnConfig(c);
 
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL,
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
                      "SSL connection destroyed without being closed");
 
         PR_Close(sslconn->ssl);
@@ -859,7 +859,7 @@ static apr_status_t nss_io_filter_output(ap_filter_t *f,
             filter_ctx->nobuffer = 1;
             status = nss_filter_io_shutdown(filter_ctx, f->c, 0);
             if (status != APR_SUCCESS) {
-                ap_log_error(APLOG_MARK, APLOG_INFO, status, NULL,
+                ap_log_error(APLOG_MARK, APLOG_INFO, status, f->c->base_server,
                              "SSL filter error shutting down I/O");
             }
             if ((status = ap_pass_brigade(f->next, bb)) != APR_SUCCESS) {

@@ -60,6 +60,34 @@ cipher_properties ciphers_def[ciphernum] =
     /* AES ciphers.*/
     {"rsa_aes_128_sha", TLS_RSA_WITH_AES_128_CBC_SHA, 0, SSL3 | TLS},
     {"rsa_aes_256_sha", TLS_RSA_WITH_AES_256_CBC_SHA, 0, SSL3 | TLS},
+#ifdef NSS_ENABLE_ECC
+    /* ECC ciphers.*/
+    {"ecdh_ecdsa_null_sha", TLS_ECDH_ECDSA_WITH_NULL_SHA, 0, TLS},
+    {"ecdh_ecdsa_rc4_128_sha", TLS_ECDH_ECDSA_WITH_RC4_128_SHA, 0, TLS},
+    {"ecdh_ecdsa_3des_sha", TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA, 0, TLS},
+    {"ecdh_ecdsa_aes_128_sha", TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA, 0, TLS},
+    {"ecdh_ecdsa_aes_256_sha", TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA, 0, TLS},
+    {"ecdhe_ecdsa_null_sha", TLS_ECDHE_ECDSA_WITH_NULL_SHA, 0, TLS},
+    {"ecdhe_ecdsa_rc4_128_sha", TLS_ECDHE_ECDSA_WITH_RC4_128_SHA, 0, TLS},
+    {"ecdhe_ecdsa_3des_sha", TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA, 0, TLS},
+    {"ecdhe_ecdsa_aes_128_sha", TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, 0, TLS},
+    {"ecdhe_ecdsa_aes_256_sha", TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, 0, TLS},
+    {"ecdh_rsa_null_sha", TLS_ECDH_RSA_WITH_NULL_SHA, 0, TLS},
+    {"ecdh_rsa_128_sha", TLS_ECDH_RSA_WITH_RC4_128_SHA, 0, TLS},
+    {"ecdh_rsa_3des_sha", TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA, 0, TLS},
+    {"ecdh_rsa_aes_128_sha", TLS_ECDH_RSA_WITH_AES_128_CBC_SHA, 0, TLS},
+    {"ecdh_rsa_aes_256_sha", TLS_ECDH_RSA_WITH_AES_256_CBC_SHA, 0, TLS},
+    {"echde_rsa_null", TLS_ECDHE_RSA_WITH_NULL_SHA, 0, TLS},
+    {"ecdhe_rsa_rc4_128_sha", TLS_ECDHE_RSA_WITH_RC4_128_SHA, 0, TLS},
+    {"ecdhe_rsa_3des_sha", TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA, 0, TLS},
+    {"ecdhe_rsa_aes_128_sha", TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, 0, TLS},
+    {"ecdhe_rsa_aes_256_sha", TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, 0, TLS},
+    {"ecdh_anon_null_sha", TLS_ECDH_anon_WITH_NULL_SHA, 0, TLS},
+    {"ecdh_anon_rc4_128sha", TLS_ECDH_anon_WITH_RC4_128_SHA, 0, TLS},
+    {"ecdh_anon_3des_sha", TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA, 0, TLS},
+    {"ecdh_anon_aes_128_sha", TLS_ECDH_anon_WITH_AES_128_CBC_SHA, 0, TLS},
+    {"ecdh_anon_aes_256_sha", TLS_ECDH_anon_WITH_AES_256_CBC_SHA, 0, TLS},
+#endif
 };
 
 static char *version_components[] = {
@@ -722,7 +750,11 @@ static void nss_init_server_check(server_rec *s,
                                   apr_pool_t *ptemp,
                                   modnss_ctx_t *mctx)
 {
-    if (mctx->servercert != NULL || mctx->serverkey != NULL) {
+#ifdef NSS_ENABLE_ECC
+    if (mctx->servercert != NULL || mctx->eccservercert != NULL) {
+#else
+    if (mctx->servercert != NULL) {
+#endif
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "Illegal attempt to re-initialise SSL for server "
                 "(theoretically shouldn't happen!)");
@@ -749,58 +781,50 @@ static void nss_init_ctx(server_rec *s,
     nss_init_ctx_cipher_suite(s, p, ptemp, mctx);
 }
 
-static void nss_init_server_certs(server_rec *s,
-                                  apr_pool_t *p,
-                                  apr_pool_t *ptemp,
-                                  modnss_ctx_t *mctx)
+static void nss_init_certificate(server_rec *s, const char *nickname,
+                                 CERTCertificate **servercert,
+                                 SECKEYPrivateKey **serverkey,
+                                 SSLKEAType *KEAtype,
+                                 PRFileDesc *model,
+                                 int enforce)
 {
     SECCertTimeValidity certtimestatus;
     SECStatus secstatus;
 
     PK11SlotInfo* slot = NULL;
-
-    /*
-     * Get own certificate and private key.
-     */
  
-    if (mctx->nickname == NULL && mctx->as_server) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-            "No certificate nickname provided.");
-        nss_die();
+    if (nickname == NULL) {
+        return;
     }
 
-    if (mctx->nickname != NULL) {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-             "Using nickname %s.", mctx->nickname);
-        mctx->servercert = FindServerCertFromNickname(mctx->nickname);
-    }
+    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+         "Using nickname %s.", nickname);
+
+    *servercert = FindServerCertFromNickname(nickname);
 
     /* Verify the certificate chain. */
-    if (mctx->servercert != NULL && mctx->as_server) {
+    if (*servercert != NULL) {
         SECCertificateUsage usage = certificateUsageSSLServer;
 
-        if (CERT_VerifyCertificateNow(CERT_GetDefaultCertDB(), mctx->servercert, PR_TRUE, usage, NULL, NULL) != SECSuccess)  {
+        if (CERT_VerifyCertificateNow(CERT_GetDefaultCertDB(), *servercert, PR_TRUE, usage, NULL, NULL) != SECSuccess)  {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "Certificate not verified: '%s'", mctx->nickname);
+                "Certificate not verified: '%s'", nickname);
             nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
-            if (mctx->enforce) {
+            if (enforce) {
                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                    "Unable to verify certificate '%s'. Add \"NSSEnforceValidCerts off\" to nss.conf so the server can start until the problem can be resolved.", mctx->nickname);
+                    "Unable to verify certificate '%s'. Add \"NSSEnforceValidCerts off\" to nss.conf so the server can start until the problem can be resolved.", nickname);
                 nss_die();
             }
         }
-    }
-
-    if (NULL == mctx->servercert && mctx->as_server)
-    {
+    } else {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "Certificate not found: '%s'", mctx->nickname);
+            "Certificate not found: '%s'", nickname);
         nss_die();
     }
 
-    if (mctx->nickname && strchr(mctx->nickname, ':'))
+    if (strchr(nickname, ':'))
     {
-        char* token = strdup(mctx->nickname);
+        char* token = strdup(nickname); 
         char* colon = strchr(token, ':');
         if (colon) {
             *colon = 0;
@@ -822,21 +846,19 @@ static void nss_init_server_certs(server_rec *s,
     else {
         slot = PK11_GetInternalKeySlot();
     }
-    
-    if (mctx->servercert) {
-        mctx->serverkey = PK11_FindPrivateKeyFromCert(slot, mctx->servercert, NULL);
-    }
+
+    *serverkey = PK11_FindPrivateKeyFromCert(slot, *servercert, NULL);
+
     PK11_FreeSlot(slot);
 
-    if (mctx->as_server && mctx->serverkey == NULL) {
+    if (*serverkey == NULL) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "Key not found for: '%s'", mctx->nickname);
+            "Key not found for: '%s'", nickname);
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
 
-    if (mctx->as_server) {
-        mctx->serverKEAType = NSS_FindCertKEAType(mctx->servercert);
+    *KEAtype = NSS_FindCertKEAType(*servercert);
 
     /*
      * Check for certs that are expired or not yet valid and WARN about it
@@ -846,7 +868,7 @@ static void nss_init_server_certs(server_rec *s,
      * for every virtual server - too expensive?
      */
 
-    certtimestatus = CERT_CheckCertValidTimes(mctx->servercert, PR_Now(), PR_FALSE);
+    certtimestatus = CERT_CheckCertValidTimes(*servercert, PR_Now(), PR_FALSE);
     switch (certtimestatus)
     {
         case secCertTimeValid:
@@ -854,16 +876,60 @@ static void nss_init_server_certs(server_rec *s,
             break;
         case secCertTimeExpired:
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                "Server certificate is expired: '%s'", mctx->nickname);
+                "Server certificate is expired: '%s'", nickname);
             break;
         case secCertTimeNotValidYet:
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                "Certificate is not valid yet '%s'", mctx->nickname);
+                "Certificate is not valid yet '%s'", nickname);
         default:
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                "Unhandled Certificate time type %d for: '%s'", certtimestatus, mctx->nickname);
+                "Unhandled Certificate time type %d for: '%s'", certtimestatus, nickname);
             break;
     }
+
+    secstatus = SSL_ConfigSecureServer(model, *servercert, *serverkey, *KEAtype);
+    if (secstatus != SECSuccess) {
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+            "SSL error configuring server: '%s'", nickname);
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
+    }
+}
+
+
+static void nss_init_server_certs(server_rec *s,
+                                  apr_pool_t *p,
+                                  apr_pool_t *ptemp,
+                                  modnss_ctx_t *mctx)
+{
+    SECCertTimeValidity certtimestatus;
+    SECStatus secstatus;
+
+    PK11SlotInfo* slot = NULL;
+
+    /*
+     * Get own certificate and private key.
+     */
+    if (mctx->as_server) {
+#ifdef NSS_ENABLE_ECC
+        if (mctx->nickname == NULL && mctx->eccnickname == NULL)
+#else
+        if (mctx->nickname == NULL)
+#endif
+        {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "No certificate nickname provided.");
+            nss_die();
+        }
+
+        nss_init_certificate(s, mctx->nickname, &mctx->servercert,
+                             &mctx->serverkey, &mctx->serverKEAType,
+                             mctx->model, mctx->enforce);
+#ifdef NSS_ENABLE_ECC
+        nss_init_certificate(s, mctx->eccnickname, &mctx->eccservercert,
+                             &mctx->eccserverkey, &mctx->eccserverKEAType,
+                             mctx->model, mctx->enforce);
+#endif
     }
 
     secstatus = (SECStatus)SSL_SetPKCS11PinArg(mctx->model, NULL);
@@ -873,16 +939,6 @@ static void nss_init_server_certs(server_rec *s,
         nss_die();
     }
     
-    if (mctx->as_server) {
-        secstatus = SSL_ConfigSecureServer(mctx->model, mctx->servercert, mctx->serverkey, mctx->serverKEAType);
-        if (secstatus != SECSuccess) {
-            ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                "SSL error configuring server: '%s'", mctx->nickname);
-            nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
-            nss_die();
-        }
-    }
-
     secstatus = (SECStatus)SSL_HandshakeCallback(mctx->model, (SSLHandshakeCallback)NSSHandshakeCallback, NULL);
     if (secstatus != SECSuccess)
     {
@@ -958,8 +1014,16 @@ apr_status_t nss_init_ModuleKill(void *data)
         sc = mySrvConfig(s);
 
         if (sc->enabled) {
-            CERT_DestroyCertificate(sc->server->servercert);
-            SECKEY_DestroyPrivateKey(sc->server->serverkey);
+            if (sc->server->nickname) {
+                CERT_DestroyCertificate(sc->server->servercert);
+                SECKEY_DestroyPrivateKey(sc->server->serverkey);
+            }
+#ifdef NSS_ENABLE_ECC
+            if (sc->server->eccnickname) {
+                CERT_DestroyCertificate(sc->server->eccservercert);
+                SECKEY_DestroyPrivateKey(sc->server->eccserverkey);
+            }
+#endif
 
             /* Closing this implicitly cleans up the copy of the certificates
              * and keys associated with any SSL socket */

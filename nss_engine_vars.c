@@ -363,10 +363,10 @@ static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *v
             if (SSL_GetCipherSuiteInfo(channel.cipherSuite,
                 &suite, sizeof suite) == SECSuccess)
             {
-                result = apr_psprintf(p, "%s", suite.keaTypeName);
+                result = apr_psprintf(p, "%s_%s", suite.keaTypeName, suite.authAlgorithmName);
             }
         } else
-            result = apr_pstrdup(p, "UNKNOWN");
+            result = apr_pstrdup(p, "UNKNOWN_UNKNOWN");
 
         resdup = FALSE;
     }
@@ -580,6 +580,25 @@ static char *nss_var_lookup_nss_cipher(apr_pool_t *p, conn_rec *c, char *var)
     }
     else if (strcEQ(var, "_ALGKEYSIZE")) {
         result = apr_psprintf(p, "%d", keySize);
+        resdup = FALSE;
+    }
+    else if (strcEQ(var, "_NAME")) {
+        SSLChannelInfo      channel;
+        SSLCipherSuiteInfo  suite;
+        SSLConnRec *sslconn = myConnConfig(c);
+
+        if (SSL_GetChannelInfo(sslconn->ssl, &channel, sizeof channel) ==
+            SECSuccess && channel.length == sizeof channel &&
+            channel.cipherSuite)
+        {
+            if (SSL_GetCipherSuiteInfo(channel.cipherSuite,
+                &suite, sizeof suite) == SECSuccess)
+            {
+                result = apr_psprintf(p, "%s",  suite.cipherSuiteName);
+            }
+        } else
+            result = apr_pstrdup(p, "UNKNOWN");
+
         resdup = FALSE;
     }
 
