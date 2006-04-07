@@ -872,7 +872,7 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
     switch (certtimestatus)
     {
         case secCertTimeValid:
-            // ok
+            /* ok */
             break;
         case secCertTimeExpired:
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
@@ -1175,10 +1175,11 @@ FindServerCertFromNickname(const char* name)
             PRUint32 matchedUsage = 0;
             PRBool isValid = PR_FALSE;
             PRBool swapcert = PR_FALSE;
-            // We still need to check key usage. Dual-key certs appear
-            // as 2 certs in the list with different usages. We want to pick
-            // the "best" one, preferrably the one with certUsageSSLServer.
-            // Otherwise just return the cert if the nickname matches.
+            /* We still need to check key usage. Dual-key certs appear
+             * as 2 certs in the list with different usages. We want to pick
+             * the "best" one, preferrably the one with certUsageSSLServer.
+             * Otherwise just return the cert if the nickname matches.
+             */
             if (CERT_CheckCertUsage(cert, certUsageSSLServer) == SECSuccess) {
                 matchedUsage = 2; 
             } else {
@@ -1190,24 +1191,27 @@ FindServerCertFromNickname(const char* name)
 
             if (secCertTimeValid == CERT_CheckCertValidTimes(cert, PR_Now(), PR_FALSE))
             {
-                // This is a valid certificate.
+                /* This is a valid certificate. */
                 isValid = PR_TRUE;
             }
             if (!bestcert) {
-                // We didn't have a cert picked yet, automatically choose this
-                // one.
+                /* We didn't have a cert picked yet, automatically choose this
+                 * one.
+                 */
                 swapcert = PR_TRUE;
             } else {
                 if (matchedUsage > bestCertMatchedUsage) {
-                    // The cert previously picked didn't have the correct
-                    // usage, but this one does. Choose this one.
+                    /* The cert previously picked didn't have the correct
+                     * usage, but this one does. Choose this one.
+                     */
                     swapcert = PR_TRUE;
                 } else {
                     if ( (bestCertMatchedUsage == matchedUsage) &&
                     (((PR_FALSE == bestCertIsValid) && (PR_TRUE == isValid)) ||
                     ((PR_TRUE == bestCertIsValid == isValid) && (PR_TRUE == cert_IsNewer(cert, bestcert))))) {
-                        // The cert previously picked was invalid but this one
-                        // is. Or they were both valid but this one is newer.
+                        /* The cert previously picked was invalid but this one
+                         * is. Or they were both valid but this one is newer.
+                         */
                         swapcert = PR_TRUE;
                     }
                 }

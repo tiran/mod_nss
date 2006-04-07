@@ -306,7 +306,7 @@ void nss_log_nss_error(const char *file, int line, int level, server_rec *s)
     error = PR_GetError();
 
     if ((error >= NSPR_ERROR_BASE) && (error <= NSPR_MAX_ERROR)) {
-        return; // We aren't logging NSPR errors
+        return; /* We aren't logging NSPR errors */
     } else if ((error >= LIBSEC_ERROR_BASE) &&
         (error <= LIBSEC_MAX_ERROR)) {
         err = libsec_errors[error-LIBSEC_ERROR_BASE].errorString;

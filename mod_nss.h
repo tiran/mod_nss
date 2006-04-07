@@ -323,7 +323,7 @@ typedef struct
     const char *name;
     int num;
     int fortezza_only;
-    PRInt32 version; // protocol version valid for this cipher
+    PRInt32 version; /* protocol version valid for this cipher */
 } cipher_properties;
 
 /* Compatibility between Apache 2.0.x and 2.2.x. The numeric version of

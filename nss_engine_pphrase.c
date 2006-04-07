@@ -79,7 +79,7 @@ SECStatus nss_Init_Tokens(server_rec *s)
             status = SECFailure;
             break;
         }
-        parg->retryCount = 0; // reset counter to 0 for the next token
+        parg->retryCount = 0; /* reset counter to 0 for the next token */
         PK11_FreeSlot(slot);
     }
     
@@ -107,11 +107,11 @@ static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
     }
     prompt = PR_smprintf("Please enter password for \"%s\" token:", PK11_GetTokenName(slot));
     if (parg == NULL) {
-        // should not happen
+        /* should not happen */
         passwd = nss_get_password(stdin, stdout, slot, nss_check_password, 0);
     } else {
         if (parg->retryCount > 2) {
-            passwd = NULL; // abort after 2 retries (3 failed attempts)
+            passwd = NULL; /* abort after 2 retries (3 failed attempts) */
         } else {
             passwd = nss_get_password(stdin, stdout, slot, nss_check_password, parg);
         }

@@ -16,6 +16,7 @@
 #include "mod_nss.h"
 #include "secder.h"     /* DER_GetInteger() */
 #include "base64.h"     /* BTOA_DataToAscii() */
+#include "cert.h"       /* CERT_* */
 
 /*  _________________________________________________________________
 **
@@ -391,7 +392,7 @@ static char *nss_var_lookup_nss_cert_dn(apr_pool_t *p, CERTName *cert, char *var
         rv = CERT_GetCountryName(cert);
     } else if (strcEQ(var, "ST")) {
         rv = CERT_GetStateName(cert);
-    } else if (strcEQ(var, "SP")) { // for compatibility
+    } else if (strcEQ(var, "SP")) { /* for compatibility */
         rv = CERT_GetStateName(cert);
     } else if (strcEQ(var, "L")) {
         rv = CERT_GetLocalityName(cert);
@@ -406,12 +407,12 @@ static char *nss_var_lookup_nss_cert_dn(apr_pool_t *p, CERTName *cert, char *var
     } else if (strcEQ(var, "EMAIL")) {
         rv = CERT_GetCertEmailAddress(cert);
     } else {
-        rv = NULL; // catch any values we don't support
+        rv = NULL; /* catch any values we don't support */
     }
 
     if (rv) {
         result = apr_pstrdup(p, rv);
-        PORT_Free(rv); // so we can free with the right allocator
+        PORT_Free(rv); /* so we can free with the right allocator */
     }
 
     return result;
@@ -533,7 +534,7 @@ static char *nss_var_lookup_nss_cert_verify(apr_pool_t *p, conn_rec *c)
         if (rv == SECSuccess)
             result = "SUCCESS";
         else
-            result = apr_psprintf(p, "FAILED"); // FIXME, add more info?
+            result = apr_psprintf(p, "FAILED"); /* FIXME, add more info? */
     }
 
     if (xs)

@@ -1138,7 +1138,7 @@ int nss_io_layer_init()
     int rc = 1;
 
     if (gIdentity != PR_INVALID_IO_LAYER) {
-        // already initialized
+        /* already initialized */
         return PR_FAILURE;
     }
 

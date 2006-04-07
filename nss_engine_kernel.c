@@ -435,7 +435,7 @@ int nss_hook_Access(request_rec *r)
                 return HTTP_FORBIDDEN;
             }
 
-            // The cert is ok, fall through to the check SSLRequires
+            /* The cert is ok, fall through to the check SSLRequires */
         }
         else {
             int handshake_done = 0;
