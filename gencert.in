@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 # Copyright 2001-2004 The Apache Software Foundation
 #
@@ -35,6 +35,14 @@ CERTUTIL=$NSSDIR/bin/certutil
 getFQDN() {
         max=0
         maxhost=
+        OS=`uname -s`
+        if [ $OS == "SunOS" ]; then
+                if [ -x /usr/lib/mail/sh/check-hostname ]; then
+                        maxhost=`/usr/lib/mail/sh/check-hostname | awk 'BEGIN { FS=" " } { if ($3 == "OK:") { print $7 } }'`
+                fi
+                echo $maxhost
+                return
+        fi
         defhost=`hostname` 
         hosthost=`host $defhost | grep -v "not found" | awk '{print $1}'`
         for host in $defhost $hosthost `hostname -f` `hostname -a` ; do
@@ -97,7 +105,7 @@ let CERTSERIAL=CERTSERIAL+1
 # 5 9 n  -> Cert signing key
 # y 10 y  -> basic constraints: CA cert
 # 5 6 7 9 n  -> SSL, S/MIME, Object signing CA
-echo "5\n9\nn\ny\n10\ny\n5\n6\n7\n9\nn\n" | \
+echo -e "5\n9\nn\ny\n10\ny\n5\n6\n7\n9\nn\n" | \
 $CERTUTIL -S -d $DEST -n cacert \
             -s "$CA_CERTDN" \
             -x \
@@ -119,7 +127,7 @@ echo "#####################################################################"
 let CERTSERIAL=CERTSERIAL+1
 # 0 2 9 n  -> Key usage: Key Encipherment, Digital Signature
 # 0 9 n  -> SSL Client
-echo "0\n2\n9\nn\n0\n9\nn\n" | \
+echo -e "0\n2\n9\nn\n0\n9\nn\n" | \
 $CERTUTIL -S -d $DEST -n alpha \
             -s "$ALPHA_CERTDN" \
             -c cacert \
@@ -149,7 +157,7 @@ echo "#####################################################################"
 echo "Generating server certificate"
 echo "#####################################################################"
 let CERTSERIAL=CERTSERIAL+1
-echo "2\n9\nn\n1\n9\nn\n" | \
+echo -e "2\n9\nn\n1\n9\nn\n" | \
 $CERTUTIL -C -d $DEST \
             -c cacert \
             -i $DEST/tmpcertreq \
