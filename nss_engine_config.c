@@ -383,7 +383,7 @@ const char *nss_cmd_NSSVerifyClient(cmd_parms *cmd,
 {
     SSLDirConfigRec *dc = (SSLDirConfigRec *)dcfg;
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
-    nss_verify_t mode;
+    nss_verify_t mode = SSL_CVERIFY_UNSET;
     const char *err;
 
     if ((err = nss_cmd_verify_parse(cmd, arg, &mode))) {
@@ -451,6 +451,8 @@ const char *nss_cmd_NSSProxyProtocol(cmd_parms *cmd,
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->proxy->auth.protocols = arg;
+
+    return NULL;
 }
 
 const char *nss_cmd_NSSProxyCipherSuite(cmd_parms *cmd,

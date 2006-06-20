@@ -24,7 +24,7 @@ typedef struct {
 
 static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg);
 static char * nss_no_password(PK11SlotInfo *slot, PRBool retry, void *arg);
-static unsigned char * nss_get_password(FILE *input, FILE *output, PK11SlotInfo *slot, PRBool (*ok)(unsigned char *), pphrase_arg_t * parg);
+static char * nss_get_password(FILE *input, FILE *output, PK11SlotInfo *slot, PRBool (*ok)(unsigned char *), pphrase_arg_t * parg);
 static PRBool nss_check_password(unsigned char *cp);
 static void echoOff(int fd);
 static void echoOn(int fd);
@@ -139,8 +139,8 @@ static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
         memset(buf, 0, sizeof(buf));
         rv = apr_file_read(parg->mc->proc.out, buf, &nBytes);
 
-        if (rv = APR_SUCCESS)
-           res = atoi(buf);
+        if (rv == APR_SUCCESS)
+            res = atoi(buf);
         if (rv != APR_SUCCESS ||
            (res != PIN_SUCCESS && res != PIN_INCORRECTPW)) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
@@ -192,7 +192,7 @@ static char * nss_no_password(PK11SlotInfo *slot, PRBool retry, void *arg)
  * twiddling with the tty. Alternatively, if the file password.conf
  * exists then it may be used to store the token password(s).
  */
-static unsigned char *nss_get_password(FILE *input, FILE *output,
+static char *nss_get_password(FILE *input, FILE *output,
                                        PK11SlotInfo *slot,
                                        PRBool (*ok)(unsigned char *),
                                        pphrase_arg_t *parg)
@@ -298,7 +298,7 @@ static unsigned char *nss_get_password(FILE *input, FILE *output,
             fprintf(output, "non-alphabetic characters\n");
             continue; 
         }
-        return (unsigned char*) PORT_Strdup((char*)phrase);
+        return (char*) PORT_Strdup((char*)phrase);
     }
 }
 

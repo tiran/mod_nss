@@ -19,6 +19,8 @@
 #include "secmod.h"
 #include "sslerr.h"
 #include "pk11func.h"
+#include "ocsp.h"
+#include "keyhi.h"
 
 static SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket);
 static SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg);
@@ -902,10 +904,7 @@ static void nss_init_server_certs(server_rec *s,
                                   apr_pool_t *ptemp,
                                   modnss_ctx_t *mctx)
 {
-    SECCertTimeValidity certtimestatus;
     SECStatus secstatus;
-
-    PK11SlotInfo* slot = NULL;
 
     /*
      * Get own certificate and private key.
@@ -1066,7 +1065,7 @@ SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket)
     switch (err) {
         default:
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                "Bad remote server certificate.", err);
+                "Bad remote server certificate: %d", err);
             nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
             return SECFailure;
             break;

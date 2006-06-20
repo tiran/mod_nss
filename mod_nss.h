@@ -439,6 +439,7 @@ apr_file_t  *nss_util_ppopen(server_rec *, apr_pool_t *, const char *,
 void         nss_util_ppclose(server_rec *, apr_pool_t *, apr_file_t *);
 char        *nss_util_readfilter(server_rec *, apr_pool_t *, const char *,
                                  const char * const *);
+int nss_rand_seed(server_rec *s, apr_pool_t *p, ssl_rsctx_t nCtx, char *prefix);
 
 /* Pass Phrase Handling */
 SECStatus nss_Init_Tokens(server_rec *s);

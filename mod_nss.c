@@ -224,7 +224,7 @@ SECStatus NSSBadCertHandler(void *arg, PRFileDesc * socket)
                 if (rv != SECSuccess) {
                     char *remote = CERT_GetCommonName(&peerCert->subject);
                     ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                        "SSL Proxy: Possible man-in-the-middle attack. The remove server is %s, we expected %s", remote, c->remote_host, rv);
+                        "SSL Proxy: Possible man-in-the-middle attack. The remove server is %s, we expected %s", remote, c->remote_host);
                     PORT_Free(remote);
                 }
             } else {
@@ -234,7 +234,7 @@ SECStatus NSSBadCertHandler(void *arg, PRFileDesc * socket)
             break;
         default:
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                "Bad remote server certificate.", err);
+                "Bad remote server certificate: %d", err);
             nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
             break;
     }
