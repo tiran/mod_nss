@@ -208,11 +208,23 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
     /* We need to be in the same directory as libnssckbi.so to load the
      * root certificates properly.
      */
-    getcwd(cwd, PATH_MAX);
-    chdir(mc->pCertificateDatabase);
+    if (getcwd(cwd, PATH_MAX) == NULL) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+            "Unable to determine current working directory");
+        nss_die();
+    }
+    if (chdir(mc->pCertificateDatabase) != 0) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+            "Unable to change directory to %s", mc->pCertificateDatabase);
+        nss_die();
+    }
     /* Initialize NSS and open the certificate database read-only. */
     rv = NSS_Initialize(mc->pCertificateDatabase, mc->pDBPrefix, mc->pDBPrefix, "secmod.db", NSS_INIT_READONLY);
-    chdir(cwd);
+    if (chdir(cwd) != 0) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+            "Unable to change directory to %s", cwd);
+        nss_die();
+    }
 
     /* Assuming everything is ok so far, check the cert database password(s). */
     if (sslenabled && (rv != SECSuccess)) {
