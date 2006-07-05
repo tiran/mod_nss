@@ -82,6 +82,8 @@ static void modnss_ctx_init(modnss_ctx_t *mctx)
     mctx->nickname            = NULL;
 #ifdef NSS_ENABLE_ECC
     mctx->eccnickname         = NULL;
+    mctx->eccservercert       = NULL;
+    mctx->eccserverkey        = NULL;
 #endif
     mctx->servercert          = NULL;
     mctx->serverkey           = NULL;
