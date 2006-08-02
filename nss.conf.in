@@ -76,8 +76,10 @@ NSSRandomSeed startup builtin
 #ServerAdmin you@example.com
 
 # mod_nss can log to separate log files, you can choose to do that if you'd like
+# LogLevel is not inherited from httpd.conf.
 #ErrorLog @apache_prefix@/logs/error_log
 #TransferLog @apache_prefix@/logs/access_log
+LogLevel warn
 
 #   SSL Engine Switch:
 #   Enable/Disable SSL for this virtual host.

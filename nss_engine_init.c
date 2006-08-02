@@ -831,7 +831,7 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
             }
         }
     } else {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "Certificate not found: '%s'", nickname);
         nss_die();
     }
@@ -848,7 +848,7 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
                  * Slot not found. This should never happen because we
                  * already found the cert.
                  */
-                ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                     "Slot not found");
                 nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
                 free(token);
@@ -866,7 +866,7 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
     PK11_FreeSlot(slot);
 
     if (*serverkey == NULL) {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "Key not found for: '%s'", nickname);
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
@@ -889,21 +889,21 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
             /* ok */
             break;
         case secCertTimeExpired:
-            ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "Server certificate is expired: '%s'", nickname);
             break;
         case secCertTimeNotValidYet:
-            ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "Certificate is not valid yet '%s'", nickname);
         default:
-            ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "Unhandled Certificate time type %d for: '%s'", certtimestatus, nickname);
             break;
     }
 
     secstatus = SSL_ConfigSecureServer(model, *servercert, *serverkey, *KEAtype);
     if (secstatus != SECSuccess) {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "SSL error configuring server: '%s'", nickname);
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
@@ -945,7 +945,7 @@ static void nss_init_server_certs(server_rec *s,
 
     secstatus = (SECStatus)SSL_SetPKCS11PinArg(mctx->model, NULL);
     if (secstatus != SECSuccess) {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "Error setting PKCS11 pin argument: '%s'", mctx->nickname);
         nss_die();
     }
@@ -953,7 +953,7 @@ static void nss_init_server_certs(server_rec *s,
     secstatus = (SECStatus)SSL_HandshakeCallback(mctx->model, (SSLHandshakeCallback)NSSHandshakeCallback, NULL);
     if (secstatus != SECSuccess)
     {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "SSL error configuring handshake callback: '%s'", mctx->nickname);
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
@@ -965,9 +965,13 @@ static void nss_init_proxy_ctx(server_rec *s,
                                 apr_pool_t *ptemp,
                                 SSLSrvConfigRec *sc)
 {
+    SSLModConfigRec *mc = myModConfig(s);
+
     nss_init_ctx(s, p, ptemp, sc->proxy);
 
-    nss_init_server_certs(s, p, ptemp, sc->proxy);
+    /* Only try to load the certificates once the server is up */
+    if (mc->nInitCount < 2)
+        nss_init_server_certs(s, p, ptemp, sc->proxy);
 }
 
 static void nss_init_server_ctx(server_rec *s,
@@ -975,11 +979,15 @@ static void nss_init_server_ctx(server_rec *s,
                                 apr_pool_t *ptemp,
                                 SSLSrvConfigRec *sc)
 {
+    SSLModConfigRec *mc = myModConfig(s);
+
     nss_init_server_check(s, p, ptemp, sc->server);
 
     nss_init_ctx(s, p, ptemp, sc->server);
 
-    nss_init_server_certs(s, p, ptemp, sc->server);
+    /* Only try to load the certificates once the server is up */
+    if (mc->nInitCount < 2)
+        nss_init_server_certs(s, p, ptemp, sc->server);
 }
 
 /*
