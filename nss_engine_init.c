@@ -969,9 +969,7 @@ static void nss_init_proxy_ctx(server_rec *s,
 
     nss_init_ctx(s, p, ptemp, sc->proxy);
 
-    /* Only try to load the certificates once the server is up */
-    if (mc->nInitCount < 2)
-        nss_init_server_certs(s, p, ptemp, sc->proxy);
+    nss_init_server_certs(s, p, ptemp, sc->proxy);
 }
 
 static void nss_init_server_ctx(server_rec *s,
@@ -985,9 +983,7 @@ static void nss_init_server_ctx(server_rec *s,
 
     nss_init_ctx(s, p, ptemp, sc->server);
 
-    /* Only try to load the certificates once the server is up */
-    if (mc->nInitCount < 2)
-        nss_init_server_certs(s, p, ptemp, sc->server);
+    nss_init_server_certs(s, p, ptemp, sc->server);
 }
 
 /*
