@@ -327,8 +327,17 @@ typedef struct
 } cipher_properties;
 
 /* Compatibility between Apache 2.0.x and 2.2.x. The numeric version of
- * the version first appeared in Apache 2.2.0 */
+ * the version first appeared in Apache 2.0.56-dev. I picked 2.0.55 as it
+ * is the last version without this define. This is used for more than just
+ * the below defines. It also determines which API is used.
+ */
 #ifndef AP_SERVER_MAJORVERSION_NUMBER
+#define AP_SERVER_MAJORVERSION_NUMBER 2
+#define AP_SERVER_MINORVERSION_NUMBER 0
+#define AP_SERVER_PATCHLEVEL_NUMBER   55
+#endif
+
+#if AP_SERVER_MINORVERSION_NUMBER < 2
 typedef struct regex_t ap_regex_t;
 #define AP_REG_EXTENDED REG_EXTENDED
 #define AP_REG_NOSUB REG_NOSUB

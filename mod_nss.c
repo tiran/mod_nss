@@ -399,7 +399,7 @@ static void nss_register_hooks(apr_pool_t *p)
 
     ap_hook_pre_connection(nss_hook_pre_connection,NULL,NULL, APR_HOOK_MIDDLE);
     ap_hook_post_config   (nss_init_Module,        NULL,NULL, APR_HOOK_MIDDLE);
-#ifndef AP_SERVER_MAJORVERSION_NUMBER
+#if AP_SERVER_MINORVERSION_NUMBER < 2 /* See comment in mod_nss.h */
     ap_hook_http_method   (nss_hook_http_scheme,   NULL,NULL, APR_HOOK_MIDDLE);
 #else
     ap_hook_http_scheme   (nss_hook_http_scheme,   NULL,NULL, APR_HOOK_MIDDLE);
