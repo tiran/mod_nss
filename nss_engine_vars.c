@@ -32,6 +32,7 @@ static char *nss_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var);
 static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *var, conn_rec *c);
 static char *nss_var_lookup_nss_cert_dn(apr_pool_t *p, CERTName *cert, char *var);
 static char *nss_var_lookup_nss_cert_valid(apr_pool_t *p, CERTCertificate *xs, int type);
+static char *ssl_var_lookup_ssl_cert_remain(apr_pool_t *p, CERTCertificate *xs);
 static char *nss_var_lookup_nss_cert_chain(apr_pool_t *p, CERTCertificate *cert,char *var);
 static char *nss_var_lookup_nss_cert_PEM(apr_pool_t *p, CERTCertificate *xs);
 static char *nss_var_lookup_nss_cert_verify(apr_pool_t *p, conn_rec *c);
@@ -314,6 +315,10 @@ static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *v
     else if (strcEQ(var, "V_END")) {
         result = nss_var_lookup_nss_cert_valid(p, xs, CERT_NOTAFTER);
     }
+    else if (strcEQ(var, "V_REMAIN")) {
+        result = ssl_var_lookup_ssl_cert_remain(p, xs);
+        resdup = FALSE;
+    }
     else if (strcEQ(var, "S_DN")) {
         xsname = CERT_NameToAscii(&xs->subject);
         result = apr_pstrdup(p, xsname);
@@ -439,6 +444,29 @@ static char *nss_var_lookup_nss_cert_valid(apr_pool_t *p, CERTCertificate *xs, i
     result = apr_pstrdup(p, timeString);
 
     return result;
+}
+
+/* Return a string giving the number of days remaining until the cert
+ * expires "0" if this can't be determined. 
+ *
+ * In mod_ssl this is more generic, passing in a time to calculate against,
+ * but I see no point in converting the end date into a string and back again.
+ */
+static char *ssl_var_lookup_ssl_cert_remain(apr_pool_t *p, CERTCertificate *xs)
+{
+    PRTime           notBefore, notAfter;
+    PRTime           now, diff;
+
+    CERT_GetCertTimes(xs, &notBefore, &notAfter);
+    now = PR_Now();
+
+    /* Both times are relative to the epoch, so no TZ calcs are needed */
+    diff = notAfter - now;
+
+    /* PRTime is in microseconds so convert to seconds before days */
+    diff = (diff / PR_USEC_PER_SEC) / (60*60*24);
+
+    return (diff > 0) ? apr_itoa(p, diff) : apr_pstrdup(p, "0");
 }
 
 static char *nss_var_lookup_nss_cert_chain(apr_pool_t *p, CERTCertificate *cert, char *var)
