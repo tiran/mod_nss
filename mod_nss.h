@@ -447,6 +447,10 @@ apr_file_t  *nss_util_ppopen(server_rec *, apr_pool_t *, const char *,
 void         nss_util_ppclose(server_rec *, apr_pool_t *, apr_file_t *);
 char        *nss_util_readfilter(server_rec *, apr_pool_t *, const char *,
                                  const char * const *);
+/* ssl_io_buffer_fill fills the setaside buffering of the HTTP request
+ * to allow an SSL renegotiation to take place. */
+int          nss_io_buffer_fill(request_rec *r);
+
 int nss_rand_seed(server_rec *s, apr_pool_t *p, ssl_rsctx_t nCtx, char *prefix);
 
 /* Pass Phrase Handling */
