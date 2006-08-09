@@ -395,6 +395,10 @@ static apr_port_t nss_hook_default_port(const request_rec *r)
 
 static void nss_register_hooks(apr_pool_t *p)
 {
+    /* nss_hook_ReadReq needs to use the BrowserMatch settings so must
+     * run after mod_setenvif's post_read_request hook. */ 
+    static const char *pre_prr[] = { "mod_setenvif.c", NULL };
+
     nss_io_filter_register(p);
 
     ap_hook_pre_connection(nss_hook_pre_connection,NULL,NULL, APR_HOOK_MIDDLE);
@@ -407,12 +411,11 @@ static void nss_register_hooks(apr_pool_t *p)
     ap_hook_default_port  (nss_hook_default_port,  NULL,NULL, APR_HOOK_MIDDLE);
     ap_hook_pre_config    (nss_hook_pre_config,    NULL,NULL, APR_HOOK_MIDDLE);
     ap_hook_child_init    (nss_init_Child,         NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_translate_name(nss_hook_Translate,     NULL,NULL, APR_HOOK_MIDDLE);
     ap_hook_check_user_id (nss_hook_UserCheck,     NULL,NULL, APR_HOOK_FIRST);
     ap_hook_fixups        (nss_hook_Fixup,         NULL,NULL, APR_HOOK_MIDDLE);
     ap_hook_access_checker(nss_hook_Access,        NULL,NULL, APR_HOOK_MIDDLE);
     ap_hook_auth_checker  (nss_hook_Auth,          NULL,NULL, APR_HOOK_MIDDLE);
-    ap_hook_post_read_request(nss_hook_ReadReq,    NULL,NULL, APR_HOOK_MIDDLE);
+    ap_hook_post_read_request(nss_hook_ReadReq, pre_prr,NULL, APR_HOOK_MIDDLE);
 
     nss_var_register();
 

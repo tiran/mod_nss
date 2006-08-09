@@ -403,7 +403,6 @@ apr_status_t nss_init_ModuleKill(void *data);
 int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum]);
 
 /* Apache API hooks */
-int nss_hook_Translate(request_rec *r);
 int nss_hook_UserCheck(request_rec *r);
 int nss_hook_Fixup(request_rec *r);
 int nss_hook_Access(request_rec *r);

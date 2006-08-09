@@ -23,6 +23,7 @@ static void HandshakeDone(PRFileDesc *fd, void *doneflag);
 int nss_hook_ReadReq(request_rec *r)
 {
     SSLConnRec *sslconn = myConnConfig(r->connection);
+    PRFileDesc *ssl = sslconn ? sslconn->ssl : NULL;
 
     if (!sslconn) {
         return DECLINED;
@@ -62,19 +63,13 @@ int nss_hook_ReadReq(request_rec *r)
         return HTTP_BAD_REQUEST;
     }
 
-    return DECLINED;
-}
-
-/* 
- *  URL Translation Handler
- */
-int nss_hook_Translate(request_rec *r)
-{
-    SSLConnRec *sslconn = myConnConfig(r->connection);
- 
-    if (!(sslconn && sslconn->ssl)) {
+    /* Get the SSL connection structure and perform the
+     * delayed interlinking from SSL back to request_rec
+     */
+    if (!ssl) {
         return DECLINED; 
     }
+
     /*
      * Log information about incoming HTTPS requests
      */
@@ -91,7 +86,6 @@ int nss_hook_Translate(request_rec *r)
 
     return DECLINED;
 }
-
 
 /*
  *  Access Handler
