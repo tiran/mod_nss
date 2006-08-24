@@ -205,6 +205,14 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
     /* Set the PKCS #11 strings for the internal token. */
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
 
+    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+        "Initializing SSL Session Cache of size %d. SSL2 timeout = %d, SSL3/TLS timeout = %d.", mc->session_cache_size, mc->session_cache_timeout, mc->ssl3_session_cache_timeout);
+    ap_mpm_query(AP_MPMQ_IS_FORKED, &forked);
+    if (forked)
+        SSL_ConfigMPServerSIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
+    else
+        SSL_ConfigServerSessionIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
+
     /* We need to be in the same directory as libnssckbi.so to load the
      * root certificates properly.
      */
@@ -267,14 +275,6 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
-
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-        "Initializing SSL Session Cache of size %d. SSL2 timeout = %d, SSL3/TLS timeout = %d.", mc->session_cache_size, mc->session_cache_timeout, mc->ssl3_session_cache_timeout);
-    ap_mpm_query(AP_MPMQ_IS_FORKED, &forked);
-    if (forked)
-        SSL_ConfigMPServerSIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
-    else
-        SSL_ConfigServerSessionIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
 
     if (ocspenabled) {
         CERT_EnableOCSPChecking(CERT_GetDefaultCertDB());
