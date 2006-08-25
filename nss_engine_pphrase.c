@@ -74,6 +74,15 @@ SECStatus nss_Init_Tokens(server_rec *s)
             continue;
         }
 
+        if (parg->mc->pphrase_dialog_type == SSL_PPTYPE_DEFER) {
+            char * passwd = nss_get_password(stdin, stdout, slot, nss_check_password, parg);
+            if (passwd == NULL) {
+                PK11_FreeSlot(slot);
+                continue;
+            }
+            free(passwd);
+        }
+
         ret = PK11_Authenticate(slot, PR_TRUE, parg);
         if (SECSuccess != ret) {
             status = SECFailure;
@@ -209,7 +218,8 @@ static char *nss_get_password(FILE *input, FILE *output,
 
     token_name = PK11_GetTokenName(slot);
 
-    if (parg->mc->pphrase_dialog_type == SSL_PPTYPE_FILE) {
+    if (parg->mc->pphrase_dialog_type == SSL_PPTYPE_FILE ||
+        parg->mc->pphrase_dialog_type == SSL_PPTYPE_DEFER) {
         /* Try to get the passwords from the password file if it exists.
          * THIS IS UNSAFE and is provided for convenience only. Without this
          * capability the server would have to be started in foreground mode.
@@ -233,6 +243,14 @@ static char *nss_get_password(FILE *input, FILE *output,
                  "Unable to open password file %s", parg->mc->pphrase_dialog_path);
             nss_die();
         }
+    }
+
+    /* For SSL_PPTYPE_DEFER we only want to authenticate passwords found
+     * in the password file.
+     */
+    if ((parg->mc->pphrase_dialog_type == SSL_PPTYPE_DEFER) &&
+        (pwdstr == NULL)) {
+        return NULL;
     }
 
     /* This purposely comes after the file check because that is more

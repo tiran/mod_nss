@@ -546,12 +546,18 @@ const char *nss_cmd_NSSPassPhraseDialog(cmd_parms *cmd,
         mc->pphrase_dialog_type  = SSL_PPTYPE_BUILTIN;
         mc->pphrase_dialog_path = NULL;
     }
-    else if ((arglen > 5) && strEQn(arg, "file:", 5)) {
+    else if (((arglen > 5) && strEQn(arg, "file:", 5)) ||
+            ((arglen > 6) && strEQn(arg, "defer:", 6))) {
         apr_finfo_t finfo;
         apr_status_t rc;
 
-        mc->pphrase_dialog_type  = SSL_PPTYPE_FILE;
-        mc->pphrase_dialog_path = ap_server_root_relative(cmd->pool, arg+5);
+        if (strEQn(arg, "file:", 5)) {
+            mc->pphrase_dialog_type  = SSL_PPTYPE_FILE;
+            mc->pphrase_dialog_path = ap_server_root_relative(cmd->pool, arg+5);
+        } else {
+            mc->pphrase_dialog_type  = SSL_PPTYPE_DEFER;
+            mc->pphrase_dialog_path = ap_server_root_relative(cmd->pool, arg+6);
+        }
         if (!mc->pphrase_dialog_path)
             return apr_pstrcat(cmd->pool,
                               "Invalid NSSPassPhraseDialog file: path ",
@@ -629,6 +635,10 @@ const char *nss_cmd_NSSRandomSeed(cmd_parms *cmd,
     }
     else if ((arg2len > 5) && strEQn(arg2, "exec:", 5)) {
         seed->nSrc   = SSL_RSSRC_EXEC;
+        seed->cpPath = ap_server_root_relative(mc->pPool, arg2+5);
+    }
+    else if ((arg2len > 6) && strEQn(arg2, "defer:", 6)) {
+        seed->nSrc   = SSL_RSSRC_FILE;
         seed->cpPath = ap_server_root_relative(mc->pPool, arg2+5);
     }
     else if (strcEQ(arg2, "builtin")) {

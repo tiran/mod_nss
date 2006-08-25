@@ -200,6 +200,7 @@ typedef enum {
     SSL_PPTYPE_UNSET   = UNSET,
     SSL_PPTYPE_BUILTIN = 0,
     SSL_PPTYPE_FILE    = 1,
+    SSL_PPTYPE_DEFER   = 2,
 } nss_pphrase_t;
 
 /*
