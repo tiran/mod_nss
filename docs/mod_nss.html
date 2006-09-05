@@ -50,7 +50,8 @@ calls instead.<br>
 <h1><a name="Building"></a>Building</h1>
 Refer to the README file included with the distribution.<br>
 <br>
-To build you'll need <a href="NSPR">NSPR</a> 4.4.1 or above and <a
+To build you'll need <a href="http://www.mozilla.org/projects/nspr/">NSPR</a>
+4.4.1 or above and <a
  href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a> 3.9.2
 or above.
 It may work with earlier versions but these are recommended (or
@@ -60,9 +61,15 @@ installed in the same parent directory (e.g. /opt/nspr,
 /usr/local/nspr, etc). It will look in this parent for include/ and
 lib/, etc.<br>
 <br>
+To build with ECC support you need <a
+ href="http://www.mozilla.org/projects/nspr/">NSPR</a> 4.6.2 or higher
+and <a href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a>
+3.11.2 or higher.<br>
+<br>
 You will also need the <a
  href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a> and <a
- href="NSPR">NSPR</a> directories in your library search
+ href="http://www.mozilla.org/projects/nspr/">NSPR</a> directories in
+your library search
 path (either /etc/ld.so.conf or LD_LIBRARY_PATH) to link and run the
 module.<br>
 <br>
@@ -132,6 +139,19 @@ of the Apache you want to install the module into.<br>
       <td style="vertical-align: top;">--with-apr-config=[PATH]</td>
       <td style="vertical-align: top;">The location of apr-config which
 tells us where the APR include files and libraries are located<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">--enable-ssl2<br>
+      </td>
+      <td style="vertical-align: top;">SSLv2 is disabled by default.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">--enable-ecc<br>
+      </td>
+      <td style="vertical-align: top;">Enable Elliptical Curve
+Cryptography. Disabled by default.<br>
       </td>
     </tr>
   </tbody>
@@ -232,6 +252,22 @@ If you have additional hardware tokens you will be prompted for each
 token password.<br>
 <br>
 All other output will be written to the Apache log files.<br>
+<br>
+To avoid&nbsp; being prompted for a startup password you can either:<br>
+<ul>
+  <li>Use a password file that contains your token passwords. See <small><small><font
+ size="+2"><small><small>NSSPassPhraseDialog for details.</small></small></font></small></small></li>
+  <li><small><small><font size="+2"><small><small>Change the internal
+token password to a blank with: <br>
+    </small></small></font></small></small></li>
+</ul>
+<div style="margin-left: 40px;"><small><small><font size="+2"><small><small><code>%
+modutil -dbdir /path/to/database/directory -changepw "NSS Certificate
+DB"</code><br>
+<br>
+Enter the old password then press Enter twice for the new password to
+blank it out.<br>
+</small></small></font></small></small></div>
 <h1><a name="Migration"></a>Migration</h1>
 A perl script, <code>migrate,pl</code>, is included to help migrate an
 existing mod_ssl configuration to work with mod_nss. There is one
@@ -331,6 +367,22 @@ This directive specifies a path, not a filename.<br>
 <br>
 <code>NSSCertificateDatabase /etc/httpd/conf/nss</code><br>
 <br>
+<big><big>NSSDBPrefix</big></big><br>
+<br>
+Normally a certificate database consists of 3 files: cert8.db, key3.db
+and secmod.db. This directive allows you to add a named prefix to the
+filenames of cert8.db and key3.db so you can store multiple databases
+in one directory. <br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSDBPrefix my-prefix-<br>
+<br>
+You would then need: my-prefix-cert8.db, my-prefix-key3.db and secmod.db<br>
+<br>
+In order to work with files with a prefix using the NSS command-line
+tools use the -P flag.<br>
+</code><br>
 <font size="+2">NSSSessionCacheSize</font><br>
 <br>
 Specifies the number of SSL sessions that can be cached. <br>
@@ -386,7 +438,7 @@ not a particularly strong source of entropy.</li>
 If the number of bytes to read is specified it just reads that amount.
 Be aware that some operating systems block on /dev/random if not enough
 entropy is available. This means that the server will wait until that
-data is available to continue startup. These systems generally offer a
+/data is available to continue startup. These systems generally offer a
 non-blocking device as well, /dev/urandom.</li>
   <li><code>exec:/path/to/program: Executes the given program and takes
 the stdout of it as the entryop. If the bytes argument is included it
@@ -459,7 +511,7 @@ enabled because
 <br>
 Available ciphers are:<br>
 <br>
-<table style="width: 50%; text-align: left;" border="1" cellpadding="2"
+<table style="width: 70%; text-align: left;" border="1" cellpadding="2"
  cellspacing="2">
   <tbody>
     <tr>
@@ -630,6 +682,147 @@ definition<br>
   </tbody>
 </table>
 <br>
+Additionally there are a number of ECC ciphers:<br>
+<br>
+<table style="width: 70%;" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; font-weight: bold;">Cipher Name<br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;">NSS Cipher
+Definition<br>
+      </td>
+      <td style="vertical-align: top; font-weight: bold;">Protocol<br>
+      </td>
+    </tr>
+    <tr>
+      <td>ecdh_ecdsa_null_sha</td>
+      <td>TLS_ECDH_ECDSA_WITH_NULL_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_ecdsa_rc4_128_sha</td>
+      <td>TLS_ECDH_ECDSA_WITH_RC4_128_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_ecdsa_3des_sha</td>
+      <td>TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_ecdsa_aes_128_sha</td>
+      <td>TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_ecdsa_aes_256_sha</td>
+      <td>TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdhe_ecdsa_null_sha</td>
+      <td>TLS_ECDHE_ECDSA_WITH_NULL_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdhe_ecdsa_rc4_128_sha</td>
+      <td>TLS_ECDHE_ECDSA_WITH_RC4_128_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdhe_ecdsa_3des_sha</td>
+      <td>TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdhe_ecdsa_aes_128_sha</td>
+      <td>TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdhe_ecdsa_aes_256_sha</td>
+      <td>TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_rsa_null_sha</td>
+      <td>TLS_ECDH_RSA_WITH_NULL_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_rsa_128_sha</td>
+      <td>TLS_ECDH_RSA_WITH_RC4_128_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_rsa_3des_sha</td>
+      <td>TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_rsa_aes_128_sha</td>
+      <td>TLS_ECDH_RSA_WITH_AES_128_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_rsa_aes_256_sha</td>
+      <td>TLS_ECDH_RSA_WITH_AES_256_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>echde_rsa_null</td>
+      <td>TLS_ECDHE_RSA_WITH_NULL_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdhe_rsa_rc4_128_sha</td>
+      <td>TLS_ECDHE_RSA_WITH_RC4_128_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdhe_rsa_3des_sha</td>
+      <td>TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdhe_rsa_aes_128_sha</td>
+      <td>TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdhe_rsa_aes_256_sha</td>
+      <td>TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_anon_null_sha</td>
+      <td>TLS_ECDH_anon_WITH_NULL_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_anon_rc4_128sha</td>
+      <td>TLS_ECDH_anon_WITH_RC4_128_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_anon_3des_sha</td>
+      <td>TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_anon_aes_128_sha</td>
+      <td>TLS_ECDH_anon_WITH_AES_128_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+    <tr>
+      <td>ecdh_anon_aes_256_sha</td>
+      <td>TLS_ECDH_anon_WITH_AES_256_CBC_SHA</td>
+      <td>TLSv1</td>
+    </tr>
+  </tbody>
+</table>
+<br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSCipherSuite
@@ -651,7 +844,7 @@ Options are:<br>
 </ul>
 Note that this differs from mod_ssl in that you can't add or subtract
 protocols.<br>
-<a href="#SSLv2">SSLv2</a> is not supported at this time.<br>
+<a href="#SSLv2">SSLv2</a> is not supported by default at this time.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
@@ -670,7 +863,23 @@ be enclosed in double quotes.<br>
  style="font-weight: bold;">
 <br>
 <code>NSSNickname Server-Cert</code><br>
-<code>NSSNickname "This contains a space"</code><br>
+<code>NSSNickname "This contains a space"<br>
+<br>
+NOTE: There is nothing magical about the string "Server-Cert." A
+nickname can be anything. Historically this was Server-Cert in the
+Netscape server products that used NSS.<br>
+<br>
+</code><big><big>NSSECCNickname</big></big><br>
+<br>
+Similar to NSSNickname but designed for use with ECC certificates. This
+allows you to have both an RSA certificate and an ECC certificate
+available on the same listening port. This allows newer clients that
+support ECC to connect with those ciphers but also allows older clients
+to connect with an RSA cipher.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSNickname Server-Cert-ECC</code><br>
 <br>
 <big><big>NSSEnforceValidCerts</big></big><br>
 <br>
@@ -928,6 +1137,13 @@ start time<br>
       </code></td>
       <td style="vertical-align: top;">Client certificate validity end
 time</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;"><code>SSL_CLIENT_V_REMAIN</code><br>
+      </td>
+      <td style="vertical-align: top;">Number of days that the
+certificate is valid<br>
+      </td>
     </tr>
     <tr>
       <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_M_VERSION<br>
