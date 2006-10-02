@@ -126,7 +126,7 @@ static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
         }
     }
 
-    if (parg->mc->nInitCount == 1) {
+    if ((parg->mc->nInitCount == 1) && (passwd != NULL)) {
         char buf[1024];
         apr_status_t rv;
         apr_size_t nBytes = 1024;
