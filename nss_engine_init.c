@@ -1019,7 +1019,7 @@ apr_status_t nss_init_ModuleKill(void *data)
     server_rec *base_server = (server_rec *)data;
     server_rec *s;
     SECStatus rv;
-    int shutdowncache = 0;
+    int shutdown = 0;
 
     /*
      * Free the non-pool allocated structures
@@ -1044,7 +1044,7 @@ apr_status_t nss_init_ModuleKill(void *data)
              * and keys associated with any SSL socket */
             PR_Close(sc->server->model);
 
-            shutdowncache = 1;
+            shutdown = 1;
         }
         if (sc->proxy_enabled) {
             if (sc->proxy->servercert != NULL) {
@@ -1055,15 +1055,18 @@ apr_status_t nss_init_ModuleKill(void *data)
             /* Closing this implicitly cleans up the copy of the certificates
              * and keys associated with any SSL socket */
             PR_Close(sc->proxy->model);
+
+            shutdown = 1;
         }
     }
 
-    if (shutdowncache) 
+    if (shutdown) {
         SSL_ShutdownServerSessionIDCache();
 
-    if ((rv = NSS_Shutdown()) != SECSuccess) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-             "NSS_Shutdown failed: %d", PR_GetError());
+        if ((rv = NSS_Shutdown()) != SECSuccess) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                 "NSS_Shutdown failed: %d", PR_GetError());
+        }
     }
 
     return APR_SUCCESS;

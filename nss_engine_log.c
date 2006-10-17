@@ -25,7 +25,7 @@
 #define NSPR_ERROR_BASE			PR_NSPR_ERROR_BASE
 #define NSPR_MAX_ERROR			(PR_MAX_ERROR - 1)
 #define LIBSEC_ERROR_BASE		(-8192)
-#define LIBSEC_MAX_ERROR		(LIBSEC_ERROR_BASE + 144)
+#define LIBSEC_MAX_ERROR		(LIBSEC_ERROR_BASE + 155)
 #define LIBSSL_ERROR_BASE		(-12288)
 #define LIBSSL_MAX_ERROR		(LIBSSL_ERROR_BASE + 102)
 
@@ -179,7 +179,18 @@ l_error_t libsec_errors[] = {
     { 141, "SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE" },
     { 142, "SEC_ERROR_UNSUPPORTED_EC_POINT_FORM" },
     { 143, "SEC_ERROR_UNRECOGNIZED_OID" },
-    { 144, "SEC_ERROR_OCSP_INVALID_SIGNING_CERT - OCSP signer certificate not found, not trusted or invalid." }
+    { 144, "SEC_ERROR_OCSP_INVALID_SIGNING_CERT - OCSP signer certificate not found, not trusted or invalid." },
+    { 145, "SEC_ERROR_REVOKED_CERTIFICATE_CRL - This certificate has been revoked." },
+    { 146, "SEC_ERROR_REVOKED_CERTIFICATE_OCSP - This certificate has been revoked." },
+    { 147, "SEC_ERROR_CRL_INVALID_VERSION" },
+    { 148, "SEC_ERROR_CRL_V1_CRITICAL_EXTENSION" },
+    { 149, "SEC_ERROR_CRL_UNKNOWN_CRITICAL_EXTENSION" },
+    { 150, "SEC_ERROR_UNKNOWN_OBJECT_TYPE" },
+    { 151, "SEC_ERROR_INCOMPATIBLE_PKCS11" },
+    { 152, "SEC_ERROR_NO_EVENT" },
+    { 153, "SEC_ERROR_CRL_ALREADY_EXISTS" },
+    { 154, "SEC_ERROR_NOT_INITIALIZED" },
+    { 155, "SEC_ERROR_TOKEN_NOT_LOGGED_IN" }
 };
 
 l_error_t libnss_errors[] = {
