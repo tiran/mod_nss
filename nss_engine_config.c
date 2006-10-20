@@ -126,6 +126,9 @@ static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
     
     sc->mc                          = NULL;
     sc->ocsp                        = UNSET;
+    sc->ocsp_default                = UNSET;
+    sc->ocsp_url                    = NULL;
+    sc->ocsp_name                   = NULL;
     sc->fips                        = UNSET;
     sc->enabled                     = UNSET;
     sc->proxy_enabled               = UNSET;
@@ -197,6 +200,9 @@ void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
 
     cfgMerge(mc, NULL);
     cfgMergeBool(ocsp);
+    cfgMergeBool(ocsp_default);
+    cfgMerge(ocsp_url, NULL);
+    cfgMerge(ocsp_name, NULL);
     cfgMergeBool(fips);
     cfgMergeBool(enabled);
     cfgMergeBool(proxy_enabled);
@@ -310,6 +316,37 @@ const char *nss_cmd_NSSOCSP(cmd_parms *cmd, void *dcfg, int flag)
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->ocsp = flag ? TRUE : FALSE;
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSOCSPDefaultResponder(cmd_parms *cmd, void *dcfg, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->ocsp_default = flag ? TRUE : FALSE;
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSOCSPDefaultURL(cmd_parms *cmd,
+                                       void *dcfg,
+                                       const char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->ocsp_url = arg;
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSOCSPDefaultName(cmd_parms *cmd,
+                                       void *dcfg,
+                                       const char *arg)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->ocsp_name = arg;
 
     return NULL;
 }

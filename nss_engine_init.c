@@ -21,6 +21,7 @@
 #include "pk11func.h"
 #include "ocsp.h"
 #include "keyhi.h"
+#include "cert.h"
 
 static SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket);
 static SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg);
@@ -137,7 +138,8 @@ static void nss_add_version_components(apr_pool_t *p,
  *  passwords. 
  */
 static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
-                                int ocspenabled)
+                                int ocspenabled, int ocspdefault,
+                                const char * ocspurl, const char *ocspname)
 {
     SECStatus rv;
     SSLModConfigRec *mc = myModConfig(s);
@@ -280,6 +282,30 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
         CERT_EnableOCSPChecking(CERT_GetDefaultCertDB());
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
             "OCSP is enabled.");
+
+        /* We ensure that ocspname and ocspurl are not NULL in nss_init_Module
+         */
+        if (ocspdefault) {
+            SECStatus sv;
+ 
+            sv = CERT_SetOCSPDefaultResponder(CERT_GetDefaultCertDB(),
+                     ocspurl, ocspname);
+
+            if (sv == SECFailure) {
+                ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                    "Unable to set OCSP default responder nickname %s.", ocspname);
+                nss_log_nss_error(APLOG_MARK, APLOG_INFO, s);
+                nss_die();
+            }
+
+            sv = CERT_EnableOCSPDefaultResponder(CERT_GetDefaultCertDB());
+            if (sv == SECFailure) {
+                ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                    "Unable to enable the OCSP default responder, %s (this shouldn't happen).", ocspname);
+                nss_log_nss_error(APLOG_MARK, APLOG_INFO, s);
+                nss_die();
+            }
+        }
     }
 }
 
@@ -293,6 +319,9 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     int sslenabled = FALSE;
     int fipsenabled = FALSE;
     int ocspenabled = FALSE;
+    int ocspdefault = FALSE;
+    const char * ocspurl = NULL;
+    const char * ocspname = NULL;
 
     mc->nInitCount++;
  
@@ -382,9 +411,21 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
         if (sc->proxy_enabled == UNSET) {
             sc->proxy_enabled = FALSE;
         }
+
+        if (sc->ocsp_default == TRUE) {
+            ocspdefault = TRUE;
+            ocspurl = sc->ocsp_url;
+            ocspname = sc->ocsp_name;
+            if ((ocspurl == NULL) || (ocspname == NULL)) {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                    "When NSSOCSPDefaultResponder is enabled both a default URL (NSSOCSPDefaultUrl) and certificate nickname (NSSOCSPDefaultName) are required.");
+                nss_die();
+            }
+        }
     }
 
-    nss_init_SSLLibrary(base_server, sslenabled, fipsenabled, ocspenabled);
+    nss_init_SSLLibrary(base_server, sslenabled, fipsenabled, ocspenabled,
+        ocspdefault, ocspurl, ocspname);
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                  "done Init: Initializing NSS library");
 
@@ -1061,11 +1102,19 @@ apr_status_t nss_init_ModuleKill(void *data)
     }
 
     if (shutdown) {
+        if (CERT_DisableOCSPDefaultResponder(CERT_GetDefaultCertDB())
+            != SECSuccess) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                 "Turning off the OCSP default responder failed.");
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
+        }
+
         SSL_ShutdownServerSessionIDCache();
 
         if ((rv = NSS_Shutdown()) != SECSuccess) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                 "NSS_Shutdown failed: %d", PR_GetError());
+                 "NSS_Shutdown failed");
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
         }
     }
 

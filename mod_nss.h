@@ -291,6 +291,9 @@ typedef struct {
 struct SSLSrvConfigRec {
     SSLModConfigRec *mc;
     BOOL             fips;
+    BOOL             ocsp_default;
+    const char      *ocsp_url;
+    const char      *ocsp_name;
     BOOL             ocsp;
     BOOL             enabled;
     BOOL             proxy_enabled;
@@ -370,6 +373,9 @@ void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv);
 const char *nss_cmd_NSSFIPS(cmd_parms *, void *, int);
 const char *nss_cmd_NSSEngine(cmd_parms *, void *, int);
 const char *nss_cmd_NSSOCSP(cmd_parms *, void *, int);
+const char *nss_cmd_NSSOCSPDefaultResponder(cmd_parms *, void *, int);
+const char *nss_cmd_NSSOCSPDefaultURL(cmd_parms *, void *dcfg, const char *arg);
+const char *nss_cmd_NSSOCSPDefaultName(cmd_parms *, void *, const char *arg);
 const char *nss_cmd_NSSCertificateDatabase(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSDBPrefix(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSCipherSuite(cmd_parms *cmd, void *dcfg, const char *arg);

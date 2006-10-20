@@ -63,6 +63,15 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(OCSP, FLAG,
                 "OCSP (Online Certificate Status Protocol)"
                 "(`on', `off')")
+    SSL_CMD_SRV(OCSPDefaultResponder, FLAG,
+                "Use a default OCSP Responder"
+                "(`on', `off')")
+    SSL_CMD_SRV(OCSPDefaultURL, TAKE1,
+                "The URL of the OCSP default responder"
+                "(`http://example.com:80/ocsp")
+    SSL_CMD_SRV(OCSPDefaultName, TAKE1,
+                "The nickname of the certificate to trust to sign the OCSP responses."
+                "(`OCSP_Cert`")
      SSL_CMD_SRV(RandomSeed, TAKE23,
                 "SSL Pseudo Random Number Generator (PRNG) seeding source "
                 "(`startup builtin|file:/path|exec:/path [bytes]')")

@@ -131,6 +131,18 @@ NSSCertificateDatabase @apache_conf@
 #   Verify that certificates have not been revoked before accepting them.
 #NSSOCSP off
 
+#
+#   Use a default OCSP responder. If enabled this will be used regardless
+#   of whether one is included in a client certificate. Note that the
+#   server certificate is verified during startup.
+#
+#   NSSOCSPDefaultURL defines the service URL of the OCSP responder
+#   NSSOCSPDefaultName is the nickname of the certificate to trust to
+#       sign the OCSP responses.
+#NSSOCSPDefaultResponder on
+#NSSOCSPDefaultURL http://example.com/ocsp/status
+#NSSOCSPDefaultName ocsp-nickname
+
 #   Access Control:
 #   With SSLRequire you can do per-directory access control based
 #   on arbitrary complex boolean expressions containing server
