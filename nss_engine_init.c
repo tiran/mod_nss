@@ -134,10 +134,8 @@ static void nss_add_version_components(apr_pool_t *p,
 /*
  *  Initialize SSL library
  *
- *  If sslenabled is not set then there is no need to prompt for the token
- *  passwords. 
  */
-static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
+static void nss_init_SSLLibrary(server_rec *s, int fipsenabled,
                                 int ocspenabled, int ocspdefault,
                                 const char * ocspurl, const char *ocspname)
 {
@@ -153,7 +151,7 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
                  "Init: %snitializing NSS library", mc->nInitCount == 1 ? "I" : "Re-i");
 
     /* Do we need to fire up our password helper? */
-    if (mc->nInitCount == 1 && sslenabled) {
+    if (mc->nInitCount == 1) {
         const char * child_argv[4];
         apr_status_t rv;
 
@@ -237,7 +235,7 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
     }
 
     /* Assuming everything is ok so far, check the cert database password(s). */
-    if (sslenabled && (rv != SECSuccess)) {
+    if (rv != SECSuccess) {
         NSS_Shutdown();
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "NSS initialization failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
@@ -262,7 +260,7 @@ static void nss_init_SSLLibrary(server_rec *s, int sslenabled, int fipsenabled,
         } /* FIPS is already enabled, nothing to do */
     }
 
-    if (sslenabled && (nss_Init_Tokens(s) != SECSuccess)) {
+    if (nss_Init_Tokens(s) != SECSuccess) {
         NSS_Shutdown();
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "NSS initialization failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
@@ -396,6 +394,10 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             sc->enabled = FALSE;
         }
 
+        if (sc->proxy_enabled == UNSET) {
+            sc->proxy_enabled = FALSE;
+        }
+
         if (sc->fips == TRUE) {
             fipsenabled = TRUE;
         }
@@ -404,12 +406,8 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             ocspenabled = TRUE;
         }
 
-        if (sc->enabled == TRUE) {
+        if ((sc->enabled == TRUE) || (sc->proxy_enabled == TRUE)) {
             sslenabled = TRUE;
-        }
-
-        if (sc->proxy_enabled == UNSET) {
-            sc->proxy_enabled = FALSE;
         }
 
         if (sc->ocsp_default == TRUE) {
@@ -424,7 +422,10 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
         }
     }
 
-    nss_init_SSLLibrary(base_server, sslenabled, fipsenabled, ocspenabled,
+    if (sslenabled == FALSE)
+        return OK;
+
+    nss_init_SSLLibrary(base_server, fipsenabled, ocspenabled,
         ocspdefault, ocspurl, ocspname);
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                  "done Init: Initializing NSS library");
@@ -1083,7 +1084,8 @@ apr_status_t nss_init_ModuleKill(void *data)
 
             /* Closing this implicitly cleans up the copy of the certificates
              * and keys associated with any SSL socket */
-            PR_Close(sc->server->model);
+            if (sc->server->model)
+                PR_Close(sc->server->model);
 
             shutdown = 1;
         }
@@ -1095,7 +1097,8 @@ apr_status_t nss_init_ModuleKill(void *data)
 
             /* Closing this implicitly cleans up the copy of the certificates
              * and keys associated with any SSL socket */
-            PR_Close(sc->proxy->model);
+            if (sc->proxy->model)
+                PR_Close(sc->proxy->model);
 
             shutdown = 1;
         }
