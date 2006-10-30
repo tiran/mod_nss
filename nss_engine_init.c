@@ -142,7 +142,7 @@ static void nss_init_SSLLibrary(server_rec *s, int fipsenabled,
     SECStatus rv;
     SSLModConfigRec *mc = myModConfig(s);
     SSLSrvConfigRec *sc; 
-    int forked = 0;
+    int threaded = 0;
     char cwd[PATH_MAX];
 
     sc = mySrvConfig(s);
@@ -207,8 +207,8 @@ static void nss_init_SSLLibrary(server_rec *s, int fipsenabled,
 
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
         "Initializing SSL Session Cache of size %d. SSL2 timeout = %d, SSL3/TLS timeout = %d.", mc->session_cache_size, mc->session_cache_timeout, mc->ssl3_session_cache_timeout);
-    ap_mpm_query(AP_MPMQ_IS_FORKED, &forked);
-    if (forked)
+    ap_mpm_query(AP_MPMQ_MAX_THREADS, &threaded);
+    if (!threaded)
         SSL_ConfigMPServerSIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
     else
         SSL_ConfigServerSessionIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
