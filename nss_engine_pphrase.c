@@ -85,8 +85,15 @@ SECStatus nss_Init_Tokens(server_rec *s)
 
         ret = PK11_Authenticate(slot, PR_TRUE, parg);
         if (SECSuccess != ret) {
-            status = SECFailure;
-            break;
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "Password for slot %s is incorrect.", PK11_GetTokenName(slot));
+            PK11_FreeSlot(slot);
+            /* We return here rather than breaking because:
+               1. All tokens must be logged for the server to work.
+               2. We'll get a bogus error message from nss_engine_init, -8053,
+                  instead of -8177.
+             */
+            return SECFailure; 
         }
         parg->retryCount = 0; /* reset counter to 0 for the next token */
         PK11_FreeSlot(slot);
@@ -153,7 +160,7 @@ static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
         if (rv != APR_SUCCESS ||
            (res != PIN_SUCCESS && res != PIN_INCORRECTPW)) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                "Unable to read from pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);
+                "Unable to read from pin store for slot: %s APR err: %d pcache: %d",  PK11_GetTokenName(slot), rv, res);
             nss_die();
         }
     }

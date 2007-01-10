@@ -445,12 +445,13 @@ char * getstr(const char * cmd, int el) {
 
     work = strdup(cmd);
     s = t = work;
+    r = NULL;
 
     peek = s;
     if (peek)
         peek++;
     while (*s) {
-        if (*s == '\t' || *peek == '\0') {
+        if (*s == '\t' || *s == '\0') {
             if (i == el) {
                 if (*peek != '\0')
                     *s = '\0';
@@ -468,8 +469,9 @@ char * getstr(const char * cmd, int el) {
         peek++;
     }
 
+    if (t) r = strdup(t);
     free(work);
-    return NULL;
+    return r;
 }
 
 /*
