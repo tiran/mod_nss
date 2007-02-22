@@ -240,6 +240,11 @@ static char *nss_get_password(FILE *input, FILE *output,
                         tmp--;
                     line[tmp+1] = '\0';
                     ptr = PL_strchr(line, ':');
+                    if (ptr == NULL) {
+                        ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                           "Malformed password entry for token %s. Format should be token:password", token_name);
+                        continue;
+                    }
                     for(tmp=1; ptr[tmp] == ' '; tmp++) {}
                     pwdstr = strdup(&(ptr[tmp]));
                 }
