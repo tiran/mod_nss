@@ -130,7 +130,7 @@ int nss_hook_Access(request_rec *r)
      * no further access control checks are relevant. The test for
      * sc->enabled is probably strictly unnecessary
      */
-    if (!(sc->enabled || !ssl)) {
+    if (!((sc->enabled == TRUE) || !ssl)) {
         return DECLINED;
     }
 
@@ -619,7 +619,7 @@ int nss_hook_UserCheck(request_rec *r)
      * - ssl not enabled
      * - client did not present a certificate
      */
-    if (!(sc->enabled && sslconn && sslconn->ssl && sslconn->client_cert) ||
+    if (!((sc->enabled == TRUE) && sslconn && sslconn->ssl && sslconn->client_cert) ||
         !(dc->nOptions & SSL_OPT_FAKEBASICAUTH) || r->user)
     {
         return DECLINED;
@@ -781,7 +781,7 @@ int nss_hook_Fixup(request_rec *r)
     /*
      * Check to see if SSL is on
      */
-    if (!(sc->enabled && sslconn && (ssl = sslconn->ssl))) {
+    if (!((sc->enabled == TRUE) && sslconn && (ssl = sslconn->ssl))) {
         return DECLINED;
     }
 

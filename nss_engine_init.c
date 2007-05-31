@@ -1036,13 +1036,13 @@ void nss_init_ConfigureServer(server_rec *s,
                               apr_pool_t *ptemp,
                               SSLSrvConfigRec *sc)
 {
-    if (sc->enabled) {
+    if (sc->enabled == TRUE) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                      "Configuring server for SSL protocol");
         nss_init_server_ctx(s, p, ptemp, sc);
     }
 
-    if (sc->proxy_enabled) {
+    if (sc->proxy_enabled == TRUE) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                      "Enabling proxy.");
         nss_init_proxy_ctx(s, p, ptemp, sc);
@@ -1070,7 +1070,7 @@ apr_status_t nss_init_ModuleKill(void *data)
     for (s = base_server; s; s = s->next) {
         sc = mySrvConfig(s);
 
-        if (sc->enabled) {
+        if (sc->enabled == TRUE) {
             if (sc->server->nickname) {
                 CERT_DestroyCertificate(sc->server->servercert);
                 SECKEY_DestroyPrivateKey(sc->server->serverkey);

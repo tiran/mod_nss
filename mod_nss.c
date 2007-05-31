@@ -206,7 +206,7 @@ int nss_engine_disable(conn_rec *c)
 
     SSLConnRec *sslconn;
 
-    if (!sc->enabled) {
+    if (sc->enabled == FALSE) {
         return 0;
     }
 

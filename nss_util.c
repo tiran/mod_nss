@@ -36,59 +36,13 @@ char *nss_util_vhostid(apr_pool_t *p, server_rec *s)
         port = s->port;
     else {
         sc = mySrvConfig(s);
-        if (sc->enabled)
+        if (sc->enabled == TRUE)
             port = DEFAULT_HTTPS_PORT;
         else
             port = DEFAULT_HTTP_PORT;
     }
     id = apr_psprintf(p, "%s:%lu", host, (unsigned long)port);
     return id;
-}
-
-void nss_util_strupper(char *s)
-{
-    for (; *s; ++s)
-        *s = apr_toupper(*s);
-    return;
-}
-
-static const char nss_util_uuencode_six2pr[64+1] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-void nss_util_uuencode(char *szTo, const char *szFrom, BOOL bPad)
-{
-    nss_util_uuencode_binary((unsigned char *)szTo,
-                             (const unsigned char *)szFrom,
-                             strlen(szFrom), bPad);
-}
-
-void nss_util_uuencode_binary(unsigned char *szTo,
-                              const unsigned char *szFrom,
-                              int nLength, BOOL bPad)
-{
-    const unsigned char *s;
-    int nPad = 0;
-
-    for (s = szFrom; nLength > 0; s += 3) {
-        *szTo++ = nss_util_uuencode_six2pr[s[0] >> 2];
-        *szTo++ = nss_util_uuencode_six2pr[(s[0] << 4 | s[1] >> 4) & 0x3f];
-        if (--nLength == 0) {
-            nPad = 2;
-            break;
-        }
-        *szTo++ = nss_util_uuencode_six2pr[(s[1] << 2 | s[2] >> 6) & 0x3f];
-        if (--nLength == 0) {
-            nPad = 1;
-            break;
-        }
-        *szTo++ = nss_util_uuencode_six2pr[s[2] & 0x3f];
-        --nLength;
-    }
-    while(bPad && nPad--) {
-        *szTo++ = NUL;
-    }
-    *szTo = NUL;
-    return;
 }
 
 apr_file_t *nss_util_ppopen(server_rec *s, apr_pool_t *p, const char *cmd,

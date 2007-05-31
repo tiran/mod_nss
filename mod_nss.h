@@ -446,9 +446,6 @@ void nss_io_filter_register(apr_pool_t *p);
 
 /*  Utility Functions  */
 char        *nss_util_vhostid(apr_pool_t *, server_rec *);
-void         nss_util_strupper(char *);
-void         nss_util_uuencode(char *, const char *, BOOL);
-void         nss_util_uuencode_binary(unsigned char *, const unsigned char *, int, BOOL);
 apr_file_t  *nss_util_ppopen(server_rec *, apr_pool_t *, const char *,
                              const char * const *);
 void         nss_util_ppclose(server_rec *, apr_pool_t *, apr_file_t *);

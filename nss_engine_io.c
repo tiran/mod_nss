@@ -578,8 +578,7 @@ static apr_status_t nss_io_filter_error(ap_filter_t *f,
     switch (status) {
       case HTTP_BAD_REQUEST:
             /* log the situation */
-            ap_log_error(APLOG_MARK, APLOG_INFO, 0,
-                         f->c->base_server,
+            ap_log_error(APLOG_MARK, APLOG_INFO, 0, f->c->base_server,
                          "SSL handshake failed: HTTP spoken on HTTPS port; "
                          "trying to send HTML error page");
 
@@ -924,6 +923,7 @@ static void nss_io_output_create(nss_filter_ctx_t *filter_ctx, conn_rec *c)
 
 struct modnss_buffer_ctx {
     apr_bucket_brigade *bb;
+    apr_pool_t *pool;
 };
 
 int nss_io_buffer_fill(request_rec *r)
@@ -936,7 +936,8 @@ int nss_io_buffer_fill(request_rec *r)
     
     /* Create the context which will be passed to the input filter. */
     ctx = apr_palloc(r->pool, sizeof *ctx);
-    ctx->bb = apr_brigade_create(r->pool, c->bucket_alloc);
+    apr_pool_create(&ctx->pool, r->pool);
+    ctx->bb = apr_brigade_create(ctx->pool, c->bucket_alloc);
 
     /* ... and a temporary brigade. */
     tempb = apr_brigade_create(r->pool, c->bucket_alloc);
@@ -981,7 +982,7 @@ int nss_io_buffer_fill(request_rec *r)
                 total += len;
             }
                 
-            rv = apr_bucket_setaside(e, r->pool);
+            rv = apr_bucket_setaside(e, ctx->pool);
             if (rv != APR_SUCCESS) {
                 ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
                               "could not setaside bucket for SSL buffer");
@@ -1059,6 +1060,9 @@ static apr_status_t nss_io_filter_buffer(ap_filter_t *f,
              * the APR_BRIGADE_* macros. */
             APR_RING_UNSPLICE(d, e, link);
             APR_RING_SPLICE_HEAD(&bb->list, d, e, apr_bucket, link);
+
+            APR_BRIGADE_CHECK_CONSISTENCY(bb);
+            APR_BRIGADE_CHECK_CONSISTENCY(ctx->bb);
         }
     }
     else {
