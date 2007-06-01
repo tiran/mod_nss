@@ -1,0 +1,80 @@
+2007-06-01  Rob Crittenden <rcritten@redhat.com>
+
+    * mod_nss 1.0.7
+    * Stop processing tokens when a login fails so we can correctly
+      report the failure.
+    * Fix an off-by-one error in nss_pcache that prevented 1 character
+      passwords (not a huge problem but a bug none-the-less).
+    * Bring in some updates based on diffs from 2.0.59 to 2.2.4
+        * Do explicit TRUE/FALSE tests with sc->enabled to see if SSL is
+          enabled.
+        * Don't depend on the fact that TRUE == 1
+        * Remove some dead code
+        * Minor update to the buffer code that buffers POST data during a
+          renegotation
+        * Optimize setting environment variables by using a switch statement.
+    * Fix typo in cipher echde_rsa_null (transposed h and d).
+    * The way I was using to detect the model being used was incorrect. Now
+      use the # of threads available. Guaranteed to be 0 for prefork and > 0
+      for worker (threaded)
+
+2006-10-27  Rob Crittenden <rcritten@redhat.com>
+
+    * mod_nss 1.0.6
+    * If NSSEngine is off then simply don't initialize NSS at all.
+    * Add support for setting a default OCSP responder. 
+
+2006-10-17  Rob Crittenden <rcritten@redhat.com>
+
+    * mod_nss 1.0.5
+    * Fix for a minor problem introduced with 1.0.4. NSS_Shutdown() was being
+      called during module unload even if SSL wasn't enabled causing an error
+      to display in the log.
+
+2006-10-11  Rob Crittenden <rcritten@redhat.com>
+
+    * mod_nss 1.0.4 
+    * Merged in some changes from mod_ssl:
+        * new env variables SSL_{SERVER,CLIENT}_V_REMAIN that contains number
+          of days until certificate expires
+        * Attempt to buffer POST data in a SSL renegotiation. 
+    * And some changes specific to mod_nss:
+        * Better way to distinguish Apache 2.0.x versus Apache 2.2.x. The old
+          way broke when 2.0.56 was introduced.
+        * Fix crash bug if the stored token password doesn't match the
+          database password
+        * Add new NSSPassPhraseDialog method, defer, where only the tokens
+          that are found in the file pointed to by this directive are
+          initialized.
+        * Fix race condition in initializing the NSS session cache that could
+          cause a core on startup.
+        * Update nss.conf.in to contain LogLevel and its own log files
+        * A missing initialization when built with ECC support that could
+          cause the server to not start 
+
+2006-06-21  Rob Crittenden <rcritten@redhat.com>
+
+    * mod_nss 1.0.3
+    * Final ECC support
+    * Compiles on Solaris with the Forte Workshop compiler (tested with 6.2
+      and 11).
+    * A number of compilation warnings were addressed
+    * gencert now uses bash instead of ksh 
+
+2006-03-02  Rob Crittenden <rcritten@redhat.com>
+
+    * Experimental Eliptical Curve Cryptopgraphy (ECC) added. Requires a
+      version of NSS also build with ECC support. Available in the CVS tip. 
+
+2006-01-31  Rob Crittenden <rcritten@redhat.com>
+
+    * mod_nss 1.0.2
+    * Add support for Apache 2.2 (contributed by Oden Eriksson) 
+
+2006-09-20  Rob Crittenden <rcritten@redhat.com>
+
+    * mod_nss 1.0.0
+    * Support for SSLv2, SSLv3, TLSv1
+    * OCSP and CRLs
+    * Client certificate authentication
+    * Can run concurrently with mod_ssl 
