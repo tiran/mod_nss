@@ -155,10 +155,9 @@ static void nss_init_SSLLibrary(server_rec *s, int fipsenabled,
         const char * child_argv[4];
         apr_status_t rv;
 
-        if (mc->pphrase_dialog_helper == NULL &&
-            mc->pphrase_dialog_path == NULL) {
+        if (mc->pphrase_dialog_helper == NULL) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "Neither NSSPassPhraseHelper nor NSSPassPhraseDialog is not set. One or the other is required.");
+                "NSSPassPhraseHelper is not set. It is required.");
             nss_die();
         }
 
