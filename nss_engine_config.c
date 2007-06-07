@@ -622,8 +622,8 @@ const char *nss_cmd_NSSPassPhraseHelper(cmd_parms *cmd,
         mc->pphrase_dialog_helper = arg;
     } else {
         return apr_pstrcat(cmd->pool,
-                           "NSSPassPhraseHelper: ", mc->pphrase_dialog_path,
-                           "does not exist or is not executable.", NULL);
+                           "NSSPassPhraseHelper: ", arg,
+                           " does not exist or is not executable.", NULL);
     }
 
     return NULL;
