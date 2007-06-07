@@ -1,3 +1,10 @@
+2007-06-07  Rob Crittenden <rcritten@redhat.com>
+
+    * The error message was wrong if NSSPassPhraseHelper pointed to a
+      non-existant file.
+    * Don't require a password file AND NSSPassPhraseHelper. Only
+      the helper is required. 
+       
 2007-06-01  Rob Crittenden <rcritten@redhat.com>
 
     * mod_nss 1.0.7
