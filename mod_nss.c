@@ -200,6 +200,10 @@ int nss_proxy_enable(conn_rec *c)
     return 1;
 }
 
+int ssl_proxy_enable(conn_rec *c) {
+    return nss_proxy_enable(c);
+}
+
 int nss_engine_disable(conn_rec *c)
 {
     SSLSrvConfigRec *sc = mySrvConfig(c->base_server);
@@ -215,6 +219,10 @@ int nss_engine_disable(conn_rec *c)
     sslconn->disabled = 1;
 
     return 1;
+}
+
+int ssl_engine_disable(conn_rec *c) {
+    return nss_engine_disable(c);
 }
 
 /* Callback for an incoming certificate that is not valid */
@@ -430,6 +438,12 @@ static void nss_register_hooks(apr_pool_t *p)
 
     APR_REGISTER_OPTIONAL_FN(nss_proxy_enable);
     APR_REGISTER_OPTIONAL_FN(nss_engine_disable);
+
+    /* If mod_ssl is not loaded then mod_nss can work with mod_proxy */
+    if (APR_RETRIEVE_OPTIONAL_FN(ssl_proxy_enable) == NULL)
+        APR_REGISTER_OPTIONAL_FN(ssl_proxy_enable);
+    if (APR_RETRIEVE_OPTIONAL_FN(ssl_engine_disable) == NULL)
+        APR_REGISTER_OPTIONAL_FN(ssl_engine_disable);
 }
 
 module AP_MODULE_DECLARE_DATA nss_module = {

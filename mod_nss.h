@@ -419,9 +419,14 @@ int nss_hook_ReadReq(request_rec *r);
 /*  Variables  */
 void         nss_var_register(void);
 char        *nss_var_lookup(apr_pool_t *, server_rec *, conn_rec *, request_rec *, char *);
+char        *ssl_var_lookup(apr_pool_t *, server_rec *, conn_rec *, request_rec *, char *);
 void         nss_var_log_config_register(apr_pool_t *p);
 
 APR_DECLARE_OPTIONAL_FN(char *, nss_var_lookup,
+                        (apr_pool_t *, server_rec *,
+                         conn_rec *, request_rec *, 
+                         char *));
+APR_DECLARE_OPTIONAL_FN(char *, ssl_var_lookup,
                         (apr_pool_t *, server_rec *,
                          conn_rec *, request_rec *, 
                          char *));
@@ -429,14 +434,19 @@ APR_DECLARE_OPTIONAL_FN(char *, nss_var_lookup,
 /* An optional function which returns non-zero if the given connection
  * is using SSL/TLS. */
 APR_DECLARE_OPTIONAL_FN(int, nss_is_https, (conn_rec *));
+APR_DECLARE_OPTIONAL_FN(int, ssl_is_https, (conn_rec *));
 
 /* Proxy Support */
 int nss_proxy_enable(conn_rec *c);
 int nss_engine_disable(conn_rec *c);
+int ssl_proxy_enable(conn_rec *c);
+int ssl_engine_disable(conn_rec *c);
 
 APR_DECLARE_OPTIONAL_FN(int, nss_proxy_enable, (conn_rec *));
+APR_DECLARE_OPTIONAL_FN(int, ssl_proxy_enable, (conn_rec *));
 
 APR_DECLARE_OPTIONAL_FN(int, nss_engine_disable, (conn_rec *));
+APR_DECLARE_OPTIONAL_FN(int, ssl_engine_disable, (conn_rec *));
 
 /* I/O */
 PRFileDesc * nss_io_new_fd();

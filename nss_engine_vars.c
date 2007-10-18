@@ -46,10 +46,21 @@ static int nss_is_https(conn_rec *c)
     return sslconn && sslconn->ssl;
 }
 
+static int ssl_is_https(conn_rec *c) {
+    return nss_is_https(c);
+}
+
 void nss_var_register(void)
 {
     APR_REGISTER_OPTIONAL_FN(nss_is_https);
     APR_REGISTER_OPTIONAL_FN(nss_var_lookup);
+
+    /* These can only be registered if mod_ssl is not loaded */
+    if (APR_RETRIEVE_OPTIONAL_FN(ssl_is_https) == NULL)
+        APR_REGISTER_OPTIONAL_FN(ssl_is_https);
+    if (APR_RETRIEVE_OPTIONAL_FN(ssl_var_lookup) == NULL)
+        APR_REGISTER_OPTIONAL_FN(ssl_var_lookup);
+
     return;
 }
 
@@ -239,6 +250,10 @@ char *nss_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
     if (result == NULL)
         result = "";
     return result;
+}
+
+char *ssl_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, char *var) {
+    return nss_var_lookup(p, s, c, r, var);
 }
 
 static char *nss_var_lookup_header(apr_pool_t *p, request_rec *r, const char *name)
