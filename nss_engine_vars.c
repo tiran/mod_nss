@@ -336,8 +336,13 @@ static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *v
     resdup = TRUE;
 
     if (strcEQ(var, "M_VERSION")) {
-        result = apr_psprintf(p, "%lu", DER_GetInteger(&xs->version)+1);
-        resdup = FALSE;
+        if (xs->version.data != NULL) {
+            result = apr_psprintf(p, "%lu", DER_GetInteger(&xs->version)+1);
+            resdup = FALSE;
+        } else {
+            result = apr_pstrdup(p, "UNKNOWN");
+            resdup = FALSE;
+        }
     }
     else if (strcEQ(var, "M_SERIAL")) {
         result = apr_psprintf(p, "%lu", DER_GetInteger(&xs->serialNumber));
