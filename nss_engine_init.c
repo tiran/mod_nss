@@ -135,111 +135,85 @@ static void nss_add_version_components(apr_pool_t *p,
  *  Initialize SSL library
  *
  */
-static void nss_init_SSLLibrary(server_rec *s, int fipsenabled,
-                                int ocspenabled, int ocspdefault,
-                                const char * ocspurl, const char *ocspname)
+static void nss_init_SSLLibrary(server_rec *base_server)
 {
     SECStatus rv;
-    SSLModConfigRec *mc = myModConfig(s);
+    SSLModConfigRec *mc = myModConfig(base_server);
     SSLSrvConfigRec *sc; 
-    int threaded = 0;
     char cwd[PATH_MAX];
+    server_rec *s;
+    int fipsenabled = FALSE;
+    int ocspenabled = FALSE;
+    int ocspdefault = FALSE;
+    const char * ocspurl = NULL;
+    const char * ocspname = NULL;
 
-    sc = mySrvConfig(s);
+    sc = mySrvConfig(base_server);
 
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                 "Init: %snitializing NSS library", mc->nInitCount == 1 ? "I" : "Re-i");
-
-    /* Do we need to fire up our password helper? */
-    if (mc->nInitCount == 1) {
-        const char * child_argv[4];
-        apr_status_t rv;
-
-        if (mc->pphrase_dialog_helper == NULL) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "NSSPassPhraseHelper is not set. It is required.");
-            nss_die();
+    for (s = base_server; s; s = s->next) {
+        if (sc->fips == TRUE) {
+            fipsenabled = TRUE;
         }
 
-        child_argv[0] = mc->pphrase_dialog_helper;
-        child_argv[1] = fipsenabled ? "on" : "off";
-        child_argv[2] = mc->pCertificateDatabase;
-        child_argv[3] = mc->pDBPrefix;
-        child_argv[4] = NULL;
-
-        rv = apr_procattr_create(&mc->procattr, mc->pPool);
-
-        if (rv != APR_SUCCESS) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "apr_procattr_create() failed APR err: %d.", rv);
-            nss_die();
+        if (sc->ocsp == TRUE) {
+            ocspenabled = TRUE;
         }
 
-        apr_procattr_io_set(mc->procattr, APR_PARENT_BLOCK, APR_PARENT_BLOCK,
-                             APR_FULL_NONBLOCK);
-        apr_procattr_error_check_set(mc->procattr, 1);
-
-        /* the process inherits our environment, which should allow the
-         * dynamic loader to find NSPR and NSS.
-         */
-        apr_procattr_cmdtype_set(mc->procattr, APR_PROGRAM_ENV);
-
-        /* We've now spawned our helper process, the actual communication
-         * with it occurs in nss_engine_pphrase.c.
-         */
-        rv = apr_proc_create(&mc->proc, child_argv[0], child_argv, NULL, mc->procattr, mc->pPool);
-        if (rv != APR_SUCCESS) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "apr_proc_create failed to launch %s APR err: %d.", child_argv[0], rv);
-            nss_die();
+        if (sc->ocsp_default == TRUE) {
+            ocspdefault = TRUE;
+            ocspurl = sc->ocsp_url;
+            ocspname = sc->ocsp_name;
+            if ((ocspurl == NULL) || (ocspname == NULL)) {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                    "When NSSOCSPDefaultResponder is enabled both a default URL (NSSOCSPDefaultUrl) and certificate nickname (NSSOCSPDefaultName) are required.");
+                if (mc->nInitCount == 1)
+                    nss_die();
+                else
+                    return;
+            }
         }
-        /* Set a 30-second read/write timeout */
-        apr_file_pipe_timeout_set(mc->proc.in, apr_time_from_sec(30));
-        apr_file_pipe_timeout_set(mc->proc.out, apr_time_from_sec(30));
     }
-
-    /* Initialize NSPR */
-    PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 256);
-
-    /* Set the PKCS #11 strings for the internal token. */
-    PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
-
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-        "Initializing SSL Session Cache of size %d. SSL2 timeout = %d, SSL3/TLS timeout = %d.", mc->session_cache_size, mc->session_cache_timeout, mc->ssl3_session_cache_timeout);
-    ap_mpm_query(AP_MPMQ_MAX_THREADS, &threaded);
-    if (!threaded)
-        SSL_ConfigMPServerSIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
-    else
-        SSL_ConfigServerSessionIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
 
     /* We need to be in the same directory as libnssckbi.so to load the
      * root certificates properly.
      */
     if (getcwd(cwd, PATH_MAX) == NULL) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "Unable to determine current working directory");
-        nss_die();
+            if (mc->nInitCount == 1)
+                nss_die();
+            else
+                return;
     }
     if (chdir(mc->pCertificateDatabase) != 0) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "Unable to change directory to %s", mc->pCertificateDatabase);
-        nss_die();
+        if (mc->nInitCount == 1)
+            nss_die();
+        else
+            return;
     }
     /* Initialize NSS and open the certificate database read-only. */
     rv = NSS_Initialize(mc->pCertificateDatabase, mc->pDBPrefix, mc->pDBPrefix, "secmod.db", NSS_INIT_READONLY);
     if (chdir(cwd) != 0) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "Unable to change directory to %s", cwd);
-        nss_die();
+        if (mc->nInitCount == 1)
+            nss_die();
+        else
+            return;
     }
 
     /* Assuming everything is ok so far, check the cert database password(s). */
     if (rv != SECSuccess) {
         NSS_Shutdown();
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-            "NSS initialization failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
-        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
-        nss_die();
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+            "NSS_Initialize failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
+        if (mc->nInitCount == 1)
+            nss_die();
+        else
+            return;
     }
 
     if (fipsenabled) {
@@ -249,39 +223,47 @@ static void nss_init_SSLLibrary(server_rec *s, int fipsenabled,
 
             if ((SECMOD_DeleteInternalModule(internal_name) != SECSuccess) ||
                  !PK11_IsFIPS()) {
-                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
                      "Unable to enable FIPS mode on certificate database %s.", mc->pCertificateDatabase);
                  NSS_Shutdown();
-                 nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
-                 nss_die();
+                 nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
+                 if (mc->nInitCount == 1)
+                     nss_die();
+                 else
+                     return;
             }
             PR_smprintf_free(internal_name);
         } /* FIPS is already enabled, nothing to do */
     }
 
-    if (nss_Init_Tokens(s) != SECSuccess) {
+    if (nss_Init_Tokens(base_server) != SECSuccess) {
         NSS_Shutdown();
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "NSS initialization failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
-        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
-        nss_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
+        if (mc->nInitCount == 1)
+            nss_die();
+        else
+            return;
     }
 
     if (NSS_SetDomesticPolicy() != SECSuccess) {
         NSS_Shutdown();
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
                  "NSS set domestic policy failed on certificate database %s.", mc->pCertificateDatabase);
-        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
-        nss_die();
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
+        if (mc->nInitCount == 1)
+            nss_die();
+        else
+            return;
     }
 
     if (ocspenabled) {
         CERT_EnableOCSPChecking(CERT_GetDefaultCertDB());
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
             "OCSP is enabled.");
 
-        /* We ensure that ocspname and ocspurl are not NULL in nss_init_Module
-         */
+        /* We ensure that ocspname and ocspurl are not NULL above. */
         if (ocspdefault) {
             SECStatus sv;
  
@@ -289,21 +271,34 @@ static void nss_init_SSLLibrary(server_rec *s, int fipsenabled,
                      ocspurl, ocspname);
 
             if (sv == SECFailure) {
-                ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
                     "Unable to set OCSP default responder nickname %s.", ocspname);
-                nss_log_nss_error(APLOG_MARK, APLOG_INFO, s);
-                nss_die();
+                nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
+                if (mc->nInitCount == 1)
+                    nss_die();
+                else
+                    return;
             }
 
             sv = CERT_EnableOCSPDefaultResponder(CERT_GetDefaultCertDB());
             if (sv == SECFailure) {
-                ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
                     "Unable to enable the OCSP default responder, %s (this shouldn't happen).", ocspname);
-                nss_log_nss_error(APLOG_MARK, APLOG_INFO, s);
-                nss_die();
+                nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
+                if (mc->nInitCount == 1)
+                    nss_die();
+                else
+                    return;
             }
         }
     }
+
+    /* 
+     * Seed the Pseudo Random Number Generator (PRNG)
+     * only need ptemp here; nothing inside allocated from the pool
+     * needs to live once we return from nss_rand_seed().
+     */
+    nss_rand_seed(base_server, mc->ptemp, SSL_RSCTX_STARTUP, "Init: ");
 }
 
 int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
@@ -315,20 +310,12 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     server_rec *s;
     int sslenabled = FALSE;
     int fipsenabled = FALSE;
-    int ocspenabled = FALSE;
-    int ocspdefault = FALSE;
-    const char * ocspurl = NULL;
-    const char * ocspname = NULL;
+    int threaded = 0;
 
     mc->nInitCount++;
- 
-    /* 
-     * Let us cleanup on restarts and exists
-     */
-    apr_pool_cleanup_register(p, base_server,
-                              nss_init_ModuleKill,
-                              apr_pool_cleanup_null);
 
+    mc->ptemp = ptemp;
+ 
     /*
      * Any init round fixes the global config
      */
@@ -383,6 +370,10 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             sc->ocsp = FALSE;
         }
 
+        if (sc->ocsp_default == UNSET) {
+            sc->ocsp_default = FALSE;
+        }
+
         /* If any servers have SSL, we want sslenabled set so we
          * can initialize the database. fipsenabled is similar. If
          * any of the servers have it set, they all will need to use
@@ -397,69 +388,112 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             sc->proxy_enabled = FALSE;
         }
 
-        if (sc->fips == TRUE) {
-            fipsenabled = TRUE;
-        }
-
-        if (sc->ocsp == TRUE) {
-            ocspenabled = TRUE;
-        }
-
         if ((sc->enabled == TRUE) || (sc->proxy_enabled == TRUE)) {
             sslenabled = TRUE;
         }
 
-        if (sc->ocsp_default == TRUE) {
-            ocspdefault = TRUE;
-            ocspurl = sc->ocsp_url;
-            ocspname = sc->ocsp_name;
-            if ((ocspurl == NULL) || (ocspname == NULL)) {
-                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                    "When NSSOCSPDefaultResponder is enabled both a default URL (NSSOCSPDefaultUrl) and certificate nickname (NSSOCSPDefaultName) are required.");
-                nss_die();
-            }
+        if (sc->fips == TRUE) {
+            fipsenabled = TRUE;
         }
     }
 
-    if (sslenabled == FALSE)
+    if (sslenabled == FALSE) {
         return OK;
+    }
 
-    nss_init_SSLLibrary(base_server, fipsenabled, ocspenabled,
-        ocspdefault, ocspurl, ocspname);
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                 "done Init: Initializing NSS library");
+                 "Init: %snitializing NSS library", mc->nInitCount == 1 ? "I" : "Re-i");
+
+    /* Do we need to fire up our password helper? */
+    if (mc->nInitCount == 1) {
+        const char * child_argv[5];
+        apr_status_t rv;
+
+        if (mc->pphrase_dialog_helper == NULL) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "NSSPassPhraseHelper is not set. It is required.");
+            nss_die();
+        }
+
+        child_argv[0] = mc->pphrase_dialog_helper;
+        child_argv[1] = fipsenabled ? "on" : "off";
+        child_argv[2] = mc->pCertificateDatabase;
+        child_argv[3] = mc->pDBPrefix;
+        child_argv[4] = NULL;
+
+        rv = apr_procattr_create(&mc->procattr, mc->pPool);
+
+        if (rv != APR_SUCCESS) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "apr_procattr_create() failed APR err: %d.", rv);
+            nss_die();
+        }
+
+        apr_procattr_io_set(mc->procattr, APR_PARENT_BLOCK, APR_PARENT_BLOCK,
+                             APR_FULL_NONBLOCK);
+        apr_procattr_error_check_set(mc->procattr, 1);
+
+        /* the process inherits our environment, which should allow the
+         * dynamic loader to find NSPR and NSS.
+         */
+        apr_procattr_cmdtype_set(mc->procattr, APR_PROGRAM_ENV);
+
+        /* We've now spawned our helper process, the actual communication
+         * with it occurs in nss_engine_pphrase.c.
+         */
+        rv = apr_proc_create(&mc->proc, child_argv[0], child_argv, NULL, mc->procattr, mc->pPool);
+        if (rv != APR_SUCCESS) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "apr_proc_create failed to launch %s APR err: %d.", child_argv[0], rv);
+            nss_die();
+        }
+        /* Set a 30-second read/write timeout */
+        apr_file_pipe_timeout_set(mc->proc.in, apr_time_from_sec(30));
+        apr_file_pipe_timeout_set(mc->proc.out, apr_time_from_sec(30));
+    }
+
+    /* Initialize NSPR */
+    PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 256);
+
+    /* Set the PKCS #11 string for the internal token to a nicer name. */
+    PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
+
+    ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
+        "Initializing SSL Session Cache of size %d. SSL2 timeout = %d, SSL3/TLS timeout = %d.", mc->session_cache_size, mc->session_cache_timeout, mc->ssl3_session_cache_timeout);
+    ap_mpm_query(AP_MPMQ_MAX_THREADS, &threaded);
+    if (!threaded)
+        SSL_ConfigMPServerSIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
+    else
+        SSL_ConfigServerSessionIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
 
     /* Load our layer */
     nss_io_layer_init();
 
-    /* 
-     * Seed the Pseudo Random Number Generator (PRNG)
-     * only need ptemp here; nothing inside allocated from the pool
-     * needs to live once we return from nss_rand_seed().
-     */
-    if (mc->nInitCount > 1)
-        nss_rand_seed(base_server, ptemp, SSL_RSCTX_STARTUP, "Init: ");
-
-    /*
-     *  initialize servers
-     */
-    ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
-                 "Init: Initializing (virtual) servers for SSL");
-
-    for (s = base_server; s; s = s->next) {
-        sc = mySrvConfig(s);
+    if (mc->nInitCount == 1) {
+        nss_init_SSLLibrary(base_server);
         /*
-         * Either now skip this server when SSL is disabled for
-         * it or give out some information about what we're
-         * configuring.
+         *  initialize servers
          */
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
+                     "Init: Initializing (virtual) servers for SSL");
 
-        /*
-         * Read the server certificate and key
-         */
-        nss_init_ConfigureServer(s, p, ptemp, sc);
+        for (s = base_server; s; s = s->next) {
+            sc = mySrvConfig(s);
+            /*
+             * Either now skip this server when SSL is disabled for
+             * it or give out some information about what we're
+             * configuring.
+             */
+
+            /*
+             * Read the server certificate and key
+             */
+            nss_init_ConfigureServer(s, p, ptemp, sc);
+        }
+
+        nss_init_ChildKill(base_server);
+        nss_init_ModuleKill(base_server);
     }
-
 
     /*
      *  Announce mod_nss and SSL library in HTTP Server field
@@ -801,9 +835,9 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
 }
 
 static void nss_init_server_check(server_rec *s,
-                                  apr_pool_t *p,
-                                  apr_pool_t *ptemp,
-                                  modnss_ctx_t *mctx)
+                                 apr_pool_t *p,
+                                 apr_pool_t *ptemp,
+                                 modnss_ctx_t *mctx)
 {
 #ifdef NSS_ENABLE_ECC
     if (mctx->servercert != NULL || mctx->eccservercert != NULL) {
@@ -1006,8 +1040,6 @@ static void nss_init_proxy_ctx(server_rec *s,
                                 apr_pool_t *ptemp,
                                 SSLSrvConfigRec *sc)
 {
-    SSLModConfigRec *mc = myModConfig(s);
-
     nss_init_ctx(s, p, ptemp, sc->proxy);
 
     nss_init_server_certs(s, p, ptemp, sc->proxy);
@@ -1018,8 +1050,6 @@ static void nss_init_server_ctx(server_rec *s,
                                 apr_pool_t *ptemp,
                                 SSLSrvConfigRec *sc)
 {
-    SSLModConfigRec *mc = myModConfig(s);
-
     nss_init_server_check(s, p, ptemp, sc->server);
 
     nss_init_ctx(s, p, ptemp, sc->server);
@@ -1048,19 +1078,59 @@ void nss_init_ConfigureServer(server_rec *s,
     }
 }
 
-void nss_init_Child(apr_pool_t *p, server_rec *s)
+void nss_init_Child(apr_pool_t *p, server_rec *base_server)
 {
-    SSLModConfigRec *mc = myModConfig(s);
+    SSLModConfigRec *mc = myModConfig(base_server);
+    SSLSrvConfigRec *sc;
+    server_rec *s;
+
     mc->pid = getpid(); /* only call getpid() once per-process */
+
+    if (SSL_InheritMPServerSIDCache(NULL) != SECSuccess) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+             "SSL_InheritMPServerSIDCache failed");
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
+    }
+
+    nss_init_SSLLibrary(base_server);
+
+    /* Configure all virtual servers */
+    for (s = base_server; s; s = s->next) {
+        sc = mySrvConfig(s);
+        if (sc->server->servercert == NULL && NSS_IsInitialized())
+            nss_init_ConfigureServer(s, p, mc->ptemp, sc);
+    }
+
+    /* 
+     * Let us cleanup on restarts and exits
+     */
+    apr_pool_cleanup_register(p, base_server,
+                              nss_init_ChildKill,
+                              apr_pool_cleanup_null);
 }
 
 apr_status_t nss_init_ModuleKill(void *data)
 {
+    server_rec *base_server = (server_rec *)data;
+
+    ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
+        "Shutting down SSL Session ID Cache");
+
+    SSL_ShutdownServerSessionIDCache();
+
+    /* NSS_Shutdown() gets called in nss_init_ChildKill */
+    return APR_SUCCESS;
+}
+
+apr_status_t nss_init_ChildKill(void *data)
+{
     SSLSrvConfigRec *sc;
     server_rec *base_server = (server_rec *)data;
     server_rec *s;
-    SECStatus rv;
     int shutdown = 0;
+
+    /* Clear any client-side session cache data */
+    SSL_ClearSessionCache();
 
     /*
      * Free the non-pool allocated structures
@@ -1111,13 +1181,7 @@ apr_status_t nss_init_ModuleKill(void *data)
             nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
         }
 
-        SSL_ShutdownServerSessionIDCache();
-
-        if ((rv = NSS_Shutdown()) != SECSuccess) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                 "NSS_Shutdown failed");
-            nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
-        }
+        NSS_Shutdown();
     }
 
     return APR_SUCCESS;

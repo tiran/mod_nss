@@ -222,6 +222,7 @@ typedef struct {
     pid_t           pid;
     int             nInitCount;
     apr_pool_t     *pPool;
+    apr_pool_t     *ptemp; /* pointer to ptemp passed in during init */
     const char     *pCertificateDatabase;
     const char     *pDBPrefix;
 
@@ -407,6 +408,7 @@ int  nss_init_Module(apr_pool_t *, apr_pool_t *, apr_pool_t *, server_rec *);
 void nss_init_Child(apr_pool_t *, server_rec *);
 void nss_init_ConfigureServer(server_rec *, apr_pool_t *, apr_pool_t *, SSLSrvConfigRec *);
 apr_status_t nss_init_ModuleKill(void *data);
+apr_status_t nss_init_ChildKill(void *data);
 int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum]);
 
 /* Apache API hooks */
