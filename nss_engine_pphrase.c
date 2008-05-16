@@ -62,6 +62,13 @@ SECStatus nss_Init_Tokens(server_rec *s)
     {
         PK11SlotInfo *slot = listEntry->slot;
 
+        /* This is needed to work around a bug in NSS while in FIPS mode.
+         * The first login will succeed but NSS_Shutdown() isn't cleaning
+         * something up causing subsequent logins to be skipped making
+         * keys and certs unavailable.
+         */
+        PK11_Logout(slot);
+
         if (PK11_NeedLogin(slot) && PK11_NeedUserInit(slot)) {
             if (slot == PK11_GetInternalKeySlot()) {
                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,

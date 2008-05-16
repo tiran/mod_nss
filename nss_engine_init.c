@@ -148,9 +148,10 @@ static void nss_init_SSLLibrary(server_rec *base_server)
     const char * ocspurl = NULL;
     const char * ocspname = NULL;
 
-    sc = mySrvConfig(base_server);
 
     for (s = base_server; s; s = s->next) {
+        sc = mySrvConfig(s);
+
         if (sc->fips == TRUE) {
             fipsenabled = TRUE;
         }
@@ -802,7 +803,7 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
     if (mctx->sc->fips) {
         for (i=0; i<ciphernum; i++) {
             if (cipher_state[i] == PR_TRUE && fips_state[i] == PR_FALSE) {
-                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
                     "Cipher %s is enabled but this is not a FIPS cipher, disabling.", ciphers_def[i].name);
                 cipher_state[i] = PR_FALSE;
             }
