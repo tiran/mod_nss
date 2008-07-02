@@ -410,7 +410,10 @@ int main(int argc, char ** argv)
                 for (node = pinList; node != NULL; node = node->next) {
                     if (!strcmp(node->tokenName, tokenName)) {
                         if (Pk11StoreGetPin(&pin, node->store) == SECSuccess) {
-                            PR_Write(out, pin, strlen(pin));
+                            if (strlen(pin) == 0)
+                                PR_Write(out, "", 1);
+                            else
+                                PR_Write(out, pin, strlen(pin));
                             memset(pin, 0, strlen(pin));
                             free(pin);
                             found = PR_TRUE;
@@ -453,7 +456,7 @@ char * getstr(const char * cmd, int el) {
     while (*s) {
         if (*s == '\t' || *s == '\0') {
             if (i == el) {
-                if (*peek != '\0')
+                if (*peek != '\0' || *s == '\t')
                     *s = '\0';
                 r = strdup(t);
                 free(work);
