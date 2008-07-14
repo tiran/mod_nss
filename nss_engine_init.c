@@ -1084,13 +1084,44 @@ void nss_init_Child(apr_pool_t *p, server_rec *base_server)
     SSLModConfigRec *mc = myModConfig(base_server);
     SSLSrvConfigRec *sc;
     server_rec *s;
+    int threaded = 0;
+    int sslenabled = FALSE;
 
     mc->pid = getpid(); /* only call getpid() once per-process */
 
-    if (SSL_InheritMPServerSIDCache(NULL) != SECSuccess) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-             "SSL_InheritMPServerSIDCache failed");
-        nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
+    /*
+     *  First, see if ssl is enabled at all
+     */
+    for (s = base_server; s; s = s->next) {
+        sc = mySrvConfig(s);
+        /* If any servers have SSL, we want sslenabled set so we
+         * can perform further initialization
+         */
+
+        if (sc->enabled == UNSET) {
+            sc->enabled = FALSE;
+        }
+
+        if (sc->proxy_enabled == UNSET) {
+            sc->proxy_enabled = FALSE;
+        }
+
+        if ((sc->enabled == TRUE) || (sc->proxy_enabled == TRUE)) {
+            sslenabled = TRUE;
+        }
+    }
+
+    if (sslenabled == FALSE) { /* we are not an SSL/TLS server */
+        return;
+    }
+
+    ap_mpm_query(AP_MPMQ_MAX_THREADS, &threaded);
+    if (!threaded) {
+        if (SSL_InheritMPServerSIDCache(NULL) != SECSuccess) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                         "SSL_InheritMPServerSIDCache failed");
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, NULL);
+        }
     }
 
     nss_init_SSLLibrary(base_server);
