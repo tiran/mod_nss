@@ -315,6 +315,13 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
 
     mc->nInitCount++;
 
+    /* 
+     * Let us cleanup on restarts and exists
+     */
+    apr_pool_cleanup_register(p, base_server,
+                              nss_init_ModuleKill,
+                              apr_pool_cleanup_null);
+
     mc->ptemp = ptemp;
  
     /*
@@ -491,9 +498,6 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
              */
             nss_init_ConfigureServer(s, p, ptemp, sc);
         }
-
-        nss_init_ChildKill(base_server);
-        nss_init_ModuleKill(base_server);
     }
 
     /*
@@ -1144,11 +1148,15 @@ void nss_init_Child(apr_pool_t *p, server_rec *base_server)
 apr_status_t nss_init_ModuleKill(void *data)
 {
     server_rec *base_server = (server_rec *)data;
+    SSLModConfigRec *mc = myModConfig(base_server);
 
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
         "Shutting down SSL Session ID Cache");
 
     SSL_ShutdownServerSessionIDCache();
+
+    if (mc->nInitCount == 1)
+        nss_init_ChildKill(base_server);
 
     /* NSS_Shutdown() gets called in nss_init_ChildKill */
     return APR_SUCCESS;
