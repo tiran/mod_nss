@@ -1,3 +1,36 @@
+2008-07-21  Rob Crittenden <rcritten@redhat.com>
+    * mod_nss 1.0.8
+
+2008-07-02  Rob Crittenden <rcritten@redhat.com>
+    * Don't allow blank passwords if FIPS is enabled. This is not
+      allowed by the NSS FIPS 140-2 security policy.
+
+2008-05-16  Rob Crittenden <rcritten@redhat.com>
+    * No need to link with softokn3
+    * Fix FIPS mode
+    * There seem to be a problem in NSS_Shutdown() that makes subsequent
+      logins appear to succeed but they actually are skipped causing keys
+      and certs to not be available.
+    * Also switch an error message to a warning related to FIPS ciphers.
+
+2008-05-09  Rob Crittenden <rcritten@redhat.com>
+
+    * NSS has been modified to not allow a fork after an NSS_Init() in the
+      soft token. It apparently always did this for hardware tokens as it is
+      part of the PKCS#11 spec.
+    * This moves the initialization code into the child process init
+      function.
+
+2008-01-03  Rob Crittenden <rcritten@redhat.com>
+
+    * See if the certificate has a version before trying to decode it into
+      a CGI variable.
+
+2007-10-18  Rob Crittenden <rcritten@redhat.com>
+
+    * If mod_ssl isn't loaded then register the hooks to mod_proxy so we
+      can do at least secure proxy in front of an unsecure host.
+
 2007-06-07  Rob Crittenden <rcritten@redhat.com>
 
     * The error message was wrong if NSSPassPhraseHelper pointed to a
