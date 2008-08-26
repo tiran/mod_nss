@@ -30,7 +30,7 @@ install-libLTLIBRARIES: libmodnss.la
 		mv @apache_conf@/../conf.d/ssl.conf @apache_conf@/../conf.d/ssl.conf.old; \
 	    fi \
 	else \
-	    if [ ! -f @apache_conf@/ssl.conf ]; then \
+	    if [ -f @apache_conf@/ssl.conf ]; then \
 		mv @apache_conf@/ssl.conf @apache_conf@/ssl.conf.old; \
 	    fi \
 	fi
