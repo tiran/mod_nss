@@ -278,6 +278,7 @@ nspr_filter_in_read(PRFileDesc *fd, void *in, PRInt32 inlen)
 
     if (APR_STATUS_IS_EAGAIN(inctx->rc)
             || APR_STATUS_IS_EINTR(inctx->rc)) {
+        PR_SetError(PR_WOULD_BLOCK_ERROR, 0);
         return (int)inl;
     }
 
