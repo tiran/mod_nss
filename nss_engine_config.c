@@ -78,6 +78,10 @@ static void modnss_ctx_init(modnss_ctx_t *mctx)
     mctx->tls                 = PR_FALSE;
     mctx->tlsrollback         = PR_FALSE;
 
+#ifdef SSL_ENABLE_RENEGOTIATION
+    mctx->enablerenegotiation   = PR_FALSE;
+    mctx->requiresafenegotiation = PR_FALSE;
+#endif
     mctx->enforce             = PR_TRUE;
     mctx->nickname            = NULL;
 #ifdef NSS_ENABLE_ECC
@@ -174,6 +178,10 @@ static void modnss_ctx_cfg_merge(modnss_ctx_t *base,
     cfgMerge(eccnickname, NULL);
 #endif
     cfgMerge(enforce, PR_TRUE);
+#ifdef SSL_ENABLE_RENEGOTIATION
+    cfgMerge(enablerenegotiation, PR_FALSE);
+    cfgMerge(requiresafenegotiation, PR_FALSE);
+#endif
 }
 
 static void modnss_ctx_cfg_merge_proxy(modnss_ctx_t *base,
@@ -460,6 +468,26 @@ const char *nss_cmd_NSSNickname(cmd_parms *cmd,
 
     return NULL;
 }
+
+#ifdef SSL_ENABLE_RENEGOTIATION
+const char *nss_cmd_NSSRenegotiation(cmd_parms *cmd, void *dcfg, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->server->enablerenegotiation = flag ? PR_TRUE : PR_FALSE;
+ 
+    return NULL;
+}
+
+const char *nss_cmd_NSSRequireSafeNegotiation(cmd_parms *cmd, void *dcfg, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->server->requiresafenegotiation = flag ? PR_TRUE : PR_FALSE;
+ 
+    return NULL;
+}
+#endif
 
 #ifdef NSS_ENABLE_ECC
 const char *nss_cmd_NSSECCNickname(cmd_parms *cmd,

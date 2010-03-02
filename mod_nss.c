@@ -97,6 +97,14 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(Nickname, TAKE1,
                 "SSL RSA Server Certificate nickname "
                 "(`Server-Cert'")
+#ifdef SSL_ENABLE_RENEGOTIATION
+    SSL_CMD_SRV(Renegotiation, FLAG,
+                "Enable SSL Renegotiation (default off) "
+                "(`on', `off')")
+    SSL_CMD_SRV(RequireSafeNegotiation, FLAG,
+                "If Rengotiation is allowed, require safe negotiation (default off) "
+                "(`on', `off')")
+#endif
 #ifdef NSS_ENABLE_ECC
     SSL_CMD_SRV(ECCNickname, TAKE1,
                 "SSL ECC Server Certificate nickname "

@@ -548,6 +548,24 @@ static void nss_init_ctx_socket(server_rec *s,
             nss_die();
         }
     }
+#ifdef SSL_ENABLE_RENEGOTIATION
+    if (SSL_OptionSet(mctx->model, SSL_ENABLE_RENEGOTIATION,
+            mctx->enablerenegotiation ?
+              SSL_RENEGOTIATE_REQUIRES_XTN : SSL_RENEGOTIATE_NEVER
+              ) != SECSuccess) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                    "Unable to set SSL renegotiation");
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+            nss_die();
+    }
+    if (SSL_OptionSet(mctx->model, SSL_REQUIRE_SAFE_NEGOTIATION,
+            mctx->requiresafenegotiation) != SECSuccess) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                    "Unable to set SSL safe negotiation");
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+            nss_die();
+    }
+#endif
 }
 
 static void nss_init_ctx_protocol(server_rec *s,

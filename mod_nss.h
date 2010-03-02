@@ -269,6 +269,10 @@ typedef struct {
     int tls;
     int tlsrollback;
     int enforce;
+#ifdef SSL_ENABLE_RENEGOTIATION
+    int enablerenegotiation;
+    int requiresafenegotiation;
+#endif
     const char *nickname;
 #ifdef NSS_ENABLE_ECC
     const char *eccnickname;
@@ -383,6 +387,10 @@ const char *nss_cmd_NSSCipherSuite(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSVerifyClient(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSProtocol(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSNickname(cmd_parms *cmd, void *dcfg, const char *arg);
+#ifdef SSL_ENABLE_RENEGOTIATION
+const char *nss_cmd_NSSRenegotiation(cmd_parms *cmd, void *dcfg, int flag);
+const char *nss_cmd_NSSRequireSafeNegotiation(cmd_parms *cmd, void *dcfg, int flag);
+#endif
 #ifdef NSS_ENABLE_ECC
 const char *nss_cmd_NSSECCNickname(cmd_parms *cmd, void *dcfg, const char *arg);
 #endif
