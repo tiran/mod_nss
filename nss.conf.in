@@ -64,6 +64,17 @@ NSSRandomSeed startup builtin
 #NSSRandomSeed startup file:/dev/random  512
 #NSSRandomSeed startup file:/dev/urandom 512
 
+#
+# TLS Negotiation configuration under RFC 5746
+#
+# Only renegotiate if the peer's hello bears the TLS renegotiation_info
+# extension. Default off.
+NSSRenegotiation off
+
+# Peer must send Signaling Cipher Suite Value (SCSV) or
+# Renegotiation Info (RI) extension in ALL handshakes.  Default: off
+NSSRequireSafeNegotiation off
+
 ##
 ## SSL Virtual Host Context
 ##
