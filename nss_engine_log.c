@@ -27,7 +27,7 @@
 #define LIBSEC_ERROR_BASE		(-8192)
 #define LIBSEC_MAX_ERROR		(LIBSEC_ERROR_BASE + 155)
 #define LIBSSL_ERROR_BASE		(-12288)
-#define LIBSSL_MAX_ERROR		(LIBSSL_ERROR_BASE + 102)
+#define LIBSSL_MAX_ERROR		(LIBSSL_ERROR_BASE + 114)
 
 typedef struct l_error_t {
     int errorNumber;
@@ -296,7 +296,19 @@ l_error_t libnss_errors[] = {
     { 99, "Server requires ciphers more secure than those supported by client" },
     { 100, "Peer reports it experienced an internal error" },
     { 101, "Peer user canceled handshake" },
-    { 102, "Peer does not permit renegotiation of SSL security parameters" }
+    { 102, "Peer does not permit renegotiation of SSL security parameters" },
+    { 103, "Server cache not configured" },
+    { 104, "Unsupported extension" },
+    { 105, "Certificate unobtainable" },
+    { 106, "Unrecognized name" },
+    { 107, "Bad certificate status" },
+    { 108, "Bad certificate hash value" },
+    { 109, "Unexpected new session ticket" },
+    { 110, "Malformed new session ticket" },
+    { 111, "Decompression failure" },
+    { 112, "Renegotiation not allowed" },
+    { 113, "Safe negotiation required but not provided by client" },
+    { 114, "Unexpected uncompressed record" },
 };
 
 void nss_die(void) 
