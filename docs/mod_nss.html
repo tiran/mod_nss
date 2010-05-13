@@ -1028,7 +1028,21 @@ requests client authentication.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>NSSProxyNickname beta</code><br>
+<code>NSSProxyNickname beta<br>
+<br>
+</code><big><big>NSSProxyCheckPeerCN</big></big><br>
+<br>
+Compare the CN value of the peer certificate with the hostname being
+requested. If this is set to on, the default, then the request will
+fail if they do not match. If this is set to off then this comparison
+is not done. Note that this test is your only protection against a
+man-in-the-middle attack so leaving this as on is strongly recommended.<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<span style="font-family: monospace;">NSSProcyCheckPeerCN</span><code>
+on<br>
+</code><br>
 <h1><a name="Environment"></a>Environment Variables</h1>
 Quite a few environment variables (for CGI and SSI) may be set
 depending on the NSSOptions configuration. It can be expensive to set
@@ -1435,42 +1449,9 @@ authentication.
 <h1><a name="FAQ"></a>Frequently Asked Questions</h1>
 Q. Does mod_nss support mod_proxy?<br>
 <br>
-A. In order to use the mod_nss proxy support you will need to build
-your own mod_proxy by applying a patch found in bug <a
- href="http://issues.apache.org/bugzilla/show_bug.cgi?id=36468">36468</a>.
-The patch is needed so we can compare the hostname contained in the
-remote certificate with the hostname you meant to visit. This prevents
-man-in-the-middle attacks.<br>
-<br>
-You also have to change the SSL functions that mod_proxy looks to use.
-You'll need to apply this patch:<br>
-<br>
-<code>1038,1039c1038,1039<br>
-&lt; APR_DECLARE_OPTIONAL_FN(int, ssl_proxy_enable, (conn_rec *));<br>
-&lt; APR_DECLARE_OPTIONAL_FN(int, ssl_engine_disable, (conn_rec *));<br>
----<br>
-&gt; APR_DECLARE_OPTIONAL_FN(int, nss_proxy_enable, (conn_rec *));<br>
-&gt; APR_DECLARE_OPTIONAL_FN(int, nss_engine_disable, (conn_rec *));<br>
-1041,1042c1041,1042<br>
-&lt; static APR_OPTIONAL_FN_TYPE(ssl_proxy_enable) *proxy_ssl_enable =
-NULL;<br>
-&lt; static APR_OPTIONAL_FN_TYPE(ssl_engine_disable) *proxy_ssl_disable
-= NULL;<br>
----<br>
-&gt; static APR_OPTIONAL_FN_TYPE(nss_proxy_enable) *proxy_ssl_enable =
-NULL;<br>
-&gt; static APR_OPTIONAL_FN_TYPE(nss_engine_disable) *proxy_ssl_disable
-= NULL;<br>
-1069,1070c1069,1070<br>
-&lt;&nbsp;&nbsp;&nbsp;&nbsp; proxy_ssl_enable =
-APR_RETRIEVE_OPTIONAL_FN(ssl_proxy_enable);<br>
-&lt;&nbsp;&nbsp;&nbsp;&nbsp; proxy_ssl_disable =
-APR_RETRIEVE_OPTIONAL_FN(ssl_engine_disable);<br>
----<br>
-&gt;&nbsp;&nbsp;&nbsp;&nbsp; proxy_ssl_enable =
-APR_RETRIEVE_OPTIONAL_FN(nss_proxy_enable);<br>
-&gt;&nbsp;&nbsp;&nbsp;&nbsp; proxy_ssl_disable =
-APR_RETRIEVE_OPTIONAL_FN(nss_engine_disable);<br>
-</code><br>
+A. Yes but you need to make sure that mod_ssl is not loaded. mod_proxy
+provides a single interface for SSL providers and mod_nss defers to
+mod_ssl
+if it is loaded.
 </body>
 </html>

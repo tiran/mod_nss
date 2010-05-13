@@ -306,6 +306,7 @@ struct SSLSrvConfigRec {
     int              vhost_id_len;
     modnss_ctx_t    *server;
     modnss_ctx_t    *proxy;
+    BOOL             proxy_ssl_check_peer_cn;
 };
 
 /*
@@ -410,6 +411,7 @@ const char *nss_cmd_NSSProxyEngine(cmd_parms *cmd, void *dcfg, int flag);
 const char *nss_cmd_NSSProxyProtocol(cmd_parms *, void *, const char *);
 const char *nss_cmd_NSSProxyCipherSuite(cmd_parms *, void *, const char *);
 const char *nss_cmd_NSSProxyNickname(cmd_parms *cmd, void *dcfg, const char *arg);
+const char *nss_cmd_NSSProxyCheckPeerCN(cmd_parms *cmd, void *dcfg, int flag);
 
 /*  module initialization  */
 int  nss_init_Module(apr_pool_t *, apr_pool_t *, apr_pool_t *, server_rec *);

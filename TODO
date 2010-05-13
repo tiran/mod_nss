@@ -1,5 +1,2 @@
-- Offer to automatically generate a self-signed cert using gencert during
-  install?
-- Should gencert create a database with an empty password or continue
-  to create a protected on?
 - Once NSS fully supports the SNI TLS extension, add that.
+- Add support for OCSP stapling

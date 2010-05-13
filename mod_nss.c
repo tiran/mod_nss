@@ -142,6 +142,8 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(ProxyNickname, TAKE1,
                "SSL Proxy: client certificate Nickname to be for proxy connections "
                "(`nickname')")
+    SSL_CMD_SRV(ProxyCheckPeerCN, FLAG,
+                "SSL Proxy: check the peers certificate CN")
 
 #ifdef IGNORE
     /* Deprecated directives. */
@@ -238,23 +240,30 @@ int ssl_engine_disable(conn_rec *c) {
 SECStatus NSSBadCertHandler(void *arg, PRFileDesc * socket)
 {
     conn_rec *c = (conn_rec *)arg;
+    SSLSrvConfigRec *sc = mySrvConfig(c->base_server);
     PRErrorCode err = PR_GetError();
     SECStatus rv = SECFailure;
     CERTCertificate *peerCert = SSL_PeerCertificate(socket);
+    const char *hostname_note;
                                                                                 
     switch (err) {
         case SSL_ERROR_BAD_CERT_DOMAIN:
-            if (c->remote_host != NULL) {
-                rv = CERT_VerifyCertName(peerCert, c->remote_host);
-                if (rv != SECSuccess) {
-                    char *remote = CERT_GetCommonName(&peerCert->subject);
+            if (sc->proxy_ssl_check_peer_cn == TRUE) {
+                if ((hostname_note = apr_table_get(c->notes, "proxy-request-hostname")) != NULL) {
+                    apr_table_unset(c->notes, "proxy-request-hostname");
+                    rv = CERT_VerifyCertName(peerCert, hostname_note);
+                    if (rv != SECSuccess) {
+                        char *remote = CERT_GetCommonName(&peerCert->subject);
+                        ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                            "SSL Proxy: Possible man-in-the-middle attack. The remove server is %s, we expected %s", remote, hostname_note);
+                        PORT_Free(remote);
+                    }
+                } else {
                     ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                        "SSL Proxy: Possible man-in-the-middle attack. The remove server is %s, we expected %s", remote, c->remote_host);
-                    PORT_Free(remote);
+                        "SSL Proxy: I don't have the name of the host we're supposed to connect to so I can't verify that we are connecting to who we think we should be. Giving up.");
                 }
             } else {
-                ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                    "SSL Proxy: I don't have the name of the host we're supposed to connect to so I can't verify that we are connecting to who we think we should be. Giving up. Hint: See Apache bug 36468.");
+                rv = SECSuccess;
             }
             break;
         default:

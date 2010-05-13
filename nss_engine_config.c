@@ -140,6 +140,7 @@ static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
     sc->vhost_id_len                = 0;     /* set during module init */
     sc->proxy                       = NULL;
     sc->server                      = NULL;
+    sc->proxy_ssl_check_peer_cn     = TRUE;
 
     modnss_ctx_init_proxy(sc, p);
 
@@ -214,6 +215,7 @@ void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
     cfgMergeBool(fips);
     cfgMergeBool(enabled);
     cfgMergeBool(proxy_enabled);
+    cfgMergeBool(proxy_ssl_check_peer_cn);
 
     modnss_ctx_cfg_merge_proxy(base->proxy, add->proxy, mrg->proxy);
 
@@ -540,6 +542,15 @@ const char *nss_cmd_NSSProxyNickname(cmd_parms *cmd,
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->proxy->nickname = arg;
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSProxyCheckPeerCN(cmd_parms *cmd, void *dcfg, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->proxy_ssl_check_peer_cn = flag ? TRUE : FALSE;
 
     return NULL;
 }
