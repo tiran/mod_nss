@@ -1,3 +1,12 @@
+2010-05-14  Rob Crittenden <rcritten@redhat.com>
+    * Ignore SIGHUP in nss_pcache (#591889). 
+      Contributed by Joshua Roys <roysjosh@gmail.com>
+
+2010-05-13  Rob Crittenden <rcritten@redhat.com>
+    * Compare CN value of remote host with requested host in reverse proxy.
+    * Add configuration option to disable this, defaulting to on. (#591224)
+    * Based on patch from Joshua Roys <roysjosh@gmail.com
+
 2008-07-21  Rob Crittenden <rcritten@redhat.com>
     * mod_nss 1.0.8
 
