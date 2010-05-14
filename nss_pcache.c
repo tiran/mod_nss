@@ -20,6 +20,7 @@
 #include <seccomon.h>
 #include <pk11func.h>
 #include <secmod.h>
+#include <signal.h>
 #include "nss_pcache.h"
 
 static char * getstr(const char * cmd, int el);
@@ -308,6 +309,8 @@ int main(int argc, char ** argv)
         fprintf(stderr, "Usage: nss_pcache <fips on/off> <directory> <prefix>\n");
         exit(1);
     }
+
+    signal(SIGHUP, SIG_IGN);
 
     if (!strcasecmp(argv[1], "on"))
         fipsmode = 1;
