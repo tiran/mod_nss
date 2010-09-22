@@ -26,7 +26,7 @@
 static SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket);
 static SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg);
 static SECStatus NSSHandshakeCallback(PRFileDesc *socket, void *arg);
-static CERTCertificate* FindServerCertFromNickname(const char* name);
+static CERTCertificate* FindServerCertFromNickname(const char* name, const CERTCertList* clist);
 SECStatus nss_AuthCertificate(void *arg, PRFileDesc *socket, PRBool checksig, PRBool isServer);
 
 /*
@@ -485,6 +485,8 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
                      "Init: Initializing (virtual) servers for SSL");
 
+        CERTCertList* clist = PK11_ListCerts(PK11CertListUser, NULL);
+
         for (s = base_server; s; s = s->next) {
             sc = mySrvConfig(s);
             /*
@@ -496,7 +498,11 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             /*
              * Read the server certificate and key
              */
-            nss_init_ConfigureServer(s, p, ptemp, sc);
+            nss_init_ConfigureServer(s, p, ptemp, sc, clist);
+        }
+
+        if (clist) {
+            CERT_DestroyCertList(clist);
         }
     }
 
@@ -898,7 +904,8 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
                                  SECKEYPrivateKey **serverkey,
                                  SSLKEAType *KEAtype,
                                  PRFileDesc *model,
-                                 int enforce)
+                                 int enforce,
+                                 const CERTCertList* clist)
 {
     SECCertTimeValidity certtimestatus;
     SECStatus secstatus;
@@ -912,17 +919,15 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
          "Using nickname %s.", nickname);
 
-    *servercert = FindServerCertFromNickname(nickname);
+    *servercert = FindServerCertFromNickname(nickname, clist);
 
     /* Verify the certificate chain. */
     if (*servercert != NULL) {
         SECCertificateUsage usage = certificateUsageSSLServer;
 
-        if (CERT_VerifyCertificateNow(CERT_GetDefaultCertDB(), *servercert, PR_TRUE, usage, NULL, NULL) != SECSuccess)  {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "Certificate not verified: '%s'", nickname);
+        if (enforce) {
+            if (CERT_VerifyCertificateNow(CERT_GetDefaultCertDB(), *servercert, PR_TRUE, usage, NULL, NULL) != SECSuccess)  {
             nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
-            if (enforce) {
                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                     "Unable to verify certificate '%s'. Add \"NSSEnforceValidCerts off\" to nss.conf so the server can start until the problem can be resolved.", nickname);
                 nss_die();
@@ -1012,7 +1017,8 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
 static void nss_init_server_certs(server_rec *s,
                                   apr_pool_t *p,
                                   apr_pool_t *ptemp,
-                                  modnss_ctx_t *mctx)
+                                  modnss_ctx_t *mctx,
+                                  const CERTCertList* clist)
 {
     SECStatus secstatus;
 
@@ -1033,11 +1039,11 @@ static void nss_init_server_certs(server_rec *s,
 
         nss_init_certificate(s, mctx->nickname, &mctx->servercert,
                              &mctx->serverkey, &mctx->serverKEAType,
-                             mctx->model, mctx->enforce);
+                             mctx->model, mctx->enforce, clist);
 #ifdef NSS_ENABLE_ECC
         nss_init_certificate(s, mctx->eccnickname, &mctx->eccservercert,
                              &mctx->eccserverkey, &mctx->eccserverKEAType,
-                             mctx->model, mctx->enforce);
+                             mctx->model, mctx->enforce, clist);
 #endif
     }
 
@@ -1061,23 +1067,25 @@ static void nss_init_server_certs(server_rec *s,
 static void nss_init_proxy_ctx(server_rec *s,
                                 apr_pool_t *p,
                                 apr_pool_t *ptemp,
-                                SSLSrvConfigRec *sc)
+                                SSLSrvConfigRec *sc,
+                                const CERTCertList* clist)
 {
     nss_init_ctx(s, p, ptemp, sc->proxy);
 
-    nss_init_server_certs(s, p, ptemp, sc->proxy);
+    nss_init_server_certs(s, p, ptemp, sc->proxy, clist);
 }
 
 static void nss_init_server_ctx(server_rec *s,
                                 apr_pool_t *p,
                                 apr_pool_t *ptemp,
-                                SSLSrvConfigRec *sc)
+                                SSLSrvConfigRec *sc,
+                                const CERTCertList* clist)
 {
     nss_init_server_check(s, p, ptemp, sc->server);
 
     nss_init_ctx(s, p, ptemp, sc->server);
 
-    nss_init_server_certs(s, p, ptemp, sc->server);
+    nss_init_server_certs(s, p, ptemp, sc->server, clist);
 }
 
 /*
@@ -1086,18 +1094,19 @@ static void nss_init_server_ctx(server_rec *s,
 void nss_init_ConfigureServer(server_rec *s,
                               apr_pool_t *p,
                               apr_pool_t *ptemp,
-                              SSLSrvConfigRec *sc)
+                              SSLSrvConfigRec *sc,
+                              const CERTCertList* clist)
 {
     if (sc->enabled == TRUE) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                      "Configuring server for SSL protocol");
-        nss_init_server_ctx(s, p, ptemp, sc);
+        nss_init_server_ctx(s, p, ptemp, sc, clist);
     }
 
     if (sc->proxy_enabled == TRUE) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                      "Enabling proxy.");
-        nss_init_proxy_ctx(s, p, ptemp, sc);
+        nss_init_proxy_ctx(s, p, ptemp, sc, clist);
     }
 }
 
@@ -1149,10 +1158,14 @@ void nss_init_Child(apr_pool_t *p, server_rec *base_server)
     nss_init_SSLLibrary(base_server);
 
     /* Configure all virtual servers */
+    CERTCertList* clist = PK11_ListCerts(PK11CertListUser, NULL);
     for (s = base_server; s; s = s->next) {
         sc = mySrvConfig(s);
         if (sc->server->servercert == NULL && NSS_IsInitialized())
-            nss_init_ConfigureServer(s, p, mc->ptemp, sc);
+            nss_init_ConfigureServer(s, p, mc->ptemp, sc, clist);
+    }
+    if (clist) {
+        CERT_DestroyCertList(clist);
     }
 
     /* 
@@ -1341,9 +1354,8 @@ cert_IsNewer(CERTCertificate *certa, CERTCertificate *certb)
  * newest, valid server certificate.
  */
 static CERTCertificate*
-FindServerCertFromNickname(const char* name)
+FindServerCertFromNickname(const char* name, const CERTCertList* clist)
 {
-    CERTCertList* clist;
     CERTCertificate* bestcert = NULL;
 
     CERTCertListNode *cln;
@@ -1352,8 +1364,6 @@ FindServerCertFromNickname(const char* name)
 
     if (name == NULL)
         return NULL;
-
-    clist = PK11_ListCerts(PK11CertListUser, NULL);
 
     for (cln = CERT_LIST_HEAD(clist); !CERT_LIST_END(cln,clist);
         cln = CERT_LIST_NEXT(cln)) {
@@ -1418,9 +1428,6 @@ FindServerCertFromNickname(const char* name)
     }
     if (bestcert) {
         bestcert = CERT_DupCertificate(bestcert);
-    }
-    if (clist) {
-        CERT_DestroyCertList(clist);
     }
     return bestcert;
 }

@@ -416,7 +416,7 @@ const char *nss_cmd_NSSProxyCheckPeerCN(cmd_parms *cmd, void *dcfg, int flag);
 /*  module initialization  */
 int  nss_init_Module(apr_pool_t *, apr_pool_t *, apr_pool_t *, server_rec *);
 void nss_init_Child(apr_pool_t *, server_rec *);
-void nss_init_ConfigureServer(server_rec *, apr_pool_t *, apr_pool_t *, SSLSrvConfigRec *);
+void nss_init_ConfigureServer(server_rec *, apr_pool_t *, apr_pool_t *, SSLSrvConfigRec *, const CERTCertList*);
 apr_status_t nss_init_ModuleKill(void *data);
 apr_status_t nss_init_ChildKill(void *data);
 int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum]);
