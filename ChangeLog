@@ -1,3 +1,18 @@
+2010-09-22  Rob Crittenden <rcritten@redhat.com>
+    * Only call PK11_ListCerts once and pass it when configuring each
+      virtual server. This saves considerable time when there are a lot
+      of certificates and/or virtual servers. (#635324)
+    * Change enforce so that we only check the validity of the certificate
+      if enforcecerts is enabled (the default).
+      Patch contributed by Wolter Eldering <wolter.eldering@vanad.com.cn>
+
+2010-09-17  Rob Crittenden <rcritten@redhat.com>
+    * Fix endless read loop in some situations when handling POST data
+      (#620856)
+      This was discovered in the dogtag TPS subsystem. I haven't been able
+      to duplicate it outside of that but it is trivial inside. This seems
+      to fix it and brings the code closer to what mod_ssl does here as well.
+
 2010-05-14  Rob Crittenden <rcritten@redhat.com>
     * Ignore SIGHUP in nss_pcache (#591889). 
       Contributed by Joshua Roys <roysjosh@gmail.com>
@@ -5,7 +20,17 @@
 2010-05-13  Rob Crittenden <rcritten@redhat.com>
     * Compare CN value of remote host with requested host in reverse proxy.
     * Add configuration option to disable this, defaulting to on. (#591224)
-    * Based on patch from Joshua Roys <roysjosh@gmail.com
+      Based on patch from Joshua Roys <roysjosh@gmail.com>
+
+2010-03-22  Rob Crittenden <rcritten@redhat.com>
+    * Update list of errors we translate
+
+2010-03-02  Rob Crittenden <rcritten@redhat.com>
+    * Add controls for managing SSL renegotiation
+      NSS is introducing some new controls in response to CVE-2009-3555,
+      MITM attacks via session renegotiation. This patch adds some tuning
+      so these options can be set at run time.
+      Patch contributed by Kai Engert <kengert@redhat.com>
 
 2008-07-21  Rob Crittenden <rcritten@redhat.com>
     * mod_nss 1.0.8
