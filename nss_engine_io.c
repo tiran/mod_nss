@@ -259,8 +259,7 @@ nspr_filter_in_read(PRFileDesc *fd, void *in, PRInt32 inlen)
          */
         if (APR_STATUS_IS_EAGAIN(inctx->rc) || APR_STATUS_IS_EINTR(inctx->rc)
                || (inctx->rc == APR_SUCCESS && APR_BRIGADE_EMPTY(inctx->bb))) {
-            nspr_filter_out_ctx_t *outctx = filter_ctx->outctx;
-            inctx->rc = outctx->rc;
+            PR_SetError(PR_WOULD_BLOCK_ERROR, 0);
             return -1;
         }
 
@@ -350,6 +349,7 @@ static apr_status_t nss_io_input_read(nspr_filter_in_ctx_t *inctx,
             break;
         }
 
+        PR_SetError(0, 0);
         rc = PR_Read(inctx->filter_ctx->pssl, buf + bytes, wanted - bytes);
 
         if (rc > 0) {
