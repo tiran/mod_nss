@@ -1,3 +1,7 @@
+2011-01-12  Rob Crittenden <rcritten@redhat.com>
+    * Don't use memcpy as it may operate on overlapping memory (#669118)
+      Patch ported from mod_ssl by Stephen Gallagher <sgallagh@redhat.com>
+
 2010-09-22  Rob Crittenden <rcritten@redhat.com>
     * Only call PK11_ListCerts once and pass it when configuring each
       virtual server. This saves considerable time when there are a lot
