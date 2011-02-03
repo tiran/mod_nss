@@ -5,6 +5,13 @@ bin_PROGRAMS = nss_pcache
 
 nss_pcache_SOURCES = nss_pcache.c
 
+man8_MANS =				\
+	gencert.8			\
+	$(NULL)
+
+install-data-hook:
+	@for i in $(man8_MANS) ; do gzip -f $(DESTDIR)$(man8dir)/$$i ; done
+
 ## Define the source file for the module
 libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c nss_engine_rand.c
 libmodnss_la_LDFLAGS = -module -avoid-version
