@@ -41,6 +41,9 @@
 #include "apr_shm.h"
 #include "apr_global_mutex.h"
 #include "apr_optional.h"
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 
 #define MOD_NSS_VERSION AP_SERVER_BASEREVISION
 
@@ -244,6 +247,9 @@ typedef struct {
     struct {
         void *pV1, *pV2, *pV3, *pV4, *pV5, *pV6, *pV7, *pV8, *pV9, *pV10;
     } rCtx;
+
+    int semid;
+    const char *user;
 } SSLModConfigRec;
 
 typedef struct SSLSrvConfigRec SSLSrvConfigRec;
@@ -412,6 +418,7 @@ const char *nss_cmd_NSSProxyProtocol(cmd_parms *, void *, const char *);
 const char *nss_cmd_NSSProxyCipherSuite(cmd_parms *, void *, const char *);
 const char *nss_cmd_NSSProxyNickname(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSProxyCheckPeerCN(cmd_parms *cmd, void *dcfg, int flag);
+const char *set_user(cmd_parms *cmd, void *dummy, const char *arg);
 
 /*  module initialization  */
 int  nss_init_Module(apr_pool_t *, apr_pool_t *, apr_pool_t *, server_rec *);

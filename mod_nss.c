@@ -152,6 +152,8 @@ static const command_rec nss_config_cmds[] = {
     AP_INIT_RAW_ARGS("NSSLogLevel", ap_set_deprecated, NULL, OR_ALL, 
       "SSLLogLevel directive is no longer supported - use LogLevel."),
 #endif
+    AP_INIT_TAKE1("User", set_user, NULL, RSRC_CONF,
+                  "Apache user. Comes from httpd.conf."),
     
     AP_END_CMD
 };

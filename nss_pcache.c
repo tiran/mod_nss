@@ -21,6 +21,9 @@
 #include <pk11func.h>
 #include <secmod.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
 #include "nss_pcache.h"
 
 static char * getstr(const char * cmd, int el);
@@ -68,6 +71,13 @@ struct Pk11PinStore
 
     int length;
     unsigned char *crypt;
+};
+
+union semun {
+    int val;
+    struct semid_ds *buf;
+    unsigned short *array;
+    struct seminfo *__buf;
 };
 
 /*
@@ -304,15 +314,19 @@ int main(int argc, char ** argv)
     char * tokenName;
     char * tokenpw;
     int fipsmode = 0;
+    int semid = 0;
+    union semun semarg;
 
-    if (argc < 3 || argc > 4) {
+    if (argc < 4 || argc > 5) {
         fprintf(stderr, "Usage: nss_pcache <fips on/off> <directory> <prefix>\n");
         exit(1);
     }
 
     signal(SIGHUP, SIG_IGN);
 
-    if (!strcasecmp(argv[1], "on"))
+    semid = strtol(argv[1], NULL, 10);
+
+    if (!strcasecmp(argv[2], "on"))
         fipsmode = 1;
 
     /* Initialize NSPR */
@@ -322,7 +336,7 @@ int main(int argc, char ** argv)
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
  
     /* Initialize NSS and open the certificate database read-only. */
-    rv = NSS_Initialize(argv[2], argc == 4 ? argv[3] : NULL, argc == 4 ? argv[3] : NULL, "secmod.db", NSS_INIT_READONLY);
+    rv = NSS_Initialize(argv[3], argc == 4 ? argv[4] : NULL, argc == 5 ? argv[4] : NULL, "secmod.db", NSS_INIT_READONLY);
 
     if (rv != SECSuccess) {
         fprintf(stderr, "Unable to initialize NSS database: %d\n", rv);
@@ -437,6 +451,11 @@ int main(int argc, char ** argv)
     }
     freeList(pinList);
     PR_Close(in);
+    /* Remove the semaphore used for locking here. This is because this
+     * program only goes away when Apache shuts down so we don't have to
+     * worry about reloads.
+     */
+    semctl(semid, 0, IPC_RMID, semarg);
     return 0;
 }
 

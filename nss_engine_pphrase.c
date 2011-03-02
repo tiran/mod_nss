@@ -279,6 +279,16 @@ static char *nss_get_password(FILE *input, FILE *output,
         char buf[1024];
         apr_status_t rv;
         apr_size_t nBytes = 1024;
+        struct sembuf sb;
+
+        /* lock the pipe */
+        sb.sem_num = 0;
+        sb.sem_op = -1;
+        sb.sem_flg = SEM_UNDO;
+        if (semop(parg->mc->semid, &sb, 1) == -1) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                "Unable to reserve semaphore resource");
+        }
 
         snprintf(buf, 1024, "RETR\t%s", token_name);
         rv = apr_file_write_full(parg->mc->proc.in, buf, strlen(buf), NULL);
@@ -293,6 +303,13 @@ static char *nss_get_password(FILE *input, FILE *output,
          */
         memset(buf, 0, sizeof(buf));
         rv = apr_file_read(parg->mc->proc.out, buf, &nBytes);
+        sb.sem_op = 1;
+        if (semop(parg->mc->semid, &sb, 1) == -1) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
+                "Unable to free semaphore resource");
+            /* perror("semop free resource id"); */
+        }
+
         if (rv != APR_SUCCESS) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "Unable to read from pin store for slot: %s APR err: %d",  PK11_GetTokenName(slot), rv);

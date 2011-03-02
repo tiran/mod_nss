@@ -312,6 +312,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     int sslenabled = FALSE;
     int fipsenabled = FALSE;
     int threaded = 0;
+    struct semid_ds status;
 
     mc->nInitCount++;
 
@@ -412,10 +413,26 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                  "Init: %snitializing NSS library", mc->nInitCount == 1 ? "I" : "Re-i");
 
+    /* The first pass through this function will create the semaphore that
+     * will be used to lock the pipe. The user is still root at that point
+     * so for any later calls the semaphore ops will fail with permission
+     * errors. So switch the user to the Apache user.
+     */
+    if (mc->semid) {
+        uid_t user_id;
+
+        user_id = ap_uname2id(mc->user);
+        semctl(mc->semid, 0, IPC_STAT, &status);
+        status.sem_perm.uid = user_id;
+        semctl(mc->semid,0,IPC_SET,&status);
+    }
+
     /* Do we need to fire up our password helper? */
     if (mc->nInitCount == 1) {
         const char * child_argv[5];
         apr_status_t rv;
+        struct sembuf sb;
+        char sembuf[32];
 
         if (mc->pphrase_dialog_helper == NULL) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
@@ -423,11 +440,31 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
             nss_die();
         }
 
+        mc->semid = semget(IPC_PRIVATE, 1, IPC_CREAT | IPC_EXCL | 0600);
+        if (mc->semid == -1) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "Unable to obtain semaphore.");
+            nss_die();
+        }
+
+        /* Initialize the semaphore */
+        sb.sem_num = 0;
+        sb.sem_op = 1;
+        sb.sem_flg = 0;
+        if ((semop(mc->semid, &sb, 1)) == -1) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "Unable to initialize semaphore.");
+            nss_die();
+        }
+
+        PR_snprintf(sembuf, 32, "%d", mc->semid);
+
         child_argv[0] = mc->pphrase_dialog_helper;
-        child_argv[1] = fipsenabled ? "on" : "off";
-        child_argv[2] = mc->pCertificateDatabase;
-        child_argv[3] = mc->pDBPrefix;
-        child_argv[4] = NULL;
+        child_argv[1] = sembuf;
+        child_argv[2] = fipsenabled ? "on" : "off";
+        child_argv[3] = mc->pCertificateDatabase;
+        child_argv[4] = mc->pDBPrefix;
+        child_argv[5] = NULL;
 
         rv = apr_procattr_create(&mc->procattr, mc->pPool);
 

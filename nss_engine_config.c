@@ -830,3 +830,12 @@ const char *nss_cmd_NSSOptions(cmd_parms *cmd,
 
     return NULL;
 }
+
+const char *set_user(cmd_parms *cmd, void *dummy, const char *arg)
+{
+    SSLModConfigRec *mc = myModConfig(cmd->server);
+
+    mc->user = arg;
+
+    return NULL;
+}
