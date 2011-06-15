@@ -1218,6 +1218,10 @@ apr_status_t nss_init_ModuleKill(void *data)
     server_rec *base_server = (server_rec *)data;
     SSLModConfigRec *mc = myModConfig(base_server);
 
+    if (!NSS_IsInitialized()) {
+        return APR_SUCCESS;
+    }
+
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
         "Shutting down SSL Session ID Cache");
 
