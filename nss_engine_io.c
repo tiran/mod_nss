@@ -1365,13 +1365,9 @@ nss_AuthCertificate(void *arg, PRFileDesc *socket,
 
     status = SSL_AuthCertificate(arg, socket, checksig, isServer);
 
-    if (status == SECSuccess) {
-        conn_rec *c = filter_ctx->c;
-        SSLConnRec *sslconn = myConnConfig(c);
-
-        sslconn->client_cert = SSL_PeerCertificate(socket);
-        sslconn->client_dn = NULL;
-    }
+    /* The certificate is copied to sslconn->client_cert in
+     * nss_hook_ReadReq()
+     */
 
     return status;
 }

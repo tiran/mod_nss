@@ -84,6 +84,11 @@ int nss_hook_ReadReq(request_rec *r)
                      nss_util_vhostid(r->pool, r->server));
     }
 
+    if (sslconn->client_cert != NULL)
+        CERT_DestroyCertificate(sslconn->client_cert);
+    sslconn->client_cert = SSL_PeerCertificate(ssl);
+    sslconn->client_dn = NULL;
+
     return DECLINED;
 }
 
@@ -626,8 +631,8 @@ int nss_hook_UserCheck(request_rec *r)
     }
 
     if (!sslconn->client_dn) {
-        char * cp = CERT_GetCommonName(&sslconn->client_cert->subject);
-        sslconn->client_dn = apr_pstrdup(r->connection->pool, cp);
+        char * cp = CERT_NameToAscii(&sslconn->client_cert->subject);
+        sslconn->client_dn = apr_pstrcat(r->connection->pool, "/", cp, NULL);
         PORT_Free(cp);
     }
 
