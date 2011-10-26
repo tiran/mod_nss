@@ -429,7 +429,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
 
     /* Do we need to fire up our password helper? */
     if (mc->nInitCount == 1) {
-        const char * child_argv[5];
+        const char * child_argv[6];
         apr_status_t rv;
         struct sembuf sb;
         char sembuf[32];
