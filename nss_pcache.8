@@ -32,7 +32,15 @@ Whenever an Apache \fBhttpd\fP process configured to use the mod_nss plug-in is 
 .br
 #   restarts of Apache.
 .br
-NSSPassPhraseHelper /usr/sbin/nss_pcache
+#
+.br
+#   NOTE:  Located at '/usr/sbin/nss_pcache' prior
+.br
+#          to 'mod_nss-1.0.8-22'.
+.br
+#
+.br
+NSSPassPhraseHelper /usr/libexec/nss_pcache
 
 .SH OPTIONS
 .TP
