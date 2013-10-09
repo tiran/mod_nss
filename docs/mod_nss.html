@@ -15,10 +15,10 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
 -->
-  <meta content="text/html; charset=ISO-8859-1"
- http-equiv="content-type">
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
   <title>mod_nss</title>
 </head>
+
 <body>
 <h1 style="text-align: center;">mod_nss</h1>
 <h2>Table of Contents</h2>
@@ -33,6 +33,7 @@
 <a href="#Database_Management">Database Management</a><br>
 <a href="#SSLv2">Why is SSLv2 disabled?</a><br>
 <a href="#FAQ">Frequently Asked Questions</a><br>
+
 <h1><a name="Introduction"></a>Introduction</h1>
 The <a href="http://www.modssl.org/">mod_ssl</a> package was
 created in April 1998 by <a href="mailto:rse@engelschall.com">Ralf S.
@@ -44,9 +45,10 @@ the <a href="http://www.apache.org/licenses/" class="external"
 license</a><span class="urlexpansion">.<br>
 <br>
 </span>mod_nss is based directly on the mod_ssl package from Apache
-2.0.54.&nbsp; It is a conversion from using OpenSSL calls to using <a
- href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a>
+2.0.54. It is a conversion from using OpenSSL calls to using
+<a href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a>
 calls instead.<br>
+
 <h1><a name="Building"></a>Building</h1>
 Refer to the README file included with the distribution.<br>
 <br>
@@ -173,13 +175,14 @@ module with something like:<br>
 &nbsp;This will create a sample configuration file <code>nss.conf</code>.
 By default
 this is installed during the installation process.<br>
+
 <h1><a name="Installation"></a>Installation</h1>
 The make install target uses apxs to install the module into Apache.
 This automatically copies the mod_nss shared library to the appropriate
 location and updates Apache's httpd.conf so that the module will be
 loaded during the next restart.<br>
 <br>
-It also tries to rename <code>ssl.conf</code> to <code>ssl.conf.old</code>.&nbsp;
+It also tries to rename <code>ssl.conf</code> to <code>ssl.conf.old</code>.
 The assumption is that mod_nss is replacing mod_ssl. They can co-exist
 as long as they are listening on separate ports.<br>
 <br>
@@ -196,6 +199,7 @@ following line to httpd.conf (location relative to httpd.conf):<br>
 This has Apache load the mod_nss configuration file, <code>nss.conf</code>.
 It is here that you will setup your VirtualServer entries to and
 configure your SSL servers.<br>
+
 <h1><a name="Generation"></a>Certificate Generation</h1>
 A ksh script, <code>gencert</code>, is included to automatically
 generate a self-signed CA plus one server certificate. This is fine for
@@ -212,30 +216,31 @@ bother with the details.<br>
 The certificate database password is httptest.<br>
 <br>
 A sample run is:<br>
-<br>
-<code># mkdir /etc/httpd/nss</code><br>
-<code># ./gencert /etc/httpd/nss<br>
-<br>
-#####################################################################<br>
-Generating new server certificate and key database. The password<br>
-is httptest<br>
-#####################################################################<br>
-<br>
-#####################################################################<br>
-Generating self-signed client CA certificate<br>
-#####################################################################<br>
-<br>
-Generating key.&nbsp; This may take a few moments...<br>
-<br>
-[ Lots of output removed ]</code><br>
-<br>
+<pre>
+# mkdir /etc/httpd/nss
+# ./gencert /etc/httpd/nss
+
+#####################################################################
+Generating new server certificate and key database. The password
+is httptest
+#####################################################################
+
+#####################################################################
+Generating self-signed client CA certificate
+#####################################################################
+
+Generating key.  This may take a few moments...
+
+[ Lots of output removed ]
+</pre>
 You should now have the following files:<br>
-<br>
-<code>/etc/httpd/nss/cert8.db<br>
-/etc/httpd/nss/key3db<br>
-/etc/httpd/nss/secmod.db</code><br>
-<br>
+<pre>
+/etc/httpd/nss/cert8.db
+/etc/httpd/nss/key3db
+/etc/httpd/nss/secmod.db
+</pre>
 These 3 files make up an NSS certificate database.<br>
+
 <h1><a name="Startup"></a>Server Startup</h1>
 Starting a mod_nss server is no different than starting a mod_ssl
 server. You will need to authenticate yourself to the security token
@@ -253,23 +258,21 @@ token password.<br>
 <br>
 All other output will be written to the Apache log files.<br>
 <br>
-To avoid&nbsp; being prompted for a startup password you can either:<br>
+To avoid being prompted for a startup password you can either:<br>
 <ul>
-  <li>Use a password file that contains your token passwords. See <small><small><font
- size="+2"><small><small>NSSPassPhraseDialog for details.</small></small></font></small></small></li>
-  <li><small><small><font size="+2"><small><small>Change the internal
-token password to a blank with: <br>
-    </small></small></font></small></small></li>
+  <li>Use a password file that contains your token passwords. See
+NSSPassPhraseDialog for details.</li>
+  <li>Change the internal token password to a blank with:</li>
 </ul>
-<div style="margin-left: 40px;"><small><small><font size="+2"><small><small><code>%
-modutil -dbdir /path/to/database/directory -changepw "NSS Certificate
-DB"</code><br>
+<div style="margin-left: 40px;">
+<code>% modutil -dbdir /path/to/database/directory -changepw "NSS Certificate DB"</code><br>
 <br>
 Enter the old password then press Enter twice for the new password to
 blank it out.<br>
-</small></small></font></small></small></div>
+</div>
+
 <h1><a name="Migration"></a>Migration</h1>
-A perl script, <code>migrate,pl</code>, is included to help migrate an
+A perl script, <code>migrate.pl</code>, is included to help migrate an
 existing mod_ssl configuration to work with mod_nss. There is one
 optional argument, -c, that will try to convert your existing server
 and CA certificates plus any certificate revocation lists (CRLs) into
@@ -282,6 +285,7 @@ possible to migrate httpd.conf to use mod_nss. Simply copy httpd.conf
 to ssl.conf, run the update, then copy nss.conf to httpd.conf (after
 making a backup, of couse). This multi-step process gives you a chance
 to verify that the migration was successful.<br>
+
 <h1><a name="Directives"></a>Configuration Directives</h1>
 The following mod_ssl Directives are not applicable to mod_nss:<br>
 <ul>
@@ -297,10 +301,10 @@ The following mod_ssl Directives are not applicable to mod_nss:<br>
 <br>
 Authentication is required in order to use the private key in an NSS
 certificate database. The method of this authentication is specified
-with the NSSPassPhraseDialog directive.&nbsp; This directive takes one
+with the NSSPassPhraseDialog directive. This directive takes one
 argument specifying the method of authentication:<br>
 <ul>
-  <li>builtin</li>
+  <li><code>builtin</code></li>
 </ul>
 <div style="margin-left: 40px;">The user will be prompted to enter the
 token password for each cryptographic device. This works seemlessly
@@ -308,20 +312,20 @@ with any hardware tokens used. The default "device" is the internal
 token provided by the NSS Certificate database itself.<br>
 </div>
 <ul>
-  <li>file:/path/to/file</li>
+  <li><code>file:/path/to/file</code></li>
 </ul>
 <div style="margin-left: 40px;">The token password(s) may be stored in
 an ASCII text file which is read during startup so the server can start
 without user intervention. The format of this file is:<br>
 <br>
-<div style="margin-left: 40px;">token:password<br>
+<div style="margin-left: 40px;"><code>token:password</code><br>
 <br>
 </div>
 </div>
 <div style="margin-left: 40px;">An example for the internal token is:<br>
 <br>
 </div>
-<div style="margin-left: 80px;">internal:secret12<br>
+<div style="margin-left: 80px;"><code>internal:secret12</code><br>
 </div>
 <br>
 <span style="font-weight: bold;">Example</span><br>
@@ -359,7 +363,7 @@ Specifies the location of the NSS certificate database to be used. An
 NSS certificate database consists of 3 files: cert8.db, key3.db and
 secmod.db. cert8.db stores certificates and Certificate Revocation
 Lists (CRLs), key3.db stores keys and secmod.db stores information
-about available pkcs#11 modules.<br>
+about available PKCS#11 modules.<br>
 <br>
 This directive specifies a path, not a filename.<br>
 <br>
@@ -376,13 +380,13 @@ in one directory. <br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>NSSDBPrefix my-prefix-<br>
+<code>NSSDBPrefix my-prefix-</code><br>
 <br>
 You would then need: my-prefix-cert8.db, my-prefix-key3.db and secmod.db<br>
 <br>
 In order to work with files with a prefix using the NSS command-line
 tools use the -P flag.<br>
-</code><br>
+<br>
 <font size="+2">NSSSessionCacheSize</font><br>
 <br>
 Specifies the number of SSL sessions that can be cached. <br>
@@ -404,8 +408,7 @@ is silently constrained.<br>
 <br>
 The default value is 100.<br>
 <br>
-<span style="font-weight: bold;">Example</span><br
- style="font-weight: bold;">
+<span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSSessionCacheTimeout 100</code><br>
 <br>
@@ -413,7 +416,7 @@ The default value is 100.<br>
 </big></big><br>
 Specifies the number of seconds SSL 3 sessions are cached.<br>
 <br>
-The valid range is 5 - 86400 seconds.&nbsp; A setting outside the valid
+The valid range is 5 - 86400 seconds. A setting outside the valid
 range is silently constrained.<br>
 <br>
 The default value is 86400 (24 hours).<br>
@@ -425,24 +428,24 @@ The default value is 86400 (24 hours).<br>
 <big><big>NSSRandomSeed</big></big><br>
 <br>
 Configures sources to seed the NSS Random Number Generator (RNG) at
-startup.&nbsp; Currently this only supports seeding the RNG at startup.
+startup. Currently this only supports seeding the RNG at startup.
 <br>
 <br>
 The following sources are available:<br>
 <ul>
-  <li><code>builtin:</code> Combines the current system time, the
+  <li><code>builtin</code>: Combines the current system time, the
 current process id
 and a randomly choosen 128-byte extract of the process stack. This is
 not a particularly strong source of entropy.</li>
-  <li><code>file:/path/to/source:</code> Reads from the specified file.
+  <li><code>file:/path/to/source</code>: Reads from the specified file.
 If the number of bytes to read is specified it just reads that amount.
 Be aware that some operating systems block on /dev/random if not enough
 entropy is available. This means that the server will wait until that
-/data is available to continue startup. These systems generally offer a
+data is available to continue startup. These systems generally offer a
 non-blocking device as well, /dev/urandom.</li>
-  <li><code>exec:/path/to/program: Executes the given program and takes
-the stdout of it as the entryop. If the bytes argument is included it
-reads that many bytes, otherwise it reads until the program exits.</code><br>
+  <li><code>exec:/path/to/program</code>: Executes the given program and takes
+the stdout of it as the entropy. If the bytes argument is included it
+reads that many bytes, otherwise it reads until the program exits.<br>
   </li>
 </ul>
 <span style="font-weight: bold;">Example</span><br>
@@ -455,10 +458,10 @@ NSSRandomSeed startup /usr/bin/makerandom</code><br>
 <br>
 Enables or disables the SSL protocol. This is usually used within a
 VirtualHost tag to enable SSL for a particular virtual host.<br>
-<span style="font-weight: bold;"><br>
-</span>SSL is disabled by default. <br>
-<span style="font-weight: bold;"><br>
-Example</span><br style="font-weight: bold;">
+<br>
+SSL is disabled by default. <br>
+<br><span style="font-weight: bold;">
+Example</span><br>
 <br>
 <code>NSSEngine on</code><br>
 <br>
@@ -479,10 +482,10 @@ The allowable ciphers are:<br>
   <li>rsa_des_56_sha</li>
   <li>fortezza</li>
 </ul>
-<span style="font-weight: bold;"><br>
-</span>FIPS is disabled by default.<br>
-<span style="font-weight: bold;"><br>
-Example</span><br style="font-weight: bold;">
+<br>
+FIPS is disabled by default.<br>
+<br><span style="font-weight: bold;">
+Example</span><br>
 <br>
 <code>NSSFIPS on</code><br>
 <br>
@@ -493,10 +496,9 @@ Enables or disables <a
 (Online Certificate Status Protocol). This allows the server to check
 the validity of a client certificate before accepting it.<br>
 <br>
-<span style="font-weight: bold;"></span>OCSP<span
- style="font-weight: bold;"> </span>is disabled by default.<br>
-<span style="font-weight: bold;"><br>
-Example</span><br style="font-weight: bold;">
+OCSP is disabled by default.<br>
+<br><span style="font-weight: bold;">
+Example</span><br>
 <br>
 <code>NSSOCSP on</code><br>
 <br>
@@ -517,8 +519,7 @@ Available ciphers are:<br>
     <tr>
       <td style="vertical-align: top; font-weight: bold;">Cipher Name<br>
       </td>
-      <td style="vertical-align: top; font-weight: bold;">NSS Cipher
-definition<br>
+      <td style="vertical-align: top; font-weight: bold;">NSS Cipher definition<br>
       </td>
       <td style="vertical-align: top; font-weight: bold;">Protocol<br>
       </td>
@@ -689,8 +690,7 @@ Additionally there are a number of ECC ciphers:<br>
     <tr>
       <td style="vertical-align: top; font-weight: bold;">Cipher Name<br>
       </td>
-      <td style="vertical-align: top; font-weight: bold;">NSS Cipher
-Definition<br>
+      <td style="vertical-align: top; font-weight: bold;">NSS Cipher Definition<br>
       </td>
       <td style="vertical-align: top; font-weight: bold;">Protocol<br>
       </td>
@@ -875,20 +875,19 @@ Specify the nickname to be used for this the server certificate.
 Certificates stored in an NSS database are referred to using nicknames
 which makes accessing a specific certificate much easier. It is also
 possible to specify the certificate DN but it is easier to use a
-nickname.&nbsp; If the nickname includes spaces then the value needs to
+nickname. If the nickname includes spaces then the value needs to
 be enclosed in double quotes.<br>
 <br>
-<span style="font-weight: bold;">Example</span><br
- style="font-weight: bold;">
+<span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSNickname Server-Cert</code><br>
-<code>NSSNickname "This contains a space"<br>
+<code>NSSNickname "This contains a space"</code><br>
 <br>
 NOTE: There is nothing magical about the string "Server-Cert." A
 nickname can be anything. Historically this was Server-Cert in the
 Netscape server products that used NSS.<br>
 <br>
-</code><big><big>NSSECCNickname</big></big><br>
+<big><big>NSSECCNickname</big></big><br>
 <br>
 Similar to NSSNickname but designed for use with ECC certificates. This
 allows you to have both an RSA certificate and an ECC certificate
@@ -928,7 +927,7 @@ Available options are:<br>
   <li><code>none</code>: no client certificate
 is required or requested<br>
   </li>
-  <li>code&gt;optional: a client
+  <li><code>optional</code>: a client
 certificate is requested but if one is not available, the connection
 may continue.<br>
   </li>
@@ -954,8 +953,7 @@ also be set for this to work.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>NSSUserName SSL_CLIENT_S_DN_UID<span
- style="font-family: sans-serif;"></span></code><br>
+<code>NSSUserName SSL_CLIENT_S_DN_UID</code><br>
 <big><big><br>
 NSSOptions</big></big> <br>
 <br>
@@ -978,7 +976,7 @@ plus every CA certificate in the client certificate.</li>
   <li>StrictRequire: Absolutely forces the connection to be forbidden
 when NSSRequireSSL or NSSRequire aren't met.</li>
   <li>OptRenegotiate: Allows the SSL connection to be renegotiated
-using a different contiguration. This is designed for a per-directory
+using a different configuration. This is designed for a per-directory
 and is relatively expensive to do. For example, it can be used to force
 very strong ciphers in particular directories.<br>
   </li>
@@ -986,20 +984,19 @@ very strong ciphers in particular directories.<br>
 All options are disabled by default.<br>
 <br>
 Example:<br>
-<br>
-<code>NSSOptions +FakeBasicAuth<br>
-&lt;Files ~ "\.(cgi|shtml)$"&gt;<br>
-NSSOptions +StdEnvVars<br>
+<pre>
+NSSOptions +FakeBasicAuth
+&lt;Files ~ "\.(cgi|shtml)$"&gt;
+NSSOptions +StdEnvVars
 &lt;Files&gt;
-</code><br>
+</pre>
 <br>
 <big><big>NSSRequireSSL</big></big><br>
 <br>
 The request is forbidden unless the connection is using SSL. Only
 available in a per-directory context. This takes no arguments.<br>
 <br>
-<span style="font-weight: bold;">Example</span><br
- style="font-weight: bold;">
+<span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSRequireSSL</code><br>
 <br>
@@ -1059,9 +1056,9 @@ man-in-the-middle attack so leaving this as on is strongly recommended.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<span style="font-family: monospace;">NSSProcyCheckPeerCN</span><code>
-on<br>
-</code><br>
+<code>NSSProcyCheckPeerCN on</code><br>
+<br>
+
 <h1><a name="Environment"></a>Environment Variables</h1>
 Quite a few environment variables (for CGI and SSI) may be set
 depending on the NSSOptions configuration. It can be expensive to set
@@ -1182,7 +1179,7 @@ certificate is valid<br>
       <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_M_VERSION<br>
       </code></td>
       <td style="vertical-align: top;">X.509 version of the client
-certificiate<br>
+certificate<br>
       </td>
     </tr>
     <tr>
@@ -1200,7 +1197,7 @@ certificate<br>
     <tr>
       <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_A_SIG</code></td>
       <td style="vertical-align: top;">Algorithm used for the signature
-of&nbsp; the client key</td>
+of the client key</td>
     </tr>
     <tr>
       <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_S_DN</code></td>
@@ -1247,7 +1244,7 @@ certificate. Only those that exist in the certificate are created</td>
       <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_M_VERSION<br>
       </code></td>
       <td style="vertical-align: top;">X.509 version of the server
-certificiate</td>
+certificate</td>
     </tr>
     <tr>
       <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_M_SERIAL<br>
@@ -1276,7 +1273,7 @@ time</td>
       <td style="vertical-align: top; width: 45%;"><code>SSL_SERVER_A_SIG<br>
       </code></td>
       <td style="vertical-align: top;">Algorithm used for the signature
-of&nbsp; the server key</td>
+of the server key</td>
     </tr>
     <tr>
       <td style="vertical-align: top; width: 45%;"><code>SSL_SESSION_ID<br>
@@ -1323,6 +1320,7 @@ itself).<br>
   </tbody>
 </table>
 <br>
+
 <h1><a name="Database_Management"></a>Database Management</h1>
 NSS stores it's certificates and keys in a set of files referred to as
 the "certificate database." The files by default (with NSS 3.x) are
@@ -1456,21 +1454,19 @@ have NSS validate it:<br>
 <br>
 <code>% certutil -V -n Server-Cert -u V -d .<br>
 certutil: certificate is valid</code><br>
+
 <h1><a name="SSLv2"></a>Why is SSLv2 disabled?</h1>
-All major browsers (Firefox, Internet Explorer, Mozilla, Netscape,
-Opera, and
-Safari) support SSL 3 and TLS so there is no need for a web server to
-support
-SSL 2. There are some known attacks against SSL 2 that are handled by
-SSL 3/TLS. SSLv2 also doesn't support useful features like client
-authentication.
+All major browsers (Firefox, Internet Explorer, Mozilla, Netscape, Opera, and
+Safari) support SSL 3 and TLS so there is no need for a web server to support
+SSL 2. There are some known attacks against SSL 2 that are handled by SSL
+3/TLS. SSL2 also doesn't support useful features like client authentication.
 <br>
+
 <h1><a name="FAQ"></a>Frequently Asked Questions</h1>
 Q. Does mod_nss support mod_proxy?<br>
 <br>
 A. Yes but you need to make sure that mod_ssl is not loaded. mod_proxy
 provides a single interface for SSL providers and mod_nss defers to
-mod_ssl
-if it is loaded.
+mod_ssl if it is loaded.
 </body>
 </html>
