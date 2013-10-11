@@ -1,3 +1,41 @@
+2014-02-20  Rob Crittenden <rcritten@redhat.com
+    * Sync with Fedora builds which were basicaly the defacto upstream.
+    * Add nss_pcache man page
+    * Fix CVE-2013-4566
+    * Move nss_pcache to /usr/libexec
+    * Fix argument handling in nss_pcache
+
+2013-10-11  Tomas Hoger <thoger@redhat.com>
+    * Documentation formatting fixes
+
+2013-10-11  Rob Crittenden <rcritten@redhat.com>
+    * Only clear the SSL Session Cache when shutting the server down.
+
+2013-10-11  Matthew Harmsen <mharmsen@redhat.com>
+    * Add support for TLS v1.1
+
+2013-07-02  Matthew Harmsen <mharmsen@redhat.com>
+    * Add man page for nss_pcache, update man page for gencert
+
+2011-10-09  Rob Crittenden <rcritten@redhat.com>
+    * Fix static array overrun when generating arg list for nss_pcache
+
+2011-06-14  Rob Crittenden <rcritten@redhat.com>
+    * Always copy in client certificate and fix FakeBasicAuth
+
+    * When NSSOptions +FakeBasicAuth is set for a directory, and a
+      certificate is not provided with which the BasicAuth can be Faked,
+      and the client provides an Authorization header, the FakeBasicAuth
+      code in mod_nss may not properly reject an attempt to spoof.
+
+    * No need to shut things down if NSS isn't initialized.
+
+2011-03-02  Rob Crittenden <rcritten@redhat.com>
+    * Add semaphore lock around retrieving token PINs to avoid overruns.
+
+2011-02-03  Rob Crittenden <rcritten@redhat.com>
+    * Add man page for gencert
+
 2011-01-12  Rob Crittenden <rcritten@redhat.com>
     * Don't use memcpy as it may operate on overlapping memory (#669118)
       Patch ported from mod_ssl by Stephen Gallagher <sgallagh@redhat.com>
