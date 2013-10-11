@@ -903,8 +903,25 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
      *  Configure SSL Cipher Suite
      */
     if (!suite) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                     "Required value NSSCipherSuite not set.");
+        /*
+         * Since this is a 'fatal' error, regardless of whether this
+         * particular invocation is from a 'server' object or a 'proxy'
+         * object, issue all error message(s) as appropriate.
+         */
+        if ((mctx->sc->enabled == TRUE) &&
+            (mctx->sc->server) &&
+            (!mctx->sc->server->auth.cipher_suite)) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "NSSEngine on; required value NSSCipherSuite not set.");
+        }
+
+        if ((mctx->sc->proxy_enabled == TRUE) &&
+            (mctx->sc->proxy) &&
+            (!mctx->sc->proxy->auth.cipher_suite)) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "NSSProxyEngine on; required value NSSProxyCipherSuite not set.");
+        }
+
         nss_die();
     }
 
@@ -1206,8 +1223,25 @@ static void nss_init_server_certs(server_rec *s,
         if (mctx->nickname == NULL)
 #endif
         {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "No certificate nickname provided.");
+            /*
+             * Since this is a 'fatal' error, regardless of whether this
+             * particular invocation is from a 'server' object or a 'proxy'
+             * object, issue all error message(s) as appropriate.
+             */
+            if ((mctx->sc->enabled == TRUE) &&
+                (mctx->sc->server) &&
+                (mctx->sc->server->nickname == NULL)) {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                    "NSSEngine on; no certificate nickname provided by NSSNickname.");
+            }
+
+            if ((mctx->sc->proxy_enabled == TRUE) &&
+                (mctx->sc->proxy) &&
+                (mctx->sc->proxy->nickname == NULL)) {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                    "NSSProxyEngine on; no certificate nickname provided by NSSProxyNickname.");
+            }
+
             nss_die();
         }
 
