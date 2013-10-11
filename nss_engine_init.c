@@ -1241,9 +1241,6 @@ apr_status_t nss_init_ChildKill(void *data)
     server_rec *s;
     int shutdown = 0;
 
-    /* Clear any client-side session cache data */
-    SSL_ClearSessionCache();
-
     /*
      * Free the non-pool allocated structures
      * in the per-server configurations
@@ -1286,6 +1283,9 @@ apr_status_t nss_init_ChildKill(void *data)
     }
 
     if (shutdown) {
+        /* Clear any client-side session cache data */
+        SSL_ClearSessionCache();
+
         if (CERT_DisableOCSPDefaultResponder(CERT_GetDefaultCertDB())
             != SECSuccess) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
