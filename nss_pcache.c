@@ -318,7 +318,7 @@ int main(int argc, char ** argv)
     union semun semarg;
 
     if (argc < 4 || argc > 5) {
-        fprintf(stderr, "Usage: nss_pcache <fips on/off> <directory> <prefix>\n");
+        fprintf(stderr, "Usage: nss_pcache <semid> <fips on/off> <directory> <prefix>\n");
         exit(1);
     }
 
