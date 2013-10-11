@@ -722,8 +722,12 @@ static char *nss_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c)
                 case SSL_LIBRARY_VERSION_3_0:
                     result = "SSLv3";
                     break;
-                case SSL_LIBRARY_VERSION_3_1_TLS:
+                case SSL_LIBRARY_VERSION_TLS_1_0:
+                    /* 'TLSv1' has been deprecated; specify 'TLSv1.0' */
                     result = "TLSv1";
+                    break;
+                case SSL_LIBRARY_VERSION_TLS_1_1:
+                    result = "TLSv1.1";
                     break;
             }
         }

@@ -466,7 +466,7 @@ Example</span><br style="font-weight: bold;">
 <br>
 Enables or disables FIPS 140 mode. This replaces the standard
 internal PKCS#11 module with a FIPS-enabled one. It also forces the
-enabled protocols to TLSv1 and disables all ciphers but the
+enabled protocols to TLSv1.1 and TLS v1.0 and disables all ciphers but the
 FIPS ones. You may still select which ciphers you would like
 limited to those that are FIPS-certified. Any non-FIPS that are
 included in the NSSCipherSuite entry are automatically disabled.
@@ -570,7 +570,7 @@ definition<br>
       </td>
       <td style="vertical-align: top;">SSL_RSA_WITH_3DES_EDE_CBC_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1<br>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1<br>
       </td>
     </tr>
     <tr>
@@ -578,106 +578,106 @@ definition<br>
       </td>
       <td style="vertical-align: top;">SSL_RSA_WITH_DES_CBC_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_null_md5<br>
       </td>
       <td style="vertical-align: top;">SSL_RSA_WITH_NULL_MD5<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_null_sha<br>
       </td>
       <td style="vertical-align: top;">SSL_RSA_WITH_NULL_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_rc2_40_md5</td>
       <td style="vertical-align: top;">SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_rc4_128_md5</td>
       <td style="vertical-align: top;">SSL_RSA_WITH_RC4_128_MD5<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_rc4_128_sha</td>
       <td style="vertical-align: top;">SSL_RSA_WITH_RC4_128_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_rc4_40_md5</td>
       <td style="vertical-align: top;">SSL_RSA_EXPORT_WITH_RC4_40_MD5<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">fortezza<br>
       </td>
       <td style="vertical-align: top;">SSL_FORTEZZA_DMS_WITH_FORTEZZA_CBC_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">fortezza_rc4_128_sha<br>
       </td>
       <td style="vertical-align: top;">SSL_FORTEZZA_DMS_WITH_RC4_128_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">fortezza_null<br>
       </td>
       <td style="vertical-align: top;">SSL_FORTEZZA_DMS_WITH_NULL_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">fips_des_sha<br>
       </td>
       <td style="vertical-align: top;">SSL_RSA_FIPS_WITH_DES_CBC_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">fips_3des_sha<br>
       </td>
       <td style="vertical-align: top;">SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_des_56_sha</td>
       <td style="vertical-align: top;">TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSL3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_rc4_56_sha</td>
       <td style="vertical-align: top;">TLS_RSA_EXPORT1024_WITH_RC4_56_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_aes_128_sha<br>
       </td>
       <td style="vertical-align: top;">TLS_RSA_WITH_AES_128_CBC_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_aes_256_sha<br>
       </td>
       <td style="vertical-align: top;">TLS_RSA_WITH_AES_256_CBC_SHA<br>
       </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1</td>
+      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1</td>
     </tr>
   </tbody>
 </table>
@@ -698,127 +698,127 @@ Definition<br>
     <tr>
       <td>ecdh_ecdsa_null_sha</td>
       <td>TLS_ECDH_ECDSA_WITH_NULL_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_ecdsa_rc4_128_sha</td>
       <td>TLS_ECDH_ECDSA_WITH_RC4_128_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_ecdsa_3des_sha</td>
       <td>TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_ecdsa_aes_128_sha</td>
       <td>TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_ecdsa_aes_256_sha</td>
       <td>TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdhe_ecdsa_null_sha</td>
       <td>TLS_ECDHE_ECDSA_WITH_NULL_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdhe_ecdsa_rc4_128_sha</td>
       <td>TLS_ECDHE_ECDSA_WITH_RC4_128_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdhe_ecdsa_3des_sha</td>
       <td>TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdhe_ecdsa_aes_128_sha</td>
       <td>TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdhe_ecdsa_aes_256_sha</td>
       <td>TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_rsa_null_sha</td>
       <td>TLS_ECDH_RSA_WITH_NULL_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_rsa_128_sha</td>
       <td>TLS_ECDH_RSA_WITH_RC4_128_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_rsa_3des_sha</td>
       <td>TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_rsa_aes_128_sha</td>
       <td>TLS_ECDH_RSA_WITH_AES_128_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_rsa_aes_256_sha</td>
       <td>TLS_ECDH_RSA_WITH_AES_256_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>echde_rsa_null</td>
       <td>TLS_ECDHE_RSA_WITH_NULL_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdhe_rsa_rc4_128_sha</td>
       <td>TLS_ECDHE_RSA_WITH_RC4_128_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdhe_rsa_3des_sha</td>
       <td>TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdhe_rsa_aes_128_sha</td>
       <td>TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdhe_rsa_aes_256_sha</td>
       <td>TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_anon_null_sha</td>
       <td>TLS_ECDH_anon_WITH_NULL_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_anon_rc4_128sha</td>
       <td>TLS_ECDH_anon_WITH_RC4_128_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_anon_3des_sha</td>
       <td>TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_anon_aes_128_sha</td>
       <td>TLS_ECDH_anon_WITH_AES_128_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
     <tr>
       <td>ecdh_anon_aes_256_sha</td>
       <td>TLS_ECDH_anon_WITH_AES_256_CBC_SHA</td>
-      <td>TLSv1</td>
+      <td>TLSv1.0/TLSv1.1</td>
     </tr>
   </tbody>
 </table>
@@ -839,16 +839,35 @@ specifically but allows ciphers for that protocol to be used at all.<br>
 Options are:<br>
 <ul>
   <li><code>SSLv3</code></li>
-  <li><code>TLSv1</code></li>
+  <li><code>TLSv1 (legacy only; replaced by TLSv1.0)</code></li>
+  <li><code>TLSv1.0</code></li>
+  <li><code>TLSv1.1</code></li>
   <li><code>All</code></li>
 </ul>
 Note that this differs from mod_ssl in that you can't add or subtract
 protocols.<br>
+<br>
+If no NSSProtocol is specified, mod_nss will default to allowing the use of
+the SSLv3, TLSv1.0, and TLSv1.1 protocols, where SSLv3 will be set to be the
+minimum protocol allowed, and TLSv1.1 will be set to be the maximum protocol
+allowed.
+<br>
+If values for NSSProtocol are specified, mod_nss will set both the minimum
+and the maximum allowed protocols based upon these entries allowing for the
+inclusion of every protocol in-between. For example, if only SSLv3 and TLSv1.1
+are specified, SSLv3, TLSv1.0, and TLSv1.1 will all be allowed, as NSS utilizes
+protocol ranges to accept all protocols inclusively
+(TLS 1.1 -> TLS 1.0 -> SSL 3.0), and does not allow exclusion of any protocols
+in the middle of a range (e. g. - TLS 1.0).<br>
+<br>
+Finally, NSS will always automatically negotiate the use of the strongest
+possible protocol that has been specified which is acceptable to both sides of
+a given connection.<br>
 <a href="#SSLv2">SSLv2</a> is not supported by default at this time.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>NSSProtocol SSLv3,TLSv1</code><br>
+<code>NSSProtocol SSLv3,TLSv1.0,TLSv1.1</code><br>
 <br>
 <big><big>NSSNickname<br>
 </big></big><br>
@@ -1101,7 +1120,7 @@ was compiled against.<br>
     <tr>
       <td style="vertical-align: top; width: 45%;"><code>SSL_PROTOCOL<br>
       </code></td>
-      <td style="vertical-align: top;">SSLv2, SSLv3 or TLSv1<br>
+      <td style="vertical-align: top;">SSLv2, SSLv3, TLSv1.0, or TLSv1.1<br>
       </td>
     </tr>
     <tr>
@@ -1443,7 +1462,7 @@ Opera, and
 Safari) support SSL 3 and TLS so there is no need for a web server to
 support
 SSL 2. There are some known attacks against SSL 2 that are handled by
-SSL 3/TLS. SSL2 also doesn't support useful features like client
+SSL 3/TLS. SSLv2 also doesn't support useful features like client
 authentication.
 <br>
 <h1><a name="FAQ"></a>Frequently Asked Questions</h1>

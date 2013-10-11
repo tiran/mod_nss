@@ -616,49 +616,97 @@ static void nss_init_ctx_protocol(server_rec *s,
                                   apr_pool_t *ptemp,
                                   modnss_ctx_t *mctx)
 {
-    int ssl2, ssl3, tls;
+    int ssl2, ssl3, tls, tls1_1;
+    char *protocol_marker = NULL;
     char *lprotocols = NULL;
     SECStatus stat;
+    SSLVersionRange enabledVersions;
 
-    ssl2 = ssl3 = tls = 0;
+    ssl2 = ssl3 = tls = tls1_1 = 0;
+
+    /*
+     * Since this routine will be invoked individually for every thread
+     * associated with each 'server' object as well as for every thread
+     * associated with each 'proxy' object, identify the protocol marker
+     * ('NSSProtocol' for 'server' versus 'NSSProxyProtocol' for 'proxy')
+     * via each thread's object type and apply this useful information to
+     * all log messages.
+     */
+    if (mctx == mctx->sc->server) {
+        protocol_marker = "NSSProtocol";
+    } else if (mctx == mctx->sc->proxy) {
+        protocol_marker = "NSSProxyProtocol";
+    }
 
     if (mctx->sc->fips) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "In FIPS mode, enabling TLSv1");
-        tls = 1;
+            "In FIPS mode ignoring %s list, enabling TLSv1.0 and TLSv1.1",
+            protocol_marker);
+        tls = tls1_1 = 1;
     } else {
         if (mctx->auth.protocols == NULL) {
             ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                "NSSProtocols not set; using: SSLv3 and TLSv1");
-            ssl3 = tls = 1;
+                "%s value not set; using: SSLv3, TLSv1.0, and TLSv1.1",
+                protocol_marker);
+            ssl3 = tls = tls1_1 = 1;
         } else {
             lprotocols = strdup(mctx->auth.protocols);
             ap_str_tolower(lprotocols);
 
             if (strstr(lprotocols, "all") != NULL) {
 #ifdef WANT_SSL2
-                ssl2 = ssl3 = tls = 1;
+                ssl2 = ssl3 = tls = tls1_1 = 1;
 #else
-                ssl3 = tls = 1;
+                ssl3 = tls = tls1_1 = 1;
 #endif
             } else {
-                if (strstr(lprotocols, "sslv2") != NULL) {
+                char *protocol_list = NULL;
+                char *saveptr = NULL;
+                char *token = NULL;
+
+                for (protocol_list = lprotocols; ; protocol_list = NULL) {
+                    token = strtok_r(protocol_list, ",", &saveptr);
+                    if (token == NULL) {
+                        break;
+                    } else if (strcmp(token, "sslv2") == 0) {
 #ifdef WANT_SSL2
-                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling SSL2");
-                    ssl2 = 1;
+                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                     "%s:  Enabling SSL2",
+                                     protocol_marker);
+                        ssl2 = 1;
 #else
-                    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s, "SSL2 is not supported");
+                        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                                     "%s:  SSL2 is not supported",
+                                     protocol_marker);
 #endif
-                }
-
-                if (strstr(lprotocols, "sslv3") != NULL) {
-                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling SSL3");
-                    ssl3 = 1;
-                }
-
-                if (strstr(lprotocols, "tlsv1") != NULL) {
-                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "Enabling TLS");
-                    tls = 1;
+                    } else if (strcmp(token, "sslv3") == 0) {
+                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                     "%s:  Enabling SSL3",
+                                     protocol_marker);
+                        ssl3 = 1;
+                    } else if (strcmp(token, "tlsv1") == 0) {
+                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                     "%s:  Enabling TLSv1.0 via TLSv1",
+                                     protocol_marker);
+                        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                                     "%s:  The 'TLSv1' protocol name has been deprecated; please change 'TLSv1' to 'TLSv1.0'.",
+                                     protocol_marker);
+                        tls = 1;
+                    } else if (strcmp(token, "tlsv1.0") == 0) {
+                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                     "%s:  Enabling TLSv1.0",
+                                     protocol_marker);
+                        tls = 1;
+                    } else if (strcmp(token, "tlsv1.1") == 0) {
+                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                     "%s:  Enabling TLSv1.1",
+                                     protocol_marker);
+                        tls1_1 = 1;
+                    } else {
+                        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
+                                     "%s:  Unknown protocol '%s' not supported",
+                                     protocol_marker, token);
+                    }
                 }
             }
             free(lprotocols);
@@ -673,31 +721,98 @@ static void nss_init_ctx_protocol(server_rec *s,
         stat = SSL_OptionSet(mctx->model, SSL_ENABLE_SSL2, PR_FALSE);
     }
 
+    /* Set protocol version ranges:
+     *
+     *     (1) Set the minimum protocol accepted
+     *     (2) Set the maximum protocol accepted
+     *     (3) Protocol ranges extend from maximum down to minimum protocol
+     *     (4) All protocol ranges are completely inclusive;
+     *         no protocol in the middle of a range may be excluded
+     *     (5) NSS automatically negotiates the use of the strongest protocol
+     *         for a connection starting with the maximum specified protocol
+     *         and downgrading as necessary to the minimum specified protocol
+     *
+     * For example, if SSL 3.0 is chosen as the minimum protocol, and
+     * TLS 1.1 is chosen as the maximum protocol, SSL 3.0, TLS 1.0, and
+     * TLS 1.1 will all be accepted as protocols, as TLS 1.0 will not and
+     * cannot be excluded from this range. NSS will automatically negotiate
+     * to utilize the strongest acceptable protocol for a connection starting
+     * with the maximum specified protocol and downgrading as necessary to the
+     * minimum specified protocol (TLS 1.1 -> TLS 1.0 -> SSL 3.0).
+     */
     if (stat == SECSuccess) {
+        /* Set minimum protocol version (lowest -> highest)
+         *
+         *     SSL 3.0 -> TLS 1.0 -> TLS 1.1
+         */
         if (ssl3 == 1) {
-            stat = SSL_OptionSet(mctx->model, SSL_ENABLE_SSL3, PR_TRUE);
+            enabledVersions.min = SSL_LIBRARY_VERSION_3_0;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [SSL 3.0] (minimum)",
+                         protocol_marker);
+        } else if (tls == 1) {
+            enabledVersions.min = SSL_LIBRARY_VERSION_TLS_1_0;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [TLS 1.0] (minimum)",
+                         protocol_marker);
+        } else if (tls1_1 == 1) {
+            enabledVersions.min = SSL_LIBRARY_VERSION_TLS_1_1;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [TLS 1.1] (minimum)",
+                         protocol_marker);
         } else {
-            stat = SSL_OptionSet(mctx->model, SSL_ENABLE_SSL3, PR_FALSE);
+            /* Set default minimum protocol version to SSL 3.0 */
+            enabledVersions.min = SSL_LIBRARY_VERSION_3_0;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [SSL 3.0] (default minimum)",
+                         protocol_marker);
         }
-    }
-    if (stat == SECSuccess) {
-        if (tls == 1) {
-            stat = SSL_OptionSet(mctx->model, SSL_ENABLE_TLS, PR_TRUE);
+
+        /* Set maximum protocol version (highest -> lowest)
+         *
+         *     TLS 1.1 -> TLS 1.0 -> SSL 3.0
+         */
+        if (tls1_1 == 1) {
+            enabledVersions.max = SSL_LIBRARY_VERSION_TLS_1_1;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [TLS 1.1] (maximum)",
+                         protocol_marker);
+        } else if (tls == 1) {
+            enabledVersions.max = SSL_LIBRARY_VERSION_TLS_1_0;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [TLS 1.0] (maximum)",
+                         protocol_marker);
+        } else if (ssl3 == 1) {
+            enabledVersions.max = SSL_LIBRARY_VERSION_3_0;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [SSL 3.0] (maximum)",
+                         protocol_marker);
         } else {
-            stat = SSL_OptionSet(mctx->model, SSL_ENABLE_TLS, PR_FALSE);
+            /* Set default maximum protocol version to TLS 1.1 */
+            enabledVersions.max = SSL_LIBRARY_VERSION_TLS_1_1;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [TLS 1.1] (default maximum)",
+                         protocol_marker);
         }
+
+        stat = SSL_VersionRangeSet(mctx->model, &enabledVersions);
     }
 
     if (stat != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                "SSL protocol initialization failed.");
+                "%s:  SSL/TLS protocol initialization failed.",
+                protocol_marker);
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
 
     mctx->ssl2 = ssl2;
     mctx->ssl3 = ssl3;
-    mctx->tls = tls;
+    if (tls1_1 == 1) {
+        mctx->tls = tls1_1;
+    } else {
+        mctx->tls = tls;
+    }
 }
 
 static void nss_init_ctx_session_cache(server_rec *s,
@@ -778,6 +893,8 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
     PRBool cipher_state[ciphernum];
     PRBool fips_state[ciphernum];
     const char *suite = mctx->auth.cipher_suite; 
+    char * object_type = NULL;
+    char * cipher_suite_marker = NULL;
     char * ciphers;
     char * fipsciphers = NULL;
     int i;
@@ -790,6 +907,23 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
                      "Required value NSSCipherSuite not set.");
         nss_die();
     }
+
+    /*
+     * Since this routine will be invoked individually for every thread
+     * associated with each 'server' object as well as for every thread
+     * associated with each 'proxy' object, identify the cipher suite markers
+     * ('NSSCipherSuite' for 'server' versus 'NSSProxyCipherSuite' for 'proxy')
+     * via each thread's object type and apply this useful information to
+     * all log messages.
+     */
+    if (mctx == mctx->sc->server) {
+        object_type = "server";
+        cipher_suite_marker = "NSSCipherSuite";
+    } else if (mctx == mctx->sc->proxy) {
+        object_type = "proxy";
+        cipher_suite_marker = "NSSProxyCipherSuite";
+    }
+
     ciphers = strdup(suite);
 
 #define CIPHERSIZE 2048
@@ -824,13 +958,13 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
         }
 
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                 "FIPS mode enabled, permitted SSL ciphers are: [%s]",
-                 fipsciphers);
+            "FIPS mode enabled on this %s, permitted SSL ciphers are: [%s]",
+            object_type, fipsciphers);
     }
 
     ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                "Configuring permitted SSL ciphers [%s]",
-                 suite);
+                "%s:  Configuring permitted SSL ciphers [%s]",
+                 cipher_suite_marker, suite);
 
     /* Disable all NSS supported cipher suites. This is to prevent any new
      * NSS cipher suites from getting automatically and unintentionally
@@ -869,7 +1003,7 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
         for (i=0; i<ciphernum; i++) {
             if (cipher_state[i] == PR_TRUE && fips_state[i] == PR_FALSE) {
                 ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                    "Cipher %s is enabled but this is not a FIPS cipher, disabling.", ciphers_def[i].name);
+                    "Cipher %s is enabled for this %s, but this is not a FIPS cipher, disabling.", ciphers_def[i].name, object_type);
                 cipher_state[i] = PR_FALSE;
             }
         }
@@ -878,19 +1012,22 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
     /* See if any ciphers have been enabled for a given protocol */
     if (mctx->ssl2 && countciphers(cipher_state, SSL2) == 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-            "SSL2 is enabled but no SSL2 ciphers are enabled.");
+            "%s:  SSL2 is enabled but no SSL2 ciphers are enabled.",
+            cipher_suite_marker);
         nss_die();
     }
 
     if (mctx->ssl3 && countciphers(cipher_state, SSL3) == 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-            "SSL3 is enabled but no SSL3 ciphers are enabled.");
+            "%s:  SSL3 is enabled but no SSL3 ciphers are enabled.",
+            cipher_suite_marker);
         nss_die();
     }
 
     if (mctx->tls && countciphers(cipher_state, TLS) == 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-            "TLS is enabled but no TLS ciphers are enabled.");
+            "%s:  TLS is enabled but no TLS ciphers are enabled.",
+            cipher_suite_marker);
         nss_die();
     }
 
