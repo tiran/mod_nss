@@ -7,6 +7,7 @@ nss_pcache_SOURCES = nss_pcache.c
 
 man8_MANS =				\
 	gencert.8			\
+	nss_pcache.8			\
 	$(NULL)
 
 install-data-hook:
