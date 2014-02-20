@@ -318,7 +318,7 @@ int main(int argc, char ** argv)
     union semun semarg;
 
     if (argc < 4 || argc > 5) {
-        fprintf(stderr, "Usage: nss_pcache <semid> <fips on/off> <directory> <prefix>\n");
+        fprintf(stderr, "Usage: nss_pcache <semid> <fips on/off> <directory> [prefix]\n");
         exit(1);
     }
 
@@ -336,7 +336,7 @@ int main(int argc, char ** argv)
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
  
     /* Initialize NSS and open the certificate database read-only. */
-    rv = NSS_Initialize(argv[3], argc == 4 ? argv[4] : NULL, argc == 5 ? argv[4] : NULL, "secmod.db", NSS_INIT_READONLY);
+    rv = NSS_Initialize(argv[3], argc == 5 ? argv[4] : NULL, argc == 5 ? argv[4] : NULL, "secmod.db", NSS_INIT_READONLY);
 
     if (rv != SECSuccess) {
         fprintf(stderr, "Unable to initialize NSS database: %d\n", rv);
