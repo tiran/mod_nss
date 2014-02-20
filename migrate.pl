@@ -115,7 +115,8 @@ while (<SSL>) {
 }
 
 if ($passphrase == 0) {
-    print NSS "NSSPassPhraseHelper /usr/sbin/nss_pcache\n";
+    # NOTE:  Located at '/usr/sbin/nss_pcache' prior to 'mod_nss-1.0.9'.
+    print NSS "NSSPassPhraseHelper /usr/libexec/nss_pcache\n";
 }
 
 close(NSS);
