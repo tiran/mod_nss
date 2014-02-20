@@ -33,6 +33,7 @@
 <a href="#Database_Management">Database Management</a><br>
 <a href="#SSLv2">Why is SSLv2 disabled?</a><br>
 <a href="#FAQ">Frequently Asked Questions</a><br>
+<a href="#Sample_Use_Cases">Sample Use Cases</a><br>
 
 <h1><a name="Introduction"></a>Introduction</h1>
 The <a href="http://www.modssl.org/">mod_ssl</a> package was
@@ -1056,7 +1057,7 @@ man-in-the-middle attack so leaving this as on is strongly recommended.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
-<code>NSSProcyCheckPeerCN on</code><br>
+<code>NSSProxyCheckPeerCN on</code><br>
 <br>
 
 <h1><a name="Environment"></a>Environment Variables</h1>
@@ -1467,6 +1468,300 @@ Q. Does mod_nss support mod_proxy?<br>
 <br>
 A. Yes but you need to make sure that mod_ssl is not loaded. mod_proxy
 provides a single interface for SSL providers and mod_nss defers to
-mod_ssl if it is loaded.
+mod_ssl if it is loaded.<br>
+
+<h1><a name="Sample_Use_Cases"></a>Sample Use Cases</h1>
+<h2>I. Restart Apache using the NSS Internal Software Token</h2>
+<ul>
+1. Become the <b>root</b> user.<br>
+<br>
+2. Install mod_nss.<br>
+<br>
+3. This use case will utilize the NSS security databases created during installation of mod_nss:<br>
+<br>
+<ul>
+<code>
+# certutil -L -d /etc/httpd/alias<br>
+<pre>
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+
+cacert                                                       CTu,Cu,Cu
+Server-Cert                                                  u,u,u
+alpha                                                        u,pu,u
+</pre>
+</code>
+<table>
+<tr>
+<td valign="top"><b>NOTE:&nbsp;&nbsp; </b></td>
+<td valign="top">For actual deployments, the administrator should setup their own NSS security databases (e. g. - replace the default mod_nss NSS security databases located in <code>/etc/httpd/alias</code>), populate them with the appropriate certificates set with the proper trust attributes, and apply any changes necessary to the <code>/etc/httpd/conf.d/nss.conf</code> file such that mod_nss uses these NSS security databases.</td>
+</tr>
+</table>
+<br>
+</ul>
+4. Use <code>certutil</code> to apply a password to the NSS security databases configured in step 3 above:<br>
+<br>
+<ul>
+<code>
+# certutil -W -d /etc/httpd/alias<br>
+Enter Password or Pin for "NSS Certificate DB":<br>
+Enter a password which will be used to encrypt your keys.<br>
+The password should be at least 8 characters long,<br>
+and should contain at least one non-alphabetic character.<br>
+<br>
+Enter new password:<br>
+Re-enter password:<br>
+Password changed successfully.<br>
+</code>
+</ul>
+<br>
+5. Configure mod_nss to use the NSS internal software token:<br>
+<br>
+<ul>
+Edit <code>/etc/httpd/conf.d/nss.conf</code>:<br>
+<br>
+<ul>
+Replace:<br>
+<ul>
+<code>NSSPassPhraseDialog builtin</code><br>
+</ul>
+with:<br>
+<ul>
+<code>NSSPassPhraseDialog file:/etc/httpd/password.conf</code>
+</ul>
+<br>
+<ul>
+<table>
+<tr>
+<td valign="top"><b>NOTE:&nbsp;&nbsp; </b></td>
+<td valign="top">Whenever <code>httpd</code> is invoked as a service/systemd process, the <code>NSSPassPhraseDialog builtin</code> parameter must be changed to point to a file URL in order to allow mod_nss to work with the Apache web server.  This is because the mod_nss test for issuing the password prompt <code>Please enter password for "internal" token:</code> on the command line is only displayed when the command <code>isatty(fileno(stdin))</code> is set to 'true', and when the command is entered from this type of invocation the value is 'false'.  In order to see the prompt, one can set the <code>NSSPassPhraseDialog builtin</code> parameter and invoke <code>httpd -D FOREGROUND</code> from the command line.</td>
+</tr>
+</table>
+</ul>
+<br>
+If the SSL Server Certificate contained in the NSS security database is an RSA certificate, make certain that the <code>NSSNickname</code> parameter is uncommented and matches the nickname displayed in step 3 above:<br>
+<ul>
+<code>NSSNickname Server-Cert</code>
+</ul>
+<br>
+If the SSL Server Certificate contained in the NSS security database is an ECC certificate, make certain that the <code>NSSECCNickname</code> parameter is uncommented and matches the nickname displayed in step 3 above:<br>
+<ul>
+<code>NSSECCNickname Server-Cert</code>
+</ul>
+<br>
+Make certain that the <code>NSSCertificateDatabase</code> parameter is uncommented and points to the NSS security databases directory configured in step 3 above:<br>
+<ul>
+<code>NSSCertificateDatabase /etc/httpd/alias</code>
+</ul>
+</ul>
+<br>
+Create the <code>/etc/httpd/password.conf</code> file:<br>
+<br>
+<ul>
+Add:<br>
+<ul>
+<code>internal:&lt;password&gt;</code><br>
+</ul>
+Replacing '&lt;password&gt;' with the password that was applied to the NSS security databases in step 4 above.<br>
+</ul>
+<br>
+Apply the appropriate ownership and permissions to the <code>/etc/httpd/password.conf</code> file:<br>
+<br>
+<ul>
+<code># chgrp apache /etc/httpd/password.conf</code><br>
+<br>
+<code># chmod 640 /etc/httpd/password.conf</code><br>
+<br>
+<code>
+# ls -l /etc/httpd/password.conf<br>
+-rw-r-----. 1 root apache 18 Nov 27 14:05 /etc/httpd/password.conf<br>
+</code>
+<br>
+</ul>
+</ul>
+6. Restart the Apache server:<br>
+<br>
+<ul>
+<code>
+# service httpd restart<br>
+Redirecting to /bin/systemctl restart  httpd.service<br>
+</code>
+<code>
+<pre>
+# service httpd status
+Redirecting to /bin/systemctl status  httpd.service
+httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
+   Active: active (running) since Wed 2013-11-27 15:25:48 PST; 1min 11s ago
+  Process: 20804 ExecStop=/bin/kill -WINCH ${MAINPID} (code=exited, status=0/SUCCESS)
+ Main PID: 20807 (httpd)
+   Status: "Total requests: 0; Current requests/sec: 0; Current traffic:   0 B/sec"
+   CGroup: name=systemd:/system/httpd.service
+           |_____20807 /usr/sbin/httpd -DFOREGROUND
+           |_____20808 /usr/libexec/nss_pcache 10027086 off /etc/httpd/alias
+           |_____20809 /usr/sbin/httpd -DFOREGROUND
+           |_____20810 /usr/sbin/httpd -DFOREGROUND
+           |_____20811 /usr/sbin/httpd -DFOREGROUND
+           |_____20812 /usr/sbin/httpd -DFOREGROUND
+           |_____20813 /usr/sbin/httpd -DFOREGROUND
+
+Nov 27 15:25:48 server.example.com systemd[1]: Started The Apache HTTP Server.
+</pre>
+</code>
+</ul>
+</ul>
+<h2>II. Restart Apache using the NSS FIPS Software Token</h2>
+<ul>
+1. Become the <b>root</b> user.<br>
+<br>
+2. Install mod_nss.<br>
+<br>
+3. This use case will utilize the NSS security databases created during installation of mod_nss:<br>
+<br>
+<ul>
+<code>
+# certutil -L -d /etc/httpd/alias<br>
+<pre>
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+
+cacert                                                       CTu,Cu,Cu
+Server-Cert                                                  u,u,u
+alpha                                                        u,pu,u
+</pre>
+</code>
+<table>
+<tr>
+<td valign="top"><b>NOTE:&nbsp;&nbsp; </b></td>
+<td valign="top">For actual deployments, the administrator should setup their own NSS security databases (e. g. - replace the default mod_nss NSS security databases located in <code>/etc/httpd/alias</code>), populate them with the appropriate certificates set with the proper trust attributes, and apply any changes necessary to the <code>/etc/httpd/conf.d/nss.conf</code> file such that mod_nss uses these NSS security databases.</td>
+</tr>
+</table>
+<br>
+</ul>
+4. Use <code>certutil</code> to apply a password to the NSS security databases configured in step 3 above:<br>
+<br>
+<ul>
+<code>
+# certutil -W -d /etc/httpd/alias<br>
+Enter Password or Pin for "NSS Certificate DB":<br>
+Enter a password which will be used to encrypt your keys.<br>
+The password should be at least 8 characters long,<br>
+and should contain at least one non-alphabetic character.<br>
+<br>
+Enter new password:<br>
+Re-enter password:<br>
+Password changed successfully.<br>
+</code>
+</ul>
+<br>
+5. Configure mod_nss to use the NSS FIPS software token:<br>
+<br>
+<ul>
+Edit <code>/etc/httpd/conf.d/nss.conf</code>:<br>
+<br>
+<ul>
+Replace:<br>
+<ul>
+<code>NSSPassPhraseDialog builtin</code><br>
+</ul>
+with:<br>
+<ul>
+<code>NSSPassPhraseDialog file:/etc/httpd/password.conf</code>
+</ul>
+<br>
+<ul>
+<table>
+<tr>
+<td valign="top"><b>NOTE:&nbsp;&nbsp; </b></td>
+<td valign="top">Whenever <code>httpd</code> is invoked as a service/systemd process, the <code>NSSPassPhraseDialog builtin</code> parameter must be changed to point to a file URL in order to allow mod_nss to work with the Apache web server.  This is because the mod_nss test for issuing the password prompt <code>Please enter password for "NSS FIPS 140-2 Certificate DB" token:</code> on the command line is only displayed when the command <code>isatty(fileno(stdin))</code> is set to 'true', and when the command is entered from this type of invocation the value is 'false'.  In order to see the prompt, one can set the <code>NSSPassPhraseDialog builtin</code> parameter and invoke <code>httpd -D FOREGROUND</code> from the command line.</td>
+</tr>
+</table>
+</ul>
+<br>
+To enable FIPS mode for mod_nss, add the following parameter:
+<ul>
+NSSFIPS on
+</ul>
+after the line marked:
+<ul>
+NSSEngine on
+</ul>
+<br>
+If the SSL Server Certificate contained in the NSS security database is an RSA certificate, make certain that the <code>NSSNickname</code> parameter is uncommented and matches the nickname displayed in step 3 above:<br>
+<ul>
+<code>NSSNickname Server-Cert</code>
+</ul>
+<br>
+If the SSL Server Certificate contained in the NSS security database is an ECC certificate, make certain that the <code>NSSECCNickname</code> parameter is uncommented and matches the nickname displayed in step 3 above:<br>
+<ul>
+<code>NSSECCNickname Server-Cert</code>
+</ul>
+<br>
+Make certain that the <code>NSSCertificateDatabase</code> parameter is uncommented and points to the NSS security databases directory configured in step 3 above:<br>
+<ul>
+<code>NSSCertificateDatabase /etc/httpd/alias</code>
+</ul>
+</ul>
+<br>
+Create the <code>/etc/httpd/password.conf</code> file:<br>
+<br>
+<ul>
+Add:<br>
+<ul>
+<code>NSS FIPS 140-2 Certificate DB:&lt;password&gt;</code><br>
+</ul>
+Replacing '&lt;password&gt;' with the password that was applied to the NSS security databases in step 4 above.<br>
+<br>
+<table>
+<tr>
+<td valign="top"><b>IMPORTANT:&nbsp;&nbsp; </b></td>
+<td valign="top">Notice that since the NSS FIPS software token is being used, the contents of the <code>/etc/httpd/password.conf</code> file references the password for the NSS FIPS software token (<code>NSS FIPS 140-2 Certificate DB:&lt;password&gt;</code>) rather than the NSS internal software token (<code>internal:&lt;password&gt;</code>).</td>
+</tr>
+</table>
+</ul>
+<br>
+Apply the appropriate ownership and permissions to the <code>/etc/httpd/password.conf</code> file:<br>
+<br>
+<ul>
+<code># chgrp apache /etc/httpd/password.conf</code><br>
+<br>
+<code># chmod 640 /etc/httpd/password.conf</code><br>
+<br>
+<code>
+# ls -l /etc/httpd/password.conf<br>
+-rw-r-----. 1 root apache 39 Nov 27 15:48 /etc/httpd/password.conf<br>
+</code>
+<br>
+</ul>
+</ul>
+6. Restart the Apache server:<br>
+<br>
+<ul>
+<code>
+# service httpd restart<br>
+Redirecting to /bin/systemctl restart  httpd.service<br>
+</code>
+<code>
+<pre>
+# service httpd status
+Redirecting to /bin/systemctl status  httpd.service
+httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
+   Active: active (running) since Wed 2013-11-27 16:26:07 PST; 4s ago
+  Process: 21296 ExecStop=/bin/kill -WINCH ${MAINPID} (code=exited, status=0/SUCCESS)
+ Main PID: 21299 (httpd)
+   Status: "Total requests: 0; Current requests/sec: 0; Current traffic:   0 B/sec"
+   CGroup: name=systemd:/system/httpd.service
+           |_____21299 /usr/sbin/httpd -DFOREGROUND
+           |_____21300 /usr/libexec/nss_pcache 10289231 on /etc/httpd/alias
+           |_____21340 /usr/sbin/httpd -DFOREGROUND
+           |_____21341 /usr/sbin/httpd -DFOREGROUND
+           |_____21342 /usr/sbin/httpd -DFOREGROUND
+
+Nov 27 16:26:07 server.example.com systemd[1]: Started The Apache HTTP Server.
+</pre>
+</code>
+</ul>
+</ul>
 </body>
 </html>
