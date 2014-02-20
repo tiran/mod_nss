@@ -280,7 +280,7 @@ int nss_hook_Access(request_rec *r)
 
         if (verify == SSL_CVERIFY_REQUIRE) {
             SSL_OptionSet(ssl, SSL_REQUEST_CERTIFICATE, PR_TRUE);
-            SSL_OptionSet(ssl, SSL_REQUIRE_CERTIFICATE, SSL_REQUIRE_NO_ERROR);
+            SSL_OptionSet(ssl, SSL_REQUIRE_CERTIFICATE, SSL_REQUIRE_ALWAYS);
         } else if (verify == SSL_CVERIFY_OPTIONAL) {
             SSL_OptionSet(ssl, SSL_REQUEST_CERTIFICATE, PR_TRUE);
             SSL_OptionSet(ssl, SSL_REQUIRE_CERTIFICATE, SSL_REQUIRE_NEVER);
