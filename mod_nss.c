@@ -192,6 +192,9 @@ static SSLConnRec *nss_init_connection_ctx(conn_rec *c)
     return sslconn;
 }
 
+static APR_OPTIONAL_FN_TYPE(ssl_proxy_enable) *othermod_proxy_enable;
+static APR_OPTIONAL_FN_TYPE(ssl_engine_disable) *othermod_engine_disable;
+
 int nss_proxy_enable(conn_rec *c)
 {
     SSLSrvConfigRec *sc = mySrvConfig(c->base_server);
@@ -199,6 +202,12 @@ int nss_proxy_enable(conn_rec *c)
     SSLConnRec *sslconn = nss_init_connection_ctx(c);
 
     if (!sc->proxy_enabled) {
+        if (othermod_proxy_enable) {
+            ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, c,
+                          "mod_nss proxy not configured, passing through to mod_ssl module");
+            return othermod_proxy_enable(c);
+        }
+
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, c->base_server,
                      "SSL Proxy requested for %s but not enabled "
                      "[Hint: NSSProxyEngine]", sc->vhost_id);
@@ -212,7 +221,7 @@ int nss_proxy_enable(conn_rec *c)
     return 1;
 }
 
-int ssl_proxy_enable(conn_rec *c) {
+static int ssl_proxy_enable(conn_rec *c) {
     return nss_proxy_enable(c);
 }
 
@@ -221,6 +230,10 @@ int nss_engine_disable(conn_rec *c)
     SSLSrvConfigRec *sc = mySrvConfig(c->base_server);
 
     SSLConnRec *sslconn;
+
+    if (othermod_engine_disable) {
+        othermod_engine_disable(c);
+    }
 
     if (sc->enabled == FALSE) {
         return 0;
@@ -233,7 +246,7 @@ int nss_engine_disable(conn_rec *c)
     return 1;
 }
 
-int ssl_engine_disable(conn_rec *c) {
+static int ssl_engine_disable(conn_rec *c) {
     return nss_engine_disable(c);
 }
 
@@ -455,14 +468,17 @@ static void nss_register_hooks(apr_pool_t *p)
 
     nss_var_register();
 
+    /* Always register these mod_nss optional functions */
     APR_REGISTER_OPTIONAL_FN(nss_proxy_enable);
     APR_REGISTER_OPTIONAL_FN(nss_engine_disable);
 
-    /* If mod_ssl is not loaded then mod_nss can work with mod_proxy */
-    if (APR_RETRIEVE_OPTIONAL_FN(ssl_proxy_enable) == NULL)
-        APR_REGISTER_OPTIONAL_FN(ssl_proxy_enable);
-    if (APR_RETRIEVE_OPTIONAL_FN(ssl_engine_disable) == NULL)
-        APR_REGISTER_OPTIONAL_FN(ssl_engine_disable);
+    /* Save the state of any previously registered mod_ssl functions */
+    othermod_proxy_enable = APR_RETRIEVE_OPTIONAL_FN(ssl_proxy_enable);
+    othermod_engine_disable = APR_RETRIEVE_OPTIONAL_FN(ssl_engine_disable);
+
+    /* Always register these local mod_ssl optional functions */
+    APR_REGISTER_OPTIONAL_FN(ssl_proxy_enable);
+    APR_REGISTER_OPTIONAL_FN(ssl_engine_disable);
 }
 
 module AP_MODULE_DECLARE_DATA nss_module = {
