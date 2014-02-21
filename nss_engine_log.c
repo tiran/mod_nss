@@ -321,7 +321,7 @@ void nss_die(void)
     exit(1); 
 }
 
-void nss_log_nss_error(const char *file, int line, int level, server_rec *s)
+void nss_log_nss_error(const char *file, int line, int module_index, int level, server_rec *s)
 {
     const char *err;
     PRInt32 error;
@@ -340,7 +340,7 @@ void nss_log_nss_error(const char *file, int line, int level, server_rec *s)
          err = "Unknown";
     }
 
-    ap_log_error(file, line, level, 0, s,
+    ap_log_error(file, line, module_index, level, 0, s,
                  "SSL Library Error: %d %s",
                  error, err);
 }

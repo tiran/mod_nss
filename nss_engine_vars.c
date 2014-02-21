@@ -196,7 +196,7 @@ char *nss_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
                  && sslconn && sslconn->ssl)
             result = nss_var_lookup_ssl(p, c, var+4);
         else if (strcEQ(var, "REMOTE_ADDR"))
-            result = c->remote_ip;
+            result = c->client_ip;
         else if (strcEQ(var, "HTTPS")) {
             if (sslconn && sslconn->ssl)
                 result = "on";
@@ -212,7 +212,7 @@ char *nss_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
         if (strlen(var) > 12 && strcEQn(var, "SSL_VERSION_", 12))
             result = nss_var_lookup_nss_version(p, var+12);
         else if (strcEQ(var, "SERVER_SOFTWARE"))
-            result = (char *)ap_get_server_version();
+            result = (char *)ap_get_server_banner();
         else if (strcEQ(var, "API_VERSION")) {
             result = apr_psprintf(p, "%d", MODULE_MAGIC_NUMBER);
             resdup = FALSE;

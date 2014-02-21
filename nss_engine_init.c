@@ -15,7 +15,7 @@
 
 #include "mod_nss.h"
 #include "apr_thread_proc.h"
-#include "ap_mpm.h"
+#include "mpm_common.h"
 #include "secmod.h"
 #include "sslerr.h"
 #include "pk11func.h"

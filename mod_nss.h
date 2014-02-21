@@ -28,7 +28,6 @@
 #include "mod_ssl.h"
 #include "util_script.h"
 #include "util_filter.h"
-#include "mpm.h"
 #include "apr.h"
 #include "apr_strings.h"
 #define APR_WANT_STRFUNC
@@ -481,7 +480,7 @@ int nss_rand_seed(server_rec *s, apr_pool_t *p, ssl_rsctx_t nCtx, char *prefix);
 SECStatus nss_Init_Tokens(server_rec *s);
 
 /* Logging */
-void nss_log_nss_error(const char *file, int line, int level, server_rec *s);
+void nss_log_nss_error(const char *file, int line, int module_index, int level, server_rec *s);
 void nss_die(void);
 
 /* NSS callback */

@@ -621,13 +621,13 @@ static apr_status_t nss_filter_io_shutdown(nss_filter_ctx_t *filter_ctx,
     PR_Close(ssl);
 
     /* log the fact that we've closed the connection */
-    if (c->base_server->loglevel >= APLOG_INFO) {
+    if (c->base_server->log.level >= APLOG_INFO) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, c->base_server,
                      "Connection to child %ld closed "
                      "(server %s, client %s)",
                      c->id,
                      nss_util_vhostid(c->pool, c->base_server),
-                     c->remote_ip ? c->remote_ip : "unknown");
+                     c->client_ip ? c->client_ip : "unknown");
     }
 
     /* deallocate the SSL connection */
@@ -1165,7 +1165,7 @@ static PRStatus PR_CALLBACK nspr_filter_getpeername(PRFileDesc *fd, PRNetAddr *a
     filter_ctx = (nss_filter_ctx_t *)(fd->secret);
     c = filter_ctx->c;
 
-    return PR_StringToNetAddr(c->remote_ip, addr);
+    return PR_StringToNetAddr(c->client_ip, addr);
 }
 
 /* 

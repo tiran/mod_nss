@@ -73,7 +73,7 @@ int nss_hook_ReadReq(request_rec *r)
     /*
      * Log information about incoming HTTPS requests
      */
-    if (r->server->loglevel >= APLOG_INFO && ap_is_initial_req(r)) {
+    if (r->server->log.level >= APLOG_INFO && ap_is_initial_req(r)) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
                      "%s HTTPS request received for child %ld (server %s)",
                      (r->connection->keepalives <= 0 ?
@@ -530,7 +530,7 @@ int nss_hook_Access(request_rec *r)
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
                          "Access to %s denied for %s "
                          "(requirement expression not fulfilled)",
-                         r->filename, r->connection->remote_ip);
+                         r->filename, r->connection->client_ip);
 
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
                          "Failed expression: %s", req->cpExpr);

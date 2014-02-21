@@ -4,6 +4,7 @@
     * Fix CVE-2013-4566
     * Move nss_pcache to /usr/libexec
     * Fix argument handling in nss_pcache
+    * Support httpd 2.4+
 
 2013-10-11  Tomas Hoger <thoger@redhat.com>
     * Documentation formatting fixes
