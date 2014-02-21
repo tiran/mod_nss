@@ -1355,13 +1355,10 @@ nss_AuthCertificate(void *arg, PRFileDesc *socket,
                   PRBool checksig, PRBool isServer)
 {
     SECStatus           status;
-    nss_filter_ctx_t   *filter_ctx;
 
     if (!arg || !socket) {
         return SECFailure;
     }
-
-    filter_ctx = (nss_filter_ctx_t *)(socket->lower->secret);
 
     status = SSL_AuthCertificate(arg, socket, checksig, isServer);
 
