@@ -1,0 +1,31 @@
+configure
+config.h
+config.h.in
+Makefile
+Makefile.in
+.deps/
+.libs/
+*.la
+*.lo
+*.o
+version.m4
+aclocal.m4
+autom4te.cache/
+config.guess
+config.log
+config.status
+config.sub
+depcomp
+install-sh
+ltmain.sh
+missing
+ylwrap
+libtool
+
+# Python compilation
+*.pyc
+py-compile
+
+# Generated files
+gencert
+nss.conf
