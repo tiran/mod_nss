@@ -78,3 +78,24 @@ LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
 
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+
+MAINTAINERCLEANFILES =		\
+	*~			\
+	Makefile.in		\
+	aclocal.m4		\
+	config.guess		\
+	config.sub		\
+	configure		\
+	depcomp			\
+	install-sh		\
+	ltmain.sh		\
+	missing			\
+	ylwrap
+
+test:
+	cd test;	\
+	./setup.sh;	\
+	nosetests -v;	\
+	cd ..
+
+.PHONY: all test clean

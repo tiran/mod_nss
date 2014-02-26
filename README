@@ -1,7 +1,7 @@
 SYNOPSIS
 
- This Apache module provides strong cryptography for the Apache 2.0 webserver
- via the Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS
+ This Apache module provides strong cryptography for the Apache 2.4 webserver
+ via the Secure Sockets Layer (v3) and Transport Layer Security (TLS
  v1) protocols by the help of the SSL/TLS implementation library NSS
 
  This module is based heavily on the mod_ssl package. In fact, it's more
@@ -9,7 +9,7 @@ SYNOPSIS
 
 BUILDING
 
- To build this you'll need NSPR 4.4.1 and NSS 3.9.3. It may work with earlier
+ To build this you'll need NSPR 4.9.+ and NSS 3.14.+. It may work with earlier
  versions but these are recommended (or tested). These can be retrieved from
  http://www.mozilla.org/. The --with-nspr and --with-nss tags require that
  the package be installed in the same parent directory (e.g. /opt/nspr,
@@ -22,6 +22,7 @@ BUILDING
  Build and install those packages somewhere then configure the module with
  something like:
 
+ % autoreconf -ivf
  % ./configure --with-apxs[=/path/to/apxs/] --with-nspr=/path/to/nspr/ --with-nss=/path/to/nss/
  % gmake all install
 
@@ -79,11 +80,13 @@ DOCUMENTATION
 
 REQUESTING A CERTIFICATE
 
- The NSS command-line tools may be used to generate a certificate request
+ You can use the provided gencert utility as a template for generating a
+ CA and a sample user and server certificate. Alterntaively, the NSS
+ command-line tools may be used to generate a certificate request
  suitable for submission to a local CA or a commerical CA like Verisign,
  and install the issued certificate into your local database. A sample
  request may look something like this. This assumes that your certificate
- database directory (NSSCertificateDatabase) is set to /opt/fortitude/alias
+ database directory (NSSCertificateDatabase) is set to /etc/httpd/alias
 
  Step 1 Create the database. This assumes you want your certificate database
         in /etc/httpd/alias
@@ -111,3 +114,12 @@ REQUESTING A CERTIFICATE
 
  % certutil -V -u V -d . -n Server-Cert
 
+TESTING
+
+ A few simple scripts are provided to stand up an in-tree Apache instance
+ against which some basic tests can be run to validate that the in-tree
+ library works.
+
+ From the source tree run:
+
+ % make test
