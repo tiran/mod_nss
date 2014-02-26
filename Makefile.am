@@ -1,3 +1,5 @@
+VERSION = 1.0.9
+
 ## This is the shared library to be built
 lib_LTLIBRARIES = libmodnss.la
 
@@ -92,7 +94,9 @@ MAINTAINERCLEANFILES =		\
 	missing			\
 	ylwrap
 
-test:
+EXTRA_DIST = *.h *.8 LICENSE test docs
+
+check:
 	cd test;	\
 	./setup.sh;	\
 	nosetests -v;	\
