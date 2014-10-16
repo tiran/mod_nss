@@ -616,13 +616,13 @@ static void nss_init_ctx_protocol(server_rec *s,
                                   apr_pool_t *ptemp,
                                   modnss_ctx_t *mctx)
 {
-    int ssl2, ssl3, tls, tls1_1;
+    int ssl2, ssl3, tls, tls1_1, tls1_2;
     char *protocol_marker = NULL;
     char *lprotocols = NULL;
     SECStatus stat;
     SSLVersionRange enabledVersions;
 
-    ssl2 = ssl3 = tls = tls1_1 = 0;
+    ssl2 = ssl3 = tls = tls1_1 = tls1_2 = 0;
 
     /*
      * Since this routine will be invoked individually for every thread
@@ -640,24 +640,24 @@ static void nss_init_ctx_protocol(server_rec *s,
 
     if (mctx->sc->fips) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "In FIPS mode ignoring %s list, enabling TLSv1.0 and TLSv1.1",
+            "In FIPS mode ignoring %s list, enabling TLSv1.0, TLSv1.1 and TLSv1.2",
             protocol_marker);
-        tls = tls1_1 = 1;
+        tls = tls1_1 = tls1_2 = 1;
     } else {
         if (mctx->auth.protocols == NULL) {
             ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                "%s value not set; using: SSLv3, TLSv1.0, and TLSv1.1",
+                "%s value not set; using: SSLv3, TLSv1.0, TLSv1.1 and TLSv1.2",
                 protocol_marker);
-            ssl3 = tls = tls1_1 = 1;
+            ssl3 = tls = tls1_1 = tls1_2 = 1;
         } else {
             lprotocols = strdup(mctx->auth.protocols);
             ap_str_tolower(lprotocols);
 
             if (strstr(lprotocols, "all") != NULL) {
 #ifdef WANT_SSL2
-                ssl2 = ssl3 = tls = tls1_1 = 1;
+                ssl2 = ssl3 = tls = tls1_1 = tls1_2 = 1;
 #else
-                ssl3 = tls = tls1_1 = 1;
+                ssl3 = tls = tls1_1 = tls1_2 = 1;
 #endif
             } else {
                 char *protocol_list = NULL;
@@ -702,6 +702,11 @@ static void nss_init_ctx_protocol(server_rec *s,
                                      "%s:  Enabling TLSv1.1",
                                      protocol_marker);
                         tls1_1 = 1;
+                    } else if (strcmp(token, "tlsv1.2") == 0) {
+                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                     "%s:  Enabling TLSv1.2",
+                                     protocol_marker);
+                        tls1_2 = 1;
                     } else {
                         ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
                                      "%s:  Unknown protocol '%s' not supported",
@@ -738,12 +743,12 @@ static void nss_init_ctx_protocol(server_rec *s,
      * cannot be excluded from this range. NSS will automatically negotiate
      * to utilize the strongest acceptable protocol for a connection starting
      * with the maximum specified protocol and downgrading as necessary to the
-     * minimum specified protocol (TLS 1.1 -> TLS 1.0 -> SSL 3.0).
+     * minimum specified protocol (TLS 1.2 -> TLS 1.1 -> TLS 1.0 -> SSL 3.0).
      */
     if (stat == SECSuccess) {
         /* Set minimum protocol version (lowest -> highest)
          *
-         *     SSL 3.0 -> TLS 1.0 -> TLS 1.1
+         *     SSL 3.0 -> TLS 1.0 -> TLS 1.1 -> TLS 1.2
          */
         if (ssl3 == 1) {
             enabledVersions.min = SSL_LIBRARY_VERSION_3_0;
@@ -760,6 +765,11 @@ static void nss_init_ctx_protocol(server_rec *s,
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                          "%s:  [TLS 1.1] (minimum)",
                          protocol_marker);
+        } else if (tls1_2 == 1) {
+            enabledVersions.min = SSL_LIBRARY_VERSION_TLS_1_2;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [TLS 1.2] (minimum)",
+                         protocol_marker);
         } else {
             /* Set default minimum protocol version to SSL 3.0 */
             enabledVersions.min = SSL_LIBRARY_VERSION_3_0;
@@ -770,9 +780,14 @@ static void nss_init_ctx_protocol(server_rec *s,
 
         /* Set maximum protocol version (highest -> lowest)
          *
-         *     TLS 1.1 -> TLS 1.0 -> SSL 3.0
+         *     TLS 1.2 -> TLS 1.1 -> TLS 1.0 -> SSL 3.0
          */
-        if (tls1_1 == 1) {
+        if (tls1_2 == 1) {
+            enabledVersions.max = SSL_LIBRARY_VERSION_TLS_1_2;
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         "%s:  [TLS 1.2] (maximum)",
+                         protocol_marker);
+        } else if (tls1_1 == 1) {
             enabledVersions.max = SSL_LIBRARY_VERSION_TLS_1_1;
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                          "%s:  [TLS 1.1] (maximum)",
@@ -788,10 +803,10 @@ static void nss_init_ctx_protocol(server_rec *s,
                          "%s:  [SSL 3.0] (maximum)",
                          protocol_marker);
         } else {
-            /* Set default maximum protocol version to TLS 1.1 */
-            enabledVersions.max = SSL_LIBRARY_VERSION_TLS_1_1;
+            /* Set default maximum protocol version to TLS 1.2 */
+            enabledVersions.max = SSL_LIBRARY_VERSION_TLS_1_2;
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                         "%s:  [TLS 1.1] (default maximum)",
+                         "%s:  [TLS 1.2] (default maximum)",
                          protocol_marker);
         }
 
@@ -808,11 +823,7 @@ static void nss_init_ctx_protocol(server_rec *s,
 
     mctx->ssl2 = ssl2;
     mctx->ssl3 = ssl3;
-    if (tls1_1 == 1) {
-        mctx->tls = tls1_1;
-    } else {
-        mctx->tls = tls;
-    }
+    mctx->tls = tls || tls1_1 || tls1_2;
 }
 
 static void nss_init_ctx_session_cache(server_rec *s,

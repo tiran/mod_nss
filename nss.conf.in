@@ -118,7 +118,7 @@ NSSCipherSuite +rsa_rc4_128_md5,+rsa_rc4_128_sha,+rsa_3des_sha,-rsa_des_sha,-rsa
 #   Since all protocol ranges are completely inclusive, and no protocol in the
 #   middle of a range may be excluded, the entry "NSSProtocol SSLv3,TLSv1.1"
 #   is identical to the entry "NSSProtocol SSLv3,TLSv1.0,TLSv1.1".
-NSSProtocol SSLv3,TLSv1.0,TLSv1.1
+NSSProtocol SSLv3,TLSv1.0,TLSv1.1,TLSv1.2
 
 #   SSL Certificate Nickname:
 #   The nickname of the RSA server certificate you are going to use.
