@@ -646,9 +646,9 @@ static void nss_init_ctx_protocol(server_rec *s,
     } else {
         if (mctx->auth.protocols == NULL) {
             ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                "%s value not set; using: SSLv3, TLSv1.0, TLSv1.1 and TLSv1.2",
+                "%s value not set; using: TLSv1.0, TLSv1.1 and TLSv1.2",
                 protocol_marker);
-            ssl3 = tls = tls1_1 = tls1_2 = 1;
+            tls = tls1_1 = tls1_2 = 1;
         } else {
             lprotocols = strdup(mctx->auth.protocols);
             ap_str_tolower(lprotocols);
