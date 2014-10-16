@@ -29,11 +29,11 @@ import test_request
 # Utility functions to assist in creating Apache configuration based
 # on test suite
 
-PORT=8000
+DEF_PORT=8000
 FQDN = socket.gethostname()
 
 default_vars = dict(
-    SERVER_PORT = PORT,
+    SERVER_PORT = DEF_PORT,
     SERVER_NAME = FQDN,
     TEST_ROOT = '%s/work/httpd' % os.getcwd(),
     SERVER_ROOT = '%s/work/httpd' % os.getcwd(),
@@ -82,7 +82,7 @@ def restart_apache():
     p = subprocess.Popen(['./start'],
                          close_fds=True)
     os.chdir(cwd)
-    test_util.wait_for_open_ports(FQDN, PORT)
+    test_util.wait_for_open_ports(FQDN, DEF_PORT)
 
 EXPECTED = """Expected %r to raise %s.
   options = %r
@@ -134,7 +134,8 @@ class Declarative(object):
         session = requests.Session()
         session.mount('https://', test_request.MyAdapter())
         verify = dict(verify = options)
-        request = session.get('https://%s:%d%s' % (FQDN, PORT, uri), **verify)
+        port = options.get('port', DEF_PORT)
+        request = session.get('https://%s:%d%s' % (FQDN, port, uri), **verify)
 
         return request
 
@@ -178,7 +179,7 @@ class Declarative(object):
             client_cipher = request.raw._pool._get_conn().client_cipher
             if protocol != client_cipher[1]:
                 raise AssertionError(
-                    'Expected cipher %s, got %s' % (cipher, client_cipher[1])
+                    'Expected protocol %s, got %s' % (protocol, client_cipher[1])
                 )
         if expected != request.status_code:
                 raise AssertionError(

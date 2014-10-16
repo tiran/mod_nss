@@ -1,3 +1,17 @@
+# Global SSL configuration
+NSSPassPhraseDialog  file:$SERVER_ROOT/conf/password.conf
+
+NSSPassPhraseHelper $SERVER_ROOT/bin/nss_pcache
+
+NSSSessionCacheSize 10000
+NSSSessionCacheTimeout 100
+NSSSession3CacheTimeout 86400
+
+Listen 0.0.0.0:$SERVER_PORT
+Listen 0.0.0.0:8001
+
+LogLevel debug
+
 <VirtualHost *:$SERVER_PORT>
 
 NSSEngine on
@@ -51,15 +65,46 @@ NSSUserName SSL_CLIENT_S_DN_UID
 <Location "/secret-test-impossible.html">
     NSSRequire %{SSL_CIPHER_USEKEYSIZE} > 4000
 </Location>
+
+<Location "/protocolssl3">
+    NSSRequire %{SSL_PROTOCOL} eq "SSLv3"
+</Location>
+
+<Location "/protocoltls1">
+    NSSRequire %{SSL_PROTOCOL} eq "TLSv1"
+</Location>
+
+<Location "/protocoltls11">
+    NSSRequire %{SSL_PROTOCOL} eq "TLSv1.1"
+</Location>
+
+<Location "/protocoltls12">
+    NSSRequire %{SSL_PROTOCOL} eq "TLSv1.2"
+</Location>
 </VirtualHost>
 
-# SSL configuration
-NSSPassPhraseDialog  file:$SERVER_ROOT/conf/password.conf
+#
+# For testing protocol handling
+#
+<VirtualHost *:8001>
 
-NSSPassPhraseHelper /usr/sbin/nss_pcache
+NSSEngine on
+NSSFIPS off
+NSSOCSP off
+NSSRenegotiation on
 
-NSSSessionCacheSize 10000
-NSSSessionCacheTimeout 100
-NSSSession3CacheTimeout 86400
+NSSCipherSuite +rc4,+rc4export,+rc2,+rc2export,+des,+desede3,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,+rsa_rc4_128_md5,+rsa_3des_sha,+rsa_des_sha,+rsa_rc4_40_md5,+rsa_rc2_40_md5,+rsa_null_md5,+rsa_des_56_sha,+rsa_rc4_56_sha,+rsa_aes_128_sha,+rsa_aes_256_sha,+fips_des_sha,+fips_3des_sha
 
-Listen 0.0.0.0:$SERVER_PORT
+NSSProtocol TLSv1.2
+
+NSSNickname Server-Cert
+
+NSSCertificateDatabase $SERVER_ROOT/alias
+
+NSSVerifyClient none
+
+# A bit redundant since the initial handshake should fail if no TLSv1.2
+<Location "/protocoltls12">
+    NSSRequire %{SSL_PROTOCOL} eq "TLSv1.2"
+</Location>
+</VirtualHost>

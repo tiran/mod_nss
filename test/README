@@ -1,0 +1,39 @@
+Overview
+--------
+Some basic Apache tests using a local instance of Apache that goes into
+the work subdirectory.
+
+suite1.tmpl defines the basic configuration for the tests.
+
+This tries to load libmodnss.so from the parent directory so you must do
+a 'make' first before trying to run the tests.
+
+Run the tests
+-------------
+./setup.sh
+nosetests -v test.py
+
+Adding tests
+------------
+
+1. Create a new Location in suite1.tmpl with a local configuration to test
+   against.
+
+2. Add a call to this location in test.py
+
+Here are the things that can be tested for:
+
+expected = HTTP response code or SSLError() exception
+protocol = 
+cipher = OpenSSL cipher name
+
+
+3. If you make a change to the mod_nss code you'll need to either copy
+   the new module to work/httpd/lib or rm -rf work and re-run setup.sh
+   otherwise you'll be testing against old code.
+   
+When testing with NSSRequire I sometimes found it difficult to figure out
+why a request was being rejected. I added a new compile-time define,
+VAR_DEBUG. If this is set then whenever a SSL_ variable is looked up the
+result is logged. This is way too much for a running server but great for
+debugging tests.

@@ -122,4 +122,4 @@ TESTING
 
  From the source tree run:
 
- % make test
+ % make check

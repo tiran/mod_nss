@@ -141,7 +141,8 @@ class MyVerifiedHTTPSConnection(HTTPSConnection):
             match_hostname(self.sock.getpeercert(), self.host)
 
     def close(self):
-        self.client_cipher = self.sock.cipher()
+        if self.sock:
+            self.client_cipher = self.sock.cipher()
         HTTPSConnection.close(self)
 
 class MyAdapter(requests.adapters.HTTPAdapter):
@@ -177,7 +178,7 @@ class MyAdapter(requests.adapters.HTTPAdapter):
 s = requests.Session()
 s.mount('https://', MyAdapter())
 try:
-    r = s.get('https://darlene.greyoak.com:8000/', verify={'verify': False, 'ssl_version': ssl.PROTOCOL_SSLv23, 'ciphers': 'HIGH'})
+    r = s.get('https://test.example.com:8000/', verify={'verify': False, 'ssl_version': ssl.PROTOCOL_SSLv23, 'ciphers': 'HIGH'})
     cipher = r.raw._pool._get_conn().client_cipher
 except requests.exceptions.SSLError, e:
     print e.message
@@ -185,6 +186,6 @@ else:
     print r.status_code
     print cipher
 
-#request = requests.get('https://darlene.greyoak.com:8000/', verify=False)
+#request = requests.get('https://test.example.com:8000/', verify=False)
 #print request.status_code
 """

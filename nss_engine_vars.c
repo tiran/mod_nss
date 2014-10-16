@@ -192,9 +192,14 @@ char *nss_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
             return othermod_var_lookup(p, s, c, r, var);
         }
 
-        if (strlen(var) > 4 && strcEQn(var, "SSL_", 4) 
-                 && sslconn && sslconn->ssl)
+        if (strlen(var) > 4 && strcEQn(var, "SSL_", 4)
+                 && sslconn && sslconn->ssl) {
             result = nss_var_lookup_ssl(p, c, var+4);
+#ifdef VAR_DEBUG
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
+                "%s: %s", var, result);
+#endif
+        }
         else if (strcEQ(var, "REMOTE_ADDR"))
             result = c->client_ip;
         else if (strcEQ(var, "HTTPS")) {

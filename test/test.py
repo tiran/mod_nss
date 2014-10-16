@@ -1,5 +1,6 @@
 from test_config import Declarative, write_template_file, restart_apache
 from test_config import stop_apache
+import ssl
 import requests.exceptions
 
 class test_suite1(Declarative):
@@ -133,6 +134,94 @@ class test_suite1(Declarative):
             desc='Impossible secret key size',
             request=('/secret-test-impossible.html', {}),
             expected=403,
+        ),
+
+        # Only SSLv3-TLSv1.1 enabled on 8000
+        dict(
+            desc='Requires TLS v1.2, no support',
+            request=('/protocoltls12/index.html', {}),
+            expected=403,
+        ),
+
+        dict(
+            desc='Try SSLv2 on default server',
+            request=('/protocoltls12/index.html',
+                    {'ssl_version': ssl.PROTOCOL_SSLv2}
+            ),
+            expected=requests.exceptions.SSLError(),
+        ),
+
+        dict(
+            desc='Try SSLv23 client on SSLv3 location',
+            request=('/protocolssl3/index.html',
+                    {'ssl_version': ssl.PROTOCOL_SSLv23}
+            ),
+            expected=403, # connects as TLSv1
+        ),
+
+        dict(
+            desc='Try TLSv1 client on SSLv3 location',
+            request=('/protocoltls1/index.html',
+                    {'ssl_version': ssl.PROTOCOL_TLSv1}
+            ),
+            expected=200,
+        ),
+
+        dict(
+            desc='Try TLSv1 client on TLSv1.1 location',
+            request=('/protocoltls11/index.html',
+                    {'ssl_version': ssl.PROTOCOL_TLSv1}
+            ),
+            expected=403,
+        ),
+
+        dict(
+            desc='Try SSLv23 client on TLSv1 location',
+            request=('/protocoltls1/index.html',
+                    {'ssl_version': ssl.PROTOCOL_SSLv23}
+            ),
+            expected=200,
+        ),
+
+        dict(
+            desc='Try SSLv23 client on 1.2-only location',
+            request=('/protocoltls12/index.html',
+                    {'ssl_version': ssl.PROTOCOL_SSLv23}
+            ),
+            expected=403,
+        ),
+
+        dict(
+            desc='Requires TLSv1.2 on VH that provides it',
+            request=('/protocoltls12/index.html', {'port': 8001}),
+            expected=200,
+        ),
+
+        dict(
+            desc='Try SSLv2 client on 1.2-only VH',
+            request=('/protocoltls12/index.html',
+                    {'port': 8001,
+                     'ssl_version': ssl.PROTOCOL_SSLv2}
+            ),
+            expected=requests.exceptions.SSLError(),
+        ),
+
+        dict(
+            desc='Try SSLv3 client on 1.2-only VH',
+            request=('/protocoltls12/index.html',
+                    {'port': 8001,
+                     'ssl_version': ssl.PROTOCOL_SSLv3}
+            ),
+            expected=requests.exceptions.SSLError(),
+        ),
+
+        dict(
+            desc='Try TLSv1 client on 1.2-only VH',
+            request=('/protocoltls12/index.html',
+                    {'port': 8001,
+                     'ssl_version': ssl.PROTOCOL_TLSv1}
+            ),
+            expected=requests.exceptions.SSLError(),
         ),
 
     ]
