@@ -1,3 +1,8 @@
+2014-10-16  Rob Crittenden <rcritten@redhat.com
+    * Add support for enabling TLS v1.2
+    * Don't enable SSL 3 by default (CVE-2014-3566)
+    * Improve protocol testing
+
 2014-02-20  Rob Crittenden <rcritten@redhat.com
     * Sync with Fedora builds which were basicaly the defacto upstream.
     * Add nss_pcache man page
