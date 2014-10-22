@@ -1179,12 +1179,20 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
 
     *KEAtype = NSS_FindCertKEAType(*servercert);
 
+    /* Subject/hostname check */
+    secstatus = CERT_VerifyCertName(*servercert, s->server_hostname);
+    if (secstatus != SECSuccess) {
+      char *cert_dns = CERT_GetCommonName(&(*servercert)->subject);
+      ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+		       "Misconfiguration of certificate's CN and virtual name."
+		       " The certificate CN has %s. We expected %s as virtual"
+                       " name.", cert_dns, s->server_hostname);
+      PORT_Free(cert_dns);
+    }
+
     /*
-     * Check for certs that are expired or not yet valid and WARN about it
-     * no need to refuse working - the client gets a warning, but can work
-     * with the server we could also verify if the certificate is made out
-     * for the correct hostname but that would require a reverse DNS lookup
-     * for every virtual server - too expensive?
+     * Check for certs that are expired or not yet valid and WARN about it.
+     * No need to refuse working - the client gets a warning.
      */
 
     certtimestatus = CERT_CheckCertValidTimes(*servercert, PR_Now(), PR_FALSE);
