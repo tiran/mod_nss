@@ -22,7 +22,7 @@ fi
 cp ../.libs/libmodnss.so ${test_root}/lib
 cp ../nss_pcache ${test_root}/bin
 
-../gencert ${test_root}/alias
+bash ../gencert ${test_root}/alias
 echo internal:httptest > ${test_root}/conf/password.conf
 
 # Export the CA cert
