@@ -1,3 +1,6 @@
+2014-10-22  Stanislav Tokos <stokos@suse.de>
+    * Compare subject CN and VS hostname during server start up
+
 2014-10-16  Rob Crittenden <rcritten@redhat.com
     * Add support for enabling TLS v1.2
     * Don't enable SSL 3 by default (CVE-2014-3566)
