@@ -98,8 +98,13 @@ EXTRA_DIST = *.h *.8 LICENSE test docs
 
 check:
 	cd test;	\
+	rm -rf work;	\
 	./setup.sh;	\
 	nosetests -v;	\
+	sleep 5;	\
+	rm -rf work;	\
+	./setup.sh sql:;	\
+	DBPREFIX=sql: nosetests -v;	\
 	cd ..
 
 .PHONY: all test clean

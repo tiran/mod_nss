@@ -12,7 +12,7 @@ Listen 0.0.0.0:8001
 
 LogLevel debug
 
-<VirtualHost *:$SERVER_PORT>
+<VirtualHost $SERVER_NAME:$SERVER_PORT>
 
 NSSEngine on
 NSSFIPS off
@@ -25,7 +25,7 @@ NSSProtocol SSLv3,TLSv1.0
 
 NSSNickname Server-Cert
 
-NSSCertificateDatabase $SERVER_ROOT/alias
+NSSCertificateDatabase $DBPREFIX$SERVER_ROOT/alias
 
 NSSVerifyClient none
 
@@ -86,7 +86,7 @@ NSSUserName SSL_CLIENT_S_DN_UID
 #
 # For testing protocol handling
 #
-<VirtualHost *:8001>
+<VirtualHost $SERVER_NAME:8001>
 
 NSSEngine on
 NSSFIPS off
@@ -98,8 +98,6 @@ NSSCipherSuite +rc4,+rc4export,+rc2,+rc2export,+des,+desede3,-fortezza,-fortezza
 NSSProtocol TLSv1.2
 
 NSSNickname Server-Cert
-
-NSSCertificateDatabase $SERVER_ROOT/alias
 
 NSSVerifyClient none
 

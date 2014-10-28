@@ -2,11 +2,12 @@ from test_config import Declarative, write_template_file, restart_apache
 from test_config import stop_apache
 import ssl
 import requests.exceptions
+import os
 
 class test_suite1(Declarative):
     @classmethod
     def setUpClass(cls):
-        write_template_file('suite1.tmpl', 'work/httpd/conf/test.conf', {})
+        write_template_file('suite1.tmpl', 'work/httpd/conf/test.conf', {'DBPREFIX': os.environ.get('DBPREFIX', '')})
         restart_apache()
 
     @classmethod

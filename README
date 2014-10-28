@@ -123,3 +123,10 @@ TESTING
  From the source tree run:
 
  % make check
+
+ The tests are run twice. Once with the old-style database and once
+ using the sqlite database format. See
+ https://wiki.mozilla.org/NSS_Shared_DB
+
+ This is controlled by the environment variable DBPREFIX which needs
+ to be set to sql: when using the newer format for the tests.

@@ -366,11 +366,13 @@ secmod.db. cert8.db stores certificates and Certificate Revocation
 Lists (CRLs), key3.db stores keys and secmod.db stores information
 about available PKCS#11 modules.<br>
 <br>
-This directive specifies a path, not a filename.<br>
+This directive specifies a path, not a filename. To use a sqlite
+NSS database include the prefix sql: in the path.<br>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSCertificateDatabase /etc/httpd/conf/nss</code><br>
+<code>NSSCertificateDatabase sql:/etc/httpd/conf/nss</code><br>
 <br>
 <big><big>NSSDBPrefix</big></big><br>
 <br>
@@ -1328,7 +1330,14 @@ NSS stores it's certificates and keys in a set of files referred to as
 the "certificate database." The files by default (with NSS 3.x) are
 named cert8.db, key3.db and secmod.db. See the NSS documentation at <a
  href="http://www.mozilla.org/projects/security/pki/nss/">http://www.mozilla.org/projects/security/pki/nss/</a>
-for more information on these specific files.<br>
+for more information on these specific files.<p>
+By default the NSS databases use the Berkeley Database format (cert8 and
+key3). To use the sqlite format (cert9 and key4) either include sql: in
+all references to the database (-d sql:/path/to/database) or
+<code>export NSS_DEFAULT_DB_TYPE="sql"</code>.
+<p>
+For more details see
+<a href="https://wiki.mozilla.org/NSS_Shared_DB">https://wiki.mozilla.org/NSS_Shared_DB</a><br>
 <br>
 The NSS database also stores any Certificate Revocation Lists (CRLs). <br>
 <br>

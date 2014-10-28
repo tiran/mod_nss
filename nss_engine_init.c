@@ -145,6 +145,7 @@ static void nss_init_SSLLibrary(server_rec *base_server)
     int fipsenabled = FALSE;
     int ocspenabled = FALSE;
     int ocspdefault = FALSE;
+    char *dbdir = NULL;
     const char * ocspurl = NULL;
     const char * ocspname = NULL;
 
@@ -186,7 +187,11 @@ static void nss_init_SSLLibrary(server_rec *base_server)
             else
                 return;
     }
-    if (chdir(mc->pCertificateDatabase) != 0) {
+    if (strncasecmp(mc->pCertificateDatabase, "sql:", 4) == 0)
+        dbdir = mc->pCertificateDatabase + 4;
+    else 
+        dbdir = mc->pCertificateDatabase;
+    if (chdir(dbdir) != 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "Unable to change directory to %s", mc->pCertificateDatabase);
         if (mc->nInitCount == 1)

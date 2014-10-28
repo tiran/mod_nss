@@ -33,6 +33,7 @@ DEF_PORT=8000
 FQDN = socket.gethostname()
 
 default_vars = dict(
+    DBPREFIX = '',
     SERVER_PORT = DEF_PORT,
     SERVER_NAME = FQDN,
     TEST_ROOT = '%s/work/httpd' % os.getcwd(),

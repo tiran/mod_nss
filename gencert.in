@@ -75,13 +75,15 @@ then
     echo "usage: $0 <destdir>" 1>&2
     exit 1
 fi
-if [ ! -d $1 -o ! -w $1 ]
+PREFIX=`echo $1 | cut -d: -f1`
+DEST=`echo $1 | cut -d: -f2`
+if [ ! -d $DEST -o ! -w $DEST ]
 then
     echo "ERROR: $1 must be writable directory." 1>&2
     exit 1
 fi
 
-DEST=$1
+DBDIR=$1
 
 echo "httptest" > $DEST/pw.txt
 
@@ -90,7 +92,7 @@ echo "#####################################################################"
 echo "Generating new server certificate and key database. The password"
 echo "is httptest"
 echo "#####################################################################"
-$CERTUTIL -N -d $DEST -f $DEST/pw.txt
+$CERTUTIL -N -d $DBDIR -f $DEST/pw.txt
 
 echo ""
 echo "#####################################################################"
@@ -102,7 +104,7 @@ let CERTSERIAL=CERTSERIAL+1
 # y 10 y  -> basic constraints: CA cert
 # 5 6 7 9 n  -> SSL, S/MIME, Object signing CA
 echo -e "5\n9\nn\ny\n10\ny\n5\n6\n7\n9\nn\n" | \
-$CERTUTIL -S -d $DEST -n cacert \
+$CERTUTIL -S -d $DBDIR -n cacert \
             -s "$CA_CERTDN" \
             -x \
             -t CTu,CTu,CTu \
@@ -124,7 +126,7 @@ let CERTSERIAL=CERTSERIAL+1
 # 0 2 9 n  -> Key usage: Key Encipherment, Digital Signature
 # 0 9 n  -> SSL Client
 echo -e "0\n2\n9\nn\n0\n9\nn\n" | \
-$CERTUTIL -S -d $DEST -n alpha \
+$CERTUTIL -S -d $DBDIR -n alpha \
             -s "$ALPHA_CERTDN" \
             -c cacert \
             -t u,pu,u \
@@ -145,7 +147,7 @@ let CERTSERIAL=CERTSERIAL+1
 # 0 2 9 n  -> Key usage: Key Encipherment, Digital Signature
 # 0 9 n  -> SSL Client
 echo -e "0\n2\n9\nn\n0\n9\nn\n" | \
-$CERTUTIL -S -d $DEST -n beta \
+$CERTUTIL -S -d $DBDIR -n beta \
             -s "$BETA_CERTDN" \
             -c cacert \
             -t u,pu,u \
@@ -162,7 +164,7 @@ echo "#####################################################################"
 echo "Generating server certificate request"
 echo "#####################################################################"
 (ps -elf; date; netstat -a) > $DEST/noise
-$CERTUTIL -R -d $DEST \
+$CERTUTIL -R -d $DBDIR \
             -s "$SERVER_CERTDN" \
             -o $DEST/tmpcertreq \
             -g $KEYSIZE \
@@ -175,7 +177,7 @@ echo "Generating server certificate"
 echo "#####################################################################"
 let CERTSERIAL=CERTSERIAL+1
 echo -e "2\n9\nn\n1\n9\nn\n" | \
-$CERTUTIL -C -d $DEST \
+$CERTUTIL -C -d $DBDIR \
             -c cacert \
             -i $DEST/tmpcertreq \
             -o $DEST/tmpcert.der \
@@ -191,7 +193,7 @@ echo ""
 echo "#####################################################################"
 echo "Importing server certificate into server cert DB"
 echo "#####################################################################"
-$CERTUTIL -A -d $DEST -n Server-Cert \
+$CERTUTIL -A -d $DBDIR -n Server-Cert \
             -t u,u,u \
             -i $DEST/tmpcert.der \
             -f $DEST/pw.txt
