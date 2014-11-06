@@ -73,7 +73,6 @@ static void modnss_ctx_init(modnss_ctx_t *mctx)
 
     mctx->as_server           = PR_TRUE;
 
-    mctx->ssl2                = PR_FALSE;
     mctx->ssl3                = PR_FALSE;
     mctx->tls                 = PR_FALSE;
     mctx->tlsrollback         = PR_FALSE;
@@ -572,11 +571,10 @@ const char *nss_cmd_NSSSessionCacheTimeout(cmd_parms *cmd,
 {
     SSLModConfigRec *mc = myModConfig(cmd->server);
 
-    mc->session_cache_timeout = atoi(arg);
+    /* Deprecated. Store a value, if any, just to complain
+       about it later. */
 
-    if (mc->session_cache_timeout < 0) {
-        return "NSSSessionCacheTimeout: Invalid argument";
-    }
+    mc->session_cache_timeout = atoi(arg);
 
     return NULL;
 }

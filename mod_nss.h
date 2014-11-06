@@ -270,7 +270,6 @@ typedef struct {
 
     int as_server;
 
-    int ssl2;
     int ssl3;
     int tls;
     int tlsrollback;
@@ -364,9 +363,9 @@ enum sslversion { SSL2=1, SSL3=2, TLS=4};
 
 /* the table itself is defined in nss_engine_init.c */
 #ifdef NSS_ENABLE_ECC
-#define ciphernum 48
+#define ciphernum 42
 #else
-#define ciphernum 23
+#define ciphernum 17
 #endif
 
 /*

@@ -145,12 +145,6 @@ tells us where the APR include files and libraries are located<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;">--enable-ssl2<br>
-      </td>
-      <td style="vertical-align: top;">SSLv2 is disabled by default.<br>
-      </td>
-    </tr>
-    <tr>
       <td style="vertical-align: top;">--enable-ecc<br>
       </td>
       <td style="vertical-align: top;">Enable Elliptical Curve
@@ -404,16 +398,7 @@ The default value is 10000.<br>
 <br>
 <big><big>NSSSessionCacheTimeout</big></big><br>
 <br>
-Specifies the number of seconds SSL 2 sessions are cached.<br>
-<br>
-The valid range is 5 - 100 seconds. A setting outside the valid range
-is silently constrained.<br>
-<br>
-The default value is 100.<br>
-<br>
-<span style="font-weight: bold;">Example</span><br>
-<br>
-<code>NSSSessionCacheTimeout 100</code><br>
+Deprecated.<br>
 <br>
 <big><big>NSSSession3CacheTimeout<br>
 </big></big><br>
@@ -526,48 +511,6 @@ Available ciphers are:<br>
       </td>
       <td style="vertical-align: top; font-weight: bold;">Protocol<br>
       </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">des<br>
-      </td>
-      <td style="vertical-align: top;">SSL_EN_DES_64_CBC_WITH_MD5<br>
-      </td>
-      <td style="vertical-align: top;">SSLv2</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">desede3<br>
-      </td>
-      <td style="vertical-align: top;">SSL_EN_DES_192_EDE3_CBC_WITH_MD5<br>
-      </td>
-      <td style="vertical-align: top;">SSLv2</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">rc2<br>
-      </td>
-      <td style="vertical-align: top;">SSL_EN_RC2_128_CBC_WITH_MD5<br>
-      </td>
-      <td style="vertical-align: top;">SSLv2</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">rc2export<br>
-      </td>
-      <td style="vertical-align: top;">SSL_EN_RC2_128_CBC_EXPORT40_WITH_MD5<br>
-      </td>
-      <td style="vertical-align: top;">SSLv2</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">rc4<br>
-      </td>
-      <td style="vertical-align: top;">SSL_EN_RC4_128_WITH_MD5<br>
-      </td>
-      <td style="vertical-align: top;">SSLv2</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">rc4export<br>
-      </td>
-      <td style="vertical-align: top;">SSL_EN_RC4_128_EXPORT40_WITH_MD5<br>
-      </td>
-      <td style="vertical-align: top;">SSLv2</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_3des_sha<br>
@@ -1121,7 +1064,7 @@ was compiled against.<br>
     <tr>
       <td style="vertical-align: top; width: 45%;"><code>SSL_PROTOCOL<br>
       </code></td>
-      <td style="vertical-align: top;">SSLv2, SSLv3, TLSv1.0, TLSv1.1 or TLSv1.2<br>
+      <td style="vertical-align: top;">SSLv3, TLSv1.0, TLSv1.1 or TLSv1.2<br>
       </td>
     </tr>
     <tr>

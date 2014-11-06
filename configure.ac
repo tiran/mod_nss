@@ -22,18 +22,6 @@ AC_PROG_YACC
 AC_PROG_LEX
 AC_DECL_YYTEXT
 
-AC_MSG_CHECKING(for SSL2)
-AC_ARG_ENABLE(ssl2,
-  [  --enable-ssl2         enable SSLv2 (default=no)],
-  ssl2=$enableval, ssl2=no)
-if test $ssl2 = yes; then
-   AC_MSG_RESULT(yes)
-   extra_cppflags="$extra_cppflags -DWANT_SSL2"
-else
-   AC_MSG_RESULT(no)
-fi
-#AM_CONDITIONAL(SSL2, test x$ssl2 = xyes)
-
 AC_MSG_CHECKING(for ECC)
 AC_ARG_ENABLE(ecc,
   [  --enable-ecc          enable Elliptical Curve Cyptography (default=no)],

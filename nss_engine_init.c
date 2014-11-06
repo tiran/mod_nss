@@ -36,13 +36,6 @@ char* INTERNAL_TOKEN_NAME = "internal                         ";
 
 cipher_properties ciphers_def[ciphernum] =
 {
-    /* SSL2 cipher suites */
-    {"rc4", SSL_EN_RC4_128_WITH_MD5, 0, SSL2},
-    {"rc4export", SSL_EN_RC4_128_EXPORT40_WITH_MD5, 0, SSL2},
-    {"rc2", SSL_EN_RC2_128_CBC_WITH_MD5, 0, SSL2},
-    {"rc2export", SSL_EN_RC2_128_CBC_EXPORT40_WITH_MD5, 0, SSL2},
-    {"des", SSL_EN_DES_64_CBC_WITH_MD5, 0, SSL2},
-    {"desede3", SSL_EN_DES_192_EDE3_CBC_WITH_MD5, 0, SSL2},
     /* SSL3/TLS cipher suites */
     {"rsa_rc4_128_md5", SSL_RSA_WITH_RC4_128_MD5, 0, SSL3 | TLS},
     {"rsa_rc4_128_sha", SSL_RSA_WITH_RC4_128_SHA, 0, SSL3 | TLS},
@@ -338,8 +331,14 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     /*
      * Fix up any global settings that aren't in the configuration
      */
-    if (mc->session_cache_timeout == UNSET) {
-        mc->session_cache_timeout = SSL_SESSION_CACHE_TIMEOUT;
+    if (mc->session_cache_timeout != UNSET) {
+        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, base_server,
+            "NSSSessionCacheTimeout is deprecated. Ignoring.");
+
+        /* We still need to pass in a legal value to 
+         * SSL_ConfigMPServerSIDCache() and SSL_ConfigServerSessionIDCache()
+         * /
+        mc->session_cache_timeout = 0; /* use NSS default */
     }
 
     if (mc->ssl3_session_cache_timeout == UNSET) {
@@ -509,7 +508,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
 
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
-        "Initializing SSL Session Cache of size %d. SSL2 timeout = %d, SSL3/TLS timeout = %d.", mc->session_cache_size, mc->session_cache_timeout, mc->ssl3_session_cache_timeout);
+        "Initializing SSL Session Cache of size %d. SSL3/TLS timeout = %d.", mc->session_cache_size, mc->ssl3_session_cache_timeout);
     ap_mpm_query(AP_MPMQ_MAX_THREADS, &threaded);
     if (!threaded)
         SSL_ConfigMPServerSIDCache(mc->session_cache_size, (PRUint32) mc->session_cache_timeout, (PRUint32) mc->ssl3_session_cache_timeout, NULL);
@@ -621,13 +620,13 @@ static void nss_init_ctx_protocol(server_rec *s,
                                   apr_pool_t *ptemp,
                                   modnss_ctx_t *mctx)
 {
-    int ssl2, ssl3, tls, tls1_1, tls1_2;
+    int ssl3, tls, tls1_1, tls1_2;
     char *protocol_marker = NULL;
     char *lprotocols = NULL;
     SECStatus stat;
     SSLVersionRange enabledVersions;
 
-    ssl2 = ssl3 = tls = tls1_1 = tls1_2 = 0;
+    ssl3 = tls = tls1_1 = tls1_2 = 0;
 
     /*
      * Since this routine will be invoked individually for every thread
@@ -659,11 +658,7 @@ static void nss_init_ctx_protocol(server_rec *s,
             ap_str_tolower(lprotocols);
 
             if (strstr(lprotocols, "all") != NULL) {
-#ifdef WANT_SSL2
-                ssl2 = ssl3 = tls = tls1_1 = tls1_2 = 1;
-#else
                 ssl3 = tls = tls1_1 = tls1_2 = 1;
-#endif
             } else {
                 char *protocol_list = NULL;
                 char *saveptr = NULL;
@@ -674,16 +669,9 @@ static void nss_init_ctx_protocol(server_rec *s,
                     if (token == NULL) {
                         break;
                     } else if (strcmp(token, "sslv2") == 0) {
-#ifdef WANT_SSL2
-                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                                     "%s:  Enabling SSL2",
-                                     protocol_marker);
-                        ssl2 = 1;
-#else
                         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                                      "%s:  SSL2 is not supported",
                                      protocol_marker);
-#endif
                     } else if (strcmp(token, "sslv3") == 0) {
                         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                                      "%s:  Enabling SSL3",
@@ -725,11 +713,7 @@ static void nss_init_ctx_protocol(server_rec *s,
 
     stat = SECSuccess;
 
-    if (ssl2 == 1) {
-        stat = SSL_OptionSet(mctx->model, SSL_ENABLE_SSL2, PR_TRUE);
-    } else {
-        stat = SSL_OptionSet(mctx->model, SSL_ENABLE_SSL2, PR_FALSE);
-    }
+    stat = SSL_OptionSet(mctx->model, SSL_ENABLE_SSL2, PR_FALSE);
 
     /* Set protocol version ranges:
      *
@@ -826,7 +810,6 @@ static void nss_init_ctx_protocol(server_rec *s,
         nss_die();
     }
 
-    mctx->ssl2 = ssl2;
     mctx->ssl3 = ssl3;
     mctx->tls = tls || tls1_1 || tls1_2;
 }
@@ -1040,14 +1023,6 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
                 cipher_state[i] = PR_FALSE;
             }
         }
-    }
-
-    /* See if any ciphers have been enabled for a given protocol */
-    if (mctx->ssl2 && countciphers(cipher_state, SSL2) == 0) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-            "%s:  SSL2 is enabled but no SSL2 ciphers are enabled.",
-            cipher_suite_marker);
-        nss_die();
     }
 
     if (mctx->ssl3 && countciphers(cipher_state, SSL3) == 0) {

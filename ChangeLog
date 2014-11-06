@@ -1,3 +1,6 @@
+2014-11-06  Rob Crittenden <rcritten@redhat.com>
+    * Completely remove support for SSLv2
+
 2014-10-28  Rob Crittenden <rcritten@redhat.com>
     * Add support for sqlite NSS databases (#1057650)
 
