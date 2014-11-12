@@ -1,6 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
+<html><head>
 <!--
  Copyright 2001-2005 The Apache Software Foundation
 
@@ -15,7 +14,7 @@
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
 -->
-  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
+  <meta content="text/html; charset=windows-1252" http-equiv="content-type">
   <title>mod_nss</title>
 </head>
 
@@ -38,11 +37,8 @@
 <h1><a name="Introduction"></a>Introduction</h1>
 The <a href="http://www.modssl.org/">mod_ssl</a> package was
 created in April 1998 by <a href="mailto:rse@engelschall.com">Ralf S.
-Engelschall</a> and was originally derived from the <a
- href="http://www.apache-ssl.org/">Apache-SSL</a> package developed by <a
- href="mailto:ben@algroup.co.uk">Ben Laurie</a>. It is licensed under
-the <a href="http://www.apache.org/licenses/" class="external"
- title="http://www.apache.org/licenses/" rel="nofollow">Apache 2.0
+Engelschall</a> and was originally derived from the <a href="http://www.apache-ssl.org/">Apache-SSL</a> package developed by <a href="mailto:ben@algroup.co.uk">Ben Laurie</a>. It is licensed under
+the <a href="http://www.apache.org/licenses/" class="external" title="http://www.apache.org/licenses/" rel="nofollow">Apache 2.0
 license</a><span class="urlexpansion">.<br>
 <br>
 </span>mod_nss is based directly on the mod_ssl package from Apache
@@ -54,8 +50,7 @@ calls instead.<br>
 Refer to the README file included with the distribution.<br>
 <br>
 To build you'll need <a href="http://www.mozilla.org/projects/nspr/">NSPR</a>
-4.4.1 or above and <a
- href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a> 3.9.2
+4.4.1 or above and <a href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a> 3.9.2
 or above.
 It may work with earlier versions but these are recommended (or
 tested). These can be retrieved from <a href="http://www.mozilla.org/">http://www.mozilla.org/</a>.
@@ -64,14 +59,11 @@ installed in the same parent directory (e.g. /opt/nspr,
 /usr/local/nspr, etc). It will look in this parent for include/ and
 lib/, etc.<br>
 <br>
-To build with ECC support you need <a
- href="http://www.mozilla.org/projects/nspr/">NSPR</a> 4.6.2 or higher
+To build with ECC support you need <a href="http://www.mozilla.org/projects/nspr/">NSPR</a> 4.6.2 or higher
 and <a href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a>
 3.11.2 or higher.<br>
 <br>
-You will also need the <a
- href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a> and <a
- href="http://www.mozilla.org/projects/nspr/">NSPR</a> directories in
+You will also need the <a href="http://www.mozilla.org/projects/security/pki/nss/">NSS</a> and <a href="http://www.mozilla.org/projects/nspr/">NSPR</a> directories in
 your library search
 path (either /etc/ld.so.conf or LD_LIBRARY_PATH) to link and run the
 module.<br>
@@ -79,8 +71,7 @@ module.<br>
 Run the configure script. The following mod_nss-specific options are
 available:<br>
 <br>
-<table style="width: 100%; text-align: left;" border="0" cellpadding="2"
- cellspacing="2">
+<table style="width: 100%; text-align: left;" cellpadding="2" cellspacing="2" border="0">
   <tbody>
     <tr>
       <td style="vertical-align: top; font-weight: bold;">Option<br>
@@ -211,8 +202,7 @@ bother with the details.<br>
 The certificate database password is httptest.<br>
 <br>
 A sample run is:<br>
-<pre>
-# mkdir /etc/httpd/nss
+<pre># mkdir /etc/httpd/nss
 # ./gencert /etc/httpd/nss
 
 #####################################################################
@@ -229,12 +219,18 @@ Generating key.  This may take a few moments...
 [ Lots of output removed ]
 </pre>
 You should now have the following files:<br>
-<pre>
-/etc/httpd/nss/cert8.db
-/etc/httpd/nss/key3db
+<pre>/etc/httpd/nss/cert8.db
+/etc/httpd/nss/key3.db
 /etc/httpd/nss/secmod.db
 </pre>
 These 3 files make up an NSS certificate database.<br>
+<br>
+If you have a sql: prefix on the path, like sql:/etc/httpd/nss, then it
+will generate an SQLite NSS database consisting of the following files:<br>
+<pre>/etc/httpd/nss/cert9.db
+/etc/httpd/nss/key4.db
+/etc/httpd/nss/pkcs11.txt</pre>
+
 
 <h1><a name="Startup"></a>Server Startup</h1>
 Starting a mod_nss server is no different than starting a mod_ssl
@@ -461,17 +457,32 @@ enabled protocols to TLSv1.2, TLSv1.1 and TLS v1.0 and disables all ciphers
 but the FIPS ones. You may still select which ciphers you would like
 limited to those that are FIPS-certified. Any non-FIPS that are
 included in the NSSCipherSuite entry are automatically disabled.
-The allowable ciphers are:<br>
+The allowable ciphers are (with ecc-enabled set):<br>
 <ul>
   <li>rsa_3des_sha</li>
-  <li>rsa_des_sha</li>
-  <li>fips_3des_sha</li>
-  <li>fips_des_sha</li>
-  <li>rsa_des_56_sha</li>
-  <li>fortezza</li>
-</ul>
-<br>
-FIPS is disabled by default.<br>
+<li>rsa_aes_128_sha</li>
+<li>rsa_aes_256_sha</li>
+<li>aes_128_sha_256</li>
+<li>aes_256_sha_256</li>
+<li>rsa_aes_128_gcm_sha_256</li>
+<li>fips_3des_sha</li>
+<li>ecdh_ecdsa_3des_sha</li>
+<li>ecdh_ecdsa_aes_128_sha</li>
+<li>ecdh_ecdsa_aes_256_sha</li>
+<li>ecdhe_ecdsa_3des_sha</li>
+<li>ecdhe_ecdsa_aes_128_sha</li>
+<li>ecdhe_ecdsa_aes_256_sha</li>
+<li>ecdh_rsa_3des_sha</li>
+<li>ecdh_rsa_aes_128_sha</li>
+<li>ecdh_rsa_aes_256_sha</li>
+<li>ecdhe_rsa_3des_sha</li>
+<li>ecdhe_rsa_aes_128_sha</li>
+<li>ecdhe_rsa_aes_256_sha</li>
+<li>ecdhe_ecdsa_aes_128_sha_256</li>
+<li>ecdhe_rsa_aes_128_sha_256</li>
+<li>ecdhe_ecdsa_aes_128_gcm_sha_256</li>
+<li>ecdhe_rsa_aes_128_gcm_sha_256</li>
+</ul>FIPS is disabled by default.<br>
 <br><span style="font-weight: bold;">
 Example</span><br>
 <br>
@@ -479,8 +490,7 @@ Example</span><br>
 <br>
 <big><big>NSSOCSP</big></big><br>
 <br>
-Enables or disables <a
- href="http://www.ietf.org/rfc/rfc2560.txt?number=2560">OCSP</a>
+Enables or disables <a href="http://www.ietf.org/rfc/rfc2560.txt?number=2560">OCSP</a>
 (Online Certificate Status Protocol). This allows the server to check
 the validity of a client certificate before accepting it.<br>
 <br>
@@ -492,17 +502,27 @@ Example</span><br>
 <br>
 <big><big>NSSCipherSuite<br>
 </big></big><br>
-A space-separated list of the SSL ciphers used, with the prefix <code>+</code>
-to enable or <code>-</code> to disable.<br>
+There are two options for configuring the available ciphers. mod_nss
+provides its own cipher list, a space-separated list of the SSL ciphers
+used, with the prefix <code>+</code>
+to enable or <code>-</code> to disable, using the Cipher Name value in the tables below.<br>
 <br>
-All ciphers are disabled by default. The SSLv2 ciphers cannot be
-enabled because
-<a href="#SSLv2">SSLv2</a> is not allowed in mod_nss.<br>
+Alternatively the mod_nss-style cipher definitions may be used, <a href="http://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslciphersuite">http://httpd.apache.org/docs/2.4/mod/mod_ssl.html#sslciphersuite</a>.
+ The support options are: ALL, COMPLEMENTOFALL, DEFAULT, RSA, EDH, NULL,
+ eNULL, AES, 3DES, DES, RC4, MD5, SHA, SHA1, SHA256, SSLv3, TLSv1,
+TLSv12, HIGH, MEDIUM, LOW, EXPORT, EXPORT40 and EXPORT56.<br>
+<br>
+If a cipher string value contains a colon it is considered a mod_ssl-style cipher string.<br>
+<br>
+If a cipher string value contains a comma it is considered a mod_nss-style cipher string.<br>
+<br>
+If it contains neither then mod_nss first tries to apply OpenSSL ciphers then NSS ciphers.<br>
+<br>
+All ciphers are disabled by default. <br>
 <br>
 Available ciphers are:<br>
 <br>
-<table style="width: 70%; text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+<table style="width: 70%; text-align: left;" cellpadding="2" cellspacing="2" border="1">
   <tbody>
     <tr>
       <td style="vertical-align: top; font-weight: bold;">Cipher Name<br>
@@ -515,77 +535,59 @@ Available ciphers are:<br>
     <tr>
       <td style="vertical-align: top;">rsa_3des_sha<br>
       </td>
-      <td style="vertical-align: top;">SSL_RSA_WITH_3DES_EDE_CBC_SHA<br>
-      </td>
+      <td style="vertical-align: top;">TLS_RSA_WITH_3DES_EDE_CBC_SHA<br>
+</td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2<br>
       </td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_des_sha<br>
       </td>
-      <td style="vertical-align: top;">SSL_RSA_WITH_DES_CBC_SHA<br>
+      <td style="vertical-align: top;">TLS_RSA_WITH_DES_CBC_SHA<br>
       </td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_null_md5<br>
       </td>
-      <td style="vertical-align: top;">SSL_RSA_WITH_NULL_MD5<br>
+      <td style="vertical-align: top;">TLS_RSA_WITH_NULL_MD5<br>
       </td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_null_sha<br>
       </td>
-      <td style="vertical-align: top;">SSL_RSA_WITH_NULL_SHA<br>
+      <td style="vertical-align: top;">TLS_RSA_WITH_NULL_SHA<br>
       </td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_rc2_40_md5</td>
-      <td style="vertical-align: top;">SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5<br>
+      <td style="vertical-align: top;">TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5<br>
       </td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_rc4_128_md5</td>
-      <td style="vertical-align: top;">SSL_RSA_WITH_RC4_128_MD5<br>
+      <td style="vertical-align: top;">TLS_RSA_WITH_RC4_128_MD5<br>
       </td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_rc4_128_sha</td>
-      <td style="vertical-align: top;">SSL_RSA_WITH_RC4_128_SHA<br>
+      <td style="vertical-align: top;">TLS_RSA_WITH_RC4_128_SHA<br>
       </td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
     </tr>
     <tr>
       <td style="vertical-align: top;">rsa_rc4_40_md5</td>
-      <td style="vertical-align: top;">SSL_RSA_EXPORT_WITH_RC4_40_MD5<br>
+      <td style="vertical-align: top;">TLS_RSA_EXPORT_WITH_RC4_40_MD5<br>
       </td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
     </tr>
-    <tr>
-      <td style="vertical-align: top;">fortezza<br>
-      </td>
-      <td style="vertical-align: top;">SSL_FORTEZZA_DMS_WITH_FORTEZZA_CBC_SHA<br>
-      </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">fortezza_rc4_128_sha<br>
-      </td>
-      <td style="vertical-align: top;">SSL_FORTEZZA_DMS_WITH_RC4_128_SHA<br>
-      </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;">fortezza_null<br>
-      </td>
-      <td style="vertical-align: top;">SSL_FORTEZZA_DMS_WITH_NULL_SHA<br>
-      </td>
-      <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
-    </tr>
+
+
+
     <tr>
       <td style="vertical-align: top;">fips_des_sha<br>
       </td>
@@ -625,13 +627,56 @@ Available ciphers are:<br>
       <td style="vertical-align: top;">TLS_RSA_WITH_AES_256_CBC_SHA<br>
       </td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
-    </tr>
+    </tr><tr>
+  <td valign="top">camelia_128_sha<br>
+  </td>
+  <td valign="top">TLS_RSA_WITH_CAMELLIA_128_CBC_SHA<br>
+  </td>
+  <td valign="top">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
+</tr>
+<tr>
+  <td valign="top">camelia_256_sha<br>
+  </td>
+  <td valign="top">TLS_RSA_WITH_CAMELLIA_256_CBC_SHA<br>
+  </td>
+  <td valign="top">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
+</tr>
+<tr>
+  <td valign="top">null_sha_256<br>
+  </td>
+  <td valign="top">TLS_RSA_WITH_NULL_SHA256<br>
+  </td>
+  <td valign="top">TLSv1.2<br>
+  </td>
+</tr>
+<tr>
+  <td valign="top">aes_128_sha_256<br>
+  </td>
+  <td valign="top">TLS_RSA_WITH_AES_128_CBC_SHA256<br>
+  </td>
+  <td valign="top">TLSv1.2</td>
+</tr>
+<tr>
+  <td valign="top">aes_256_sha_256<br>
+  </td>
+  <td valign="top">TLS_RSA_WITH_AES_256_CBC_SHA256<br>
+  </td>
+  <td valign="top">TLSv1.2</td>
+</tr>
+<tr>
+  <td valign="top">rsa_aes_128_gcm_sha_256<br>
+  </td>
+  <td valign="top">TLS_RSA_WITH_AES_128_GCM_SHA256<br>
+  </td>
+  <td valign="top">TLSv1.2</td>
+</tr>
+
   </tbody>
 </table>
 <br>
 Additionally there are a number of ECC ciphers:<br>
 <br>
-<table style="width: 70%;" border="1" cellpadding="2" cellspacing="2">
+<table style="width: 70%;" cellpadding="2" cellspacing="2" border="1">
   <tbody>
     <tr>
       <td style="vertical-align: top; font-weight: bold;">Cipher Name<br>
@@ -765,16 +810,48 @@ Additionally there are a number of ECC ciphers:<br>
       <td>ecdh_anon_aes_256_sha</td>
       <td>TLS_ECDH_anon_WITH_AES_256_CBC_SHA</td>
       <td>TLSv1.0/TLSv1.1/TLSv1.2</td>
-    </tr>
+    </tr><tr>
+  <td valign="top">ecdhe_ecdsa_aes_128_sha_256<br>
+  </td>
+  <td valign="top">TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256<br>
+  </td>
+  <td valign="top">TLSv1.2</td>
+</tr>
+<tr>
+  <td valign="top">ecdhe_rsa_aes_128_sha_256<br>
+  </td>
+  <td valign="top">TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256<br>
+  </td>
+  <td valign="top">TLSv1.2</td>
+</tr>
+<tr>
+  <td valign="top">ecdhe_ecdsa_aes_128_gcm_sha_256<br>
+  </td>
+  <td valign="top">TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256<br>
+  </td>
+  <td valign="top">TLSv1.2</td>
+</tr>
+<tr>
+  <td valign="top">ecdhe_rsa_aes_128_gcm_sha_256<br>
+  </td>
+  <td valign="top">TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256<br>
+  </td>
+  <td valign="top">TLSv1.2</td>
+</tr>
+
   </tbody>
 </table>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSCipherSuite
-+rsa_3des_sha,-rsa_des_56_sha,+rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,<br>
--rsa_rc4_40_md5,-rsa_rc4_56_sha,-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,<br>
-+fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha</code><br>
++rsa_3des_sha,-rsa_des_56_sha,+rsa_des_sha,-rsa_null_md5,-rsa_null_sha,-rsa_rc2_40_md5,+rsa_rc4_128_md5,-rsa_rc4_128_sha,-rsa_rc4_40_md5,-rsa_rc4_56_sha,-fips_des_sha, +fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha</code><br>
+<br>
+<code>NSSCipherSuite ALL</code><br>
+<br>
+<code>NSSCipherSuite </code><code>rsa_3des_sha</code><br>
+<br>
+<code>NSSCipherSuite RC4-SHA</code><br>
 <br>
 <big><big>NSSProtocol<br>
 </big></big><br>
@@ -804,7 +881,7 @@ and the maximum allowed protocols based upon these entries allowing for the
 inclusion of every protocol in-between. For example, if only SSLv3 and TLSv1.1
 are specified, SSLv3, TLSv1.0, and TLSv1.1 will all be allowed, as NSS utilizes
 protocol ranges to accept all protocols inclusively
-(TLS 1.1 -> TLS 1.0 -> SSL 3.0), and does not allow exclusion of any protocols
+(TLS 1.1 -&gt; TLS 1.0 -&gt; SSL 3.0), and does not allow exclusion of any protocols
 in the middle of a range (e. g. - TLS 1.0).<br>
 <br>
 Finally, NSS will always automatically negotiate the use of the strongest
@@ -931,8 +1008,7 @@ very strong ciphers in particular directories.<br>
 All options are disabled by default.<br>
 <br>
 Example:<br>
-<pre>
-NSSOptions +FakeBasicAuth
+<pre>NSSOptions +FakeBasicAuth
 &lt;Files ~ "\.(cgi|shtml)$"&gt;
 NSSOptions +StdEnvVars
 &lt;Files&gt;
@@ -1015,8 +1091,7 @@ variables along with the option used to set them.<br>
 <div style="text-align: center;">
 <h3>Always Set</h3>
 </div>
-<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+<table style="width: 100%; text-align: left;" cellpadding="2" cellspacing="2" border="1">
   <tbody>
     <tr>
       <td style="vertical-align: top; font-weight: bold; width: 45%;">Name<br>
@@ -1038,8 +1113,7 @@ used<br>
 <h3>+StdEnvVars<br>
 </h3>
 </div>
-<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+<table style="width: 100%; text-align: left;" cellpadding="2" cellspacing="2" border="1">
   <tbody>
     <tr>
       <td style="vertical-align: top; font-weight: bold; width: 45%;">Name<br>
@@ -1233,8 +1307,7 @@ of the server key</td>
 <br>
 <h3 style="text-align: center;">+ExportCertData<br>
 </h3>
-<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+<table style="width: 100%; text-align: left;" cellpadding="2" cellspacing="2" border="1">
   <tbody>
     <tr>
       <td style="vertical-align: top; font-weight: bold; width: 45%;">Name<br>
@@ -1271,14 +1344,13 @@ itself).<br>
 <h1><a name="Database_Management"></a>Database Management</h1>
 NSS stores it's certificates and keys in a set of files referred to as
 the "certificate database." The files by default (with NSS 3.x) are
-named cert8.db, key3.db and secmod.db. See the NSS documentation at <a
- href="http://www.mozilla.org/projects/security/pki/nss/">http://www.mozilla.org/projects/security/pki/nss/</a>
+named cert8.db, key3.db and secmod.db. See the NSS documentation at <a href="http://www.mozilla.org/projects/security/pki/nss/">http://www.mozilla.org/projects/security/pki/nss/</a>
 for more information on these specific files.<p>
 By default the NSS databases use the Berkeley Database format (cert8 and
 key3). To use the sqlite format (cert9 and key4) either include sql: in
 all references to the database (-d sql:/path/to/database) or
 <code>export NSS_DEFAULT_DB_TYPE="sql"</code>.
-<p>
+</p><p>
 For more details see
 <a href="https://wiki.mozilla.org/NSS_Shared_DB">https://wiki.mozilla.org/NSS_Shared_DB</a><br>
 <br>
@@ -1288,8 +1360,7 @@ Several NSS tools are available for managing certificates, keys,
 PKCS#11 modules and CRLs. These come with the NSS distribution. Here is
 a brief overview:<br>
 <br>
-<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+<table style="width: 100%; text-align: left;" cellpadding="2" cellspacing="2" border="1">
   <tbody>
     <tr>
       <td style="vertical-align: top;"><span style="font-weight: bold;">Tool</span><br>
@@ -1334,8 +1405,7 @@ method of referring to certificates. All of these commands use the -d
 option to specify the database location. The default is ~/.netscape and
 is probably not what you want.<br>
 <br>
-<table style="width: 100%; text-align: left;" border="1" cellpadding="2"
- cellspacing="2">
+<table style="width: 100%; text-align: left;" cellpadding="2" cellspacing="2" border="1">
   <tbody>
     <tr>
       <td style="vertical-align: top;"><span style="font-weight: bold;">Description</span><br>
@@ -1382,7 +1452,7 @@ Import-Me -d [path]<br>
   </tbody>
 </table>
 <br>
-<h2>Importing OpenSSL Certificates</h2>
+</p><h2>Importing OpenSSL Certificates</h2>
 If you have existing OpenSSL certificates you can import them into an
 NSS certificate database.<br>
 <br>
@@ -1435,8 +1505,7 @@ mod_ssl if it is loaded.<br>
 <ul>
 <code>
 # certutil -L -d /etc/httpd/alias<br>
-<pre>
-Certificate Nickname                                         Trust Attributes
+<pre>Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 
 cacert                                                       CTu,Cu,Cu
@@ -1445,11 +1514,13 @@ alpha                                                        u,pu,u
 </pre>
 </code>
 <table>
-<tr>
+<tbody><tr>
 <td valign="top"><b>NOTE:&nbsp;&nbsp; </b></td>
-<td valign="top">For actual deployments, the administrator should setup their own NSS security databases (e. g. - replace the default mod_nss NSS security databases located in <code>/etc/httpd/alias</code>), populate them with the appropriate certificates set with the proper trust attributes, and apply any changes necessary to the <code>/etc/httpd/conf.d/nss.conf</code> file such that mod_nss uses these NSS security databases.</td>
+<td valign="top">For actual deployments, the administrator should setup
+their own NSS security databases (e. g. - replace the default mod_nss
+NSS security databases located in <code>/etc/httpd/alias</code>), populate them with the appropriate certificates set with the proper trust attributes, and apply any changes necessary to the <code>/etc/httpd/conf.d/nss.conf</code> file such that mod_nss uses these NSS security databases.</td>
 </tr>
-</table>
+</tbody></table>
 <br>
 </ul>
 4. Use <code>certutil</code> to apply a password to the NSS security databases configured in step 3 above:<br>
@@ -1485,11 +1556,17 @@ with:<br>
 <br>
 <ul>
 <table>
-<tr>
+<tbody><tr>
 <td valign="top"><b>NOTE:&nbsp;&nbsp; </b></td>
-<td valign="top">Whenever <code>httpd</code> is invoked as a service/systemd process, the <code>NSSPassPhraseDialog builtin</code> parameter must be changed to point to a file URL in order to allow mod_nss to work with the Apache web server.  This is because the mod_nss test for issuing the password prompt <code>Please enter password for "internal" token:</code> on the command line is only displayed when the command <code>isatty(fileno(stdin))</code> is set to 'true', and when the command is entered from this type of invocation the value is 'false'.  In order to see the prompt, one can set the <code>NSSPassPhraseDialog builtin</code> parameter and invoke <code>httpd -D FOREGROUND</code> from the command line.</td>
+<td valign="top">Whenever <code>httpd</code> is invoked as a service/systemd process, the <code>NSSPassPhraseDialog builtin</code>
+ parameter must be changed to point to a file URL in order to allow
+mod_nss to work with the Apache web server.  This is because the mod_nss
+ test for issuing the password prompt <code>Please enter password for "internal" token:</code> on the command line is only displayed when the command <code>isatty(fileno(stdin))</code>
+ is set to 'true', and when the command is entered from this type of
+invocation the value is 'false'.  In order to see the prompt, one can
+set the <code>NSSPassPhraseDialog builtin</code> parameter and invoke <code>httpd -D FOREGROUND</code> from the command line.</td>
 </tr>
-</table>
+</tbody></table>
 </ul>
 <br>
 If the SSL Server Certificate contained in the NSS security database is an RSA certificate, make certain that the <code>NSSNickname</code> parameter is uncommented and matches the nickname displayed in step 3 above:<br>
@@ -1540,8 +1617,7 @@ Apply the appropriate ownership and permissions to the <code>/etc/httpd/password
 Redirecting to /bin/systemctl restart  httpd.service<br>
 </code>
 <code>
-<pre>
-# service httpd status
+<pre># service httpd status
 Redirecting to /bin/systemctl status  httpd.service
 httpd.service - The Apache HTTP Server
    Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
@@ -1574,8 +1650,7 @@ Nov 27 15:25:48 server.example.com systemd[1]: Started The Apache HTTP Server.
 <ul>
 <code>
 # certutil -L -d /etc/httpd/alias<br>
-<pre>
-Certificate Nickname                                         Trust Attributes
+<pre>Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 
 cacert                                                       CTu,Cu,Cu
@@ -1584,11 +1659,13 @@ alpha                                                        u,pu,u
 </pre>
 </code>
 <table>
-<tr>
+<tbody><tr>
 <td valign="top"><b>NOTE:&nbsp;&nbsp; </b></td>
-<td valign="top">For actual deployments, the administrator should setup their own NSS security databases (e. g. - replace the default mod_nss NSS security databases located in <code>/etc/httpd/alias</code>), populate them with the appropriate certificates set with the proper trust attributes, and apply any changes necessary to the <code>/etc/httpd/conf.d/nss.conf</code> file such that mod_nss uses these NSS security databases.</td>
+<td valign="top">For actual deployments, the administrator should setup
+their own NSS security databases (e. g. - replace the default mod_nss
+NSS security databases located in <code>/etc/httpd/alias</code>), populate them with the appropriate certificates set with the proper trust attributes, and apply any changes necessary to the <code>/etc/httpd/conf.d/nss.conf</code> file such that mod_nss uses these NSS security databases.</td>
 </tr>
-</table>
+</tbody></table>
 <br>
 </ul>
 4. Use <code>certutil</code> to apply a password to the NSS security databases configured in step 3 above:<br>
@@ -1624,11 +1701,17 @@ with:<br>
 <br>
 <ul>
 <table>
-<tr>
+<tbody><tr>
 <td valign="top"><b>NOTE:&nbsp;&nbsp; </b></td>
-<td valign="top">Whenever <code>httpd</code> is invoked as a service/systemd process, the <code>NSSPassPhraseDialog builtin</code> parameter must be changed to point to a file URL in order to allow mod_nss to work with the Apache web server.  This is because the mod_nss test for issuing the password prompt <code>Please enter password for "NSS FIPS 140-2 Certificate DB" token:</code> on the command line is only displayed when the command <code>isatty(fileno(stdin))</code> is set to 'true', and when the command is entered from this type of invocation the value is 'false'.  In order to see the prompt, one can set the <code>NSSPassPhraseDialog builtin</code> parameter and invoke <code>httpd -D FOREGROUND</code> from the command line.</td>
+<td valign="top">Whenever <code>httpd</code> is invoked as a service/systemd process, the <code>NSSPassPhraseDialog builtin</code>
+ parameter must be changed to point to a file URL in order to allow
+mod_nss to work with the Apache web server.  This is because the mod_nss
+ test for issuing the password prompt <code>Please enter password for "NSS FIPS 140-2 Certificate DB" token:</code> on the command line is only displayed when the command <code>isatty(fileno(stdin))</code>
+ is set to 'true', and when the command is entered from this type of
+invocation the value is 'false'.  In order to see the prompt, one can
+set the <code>NSSPassPhraseDialog builtin</code> parameter and invoke <code>httpd -D FOREGROUND</code> from the command line.</td>
 </tr>
-</table>
+</tbody></table>
 </ul>
 <br>
 To enable FIPS mode for mod_nss, add the following parameter:
@@ -1666,11 +1749,11 @@ Add:<br>
 Replacing '&lt;password&gt;' with the password that was applied to the NSS security databases in step 4 above.<br>
 <br>
 <table>
-<tr>
+<tbody><tr>
 <td valign="top"><b>IMPORTANT:&nbsp;&nbsp; </b></td>
 <td valign="top">Notice that since the NSS FIPS software token is being used, the contents of the <code>/etc/httpd/password.conf</code> file references the password for the NSS FIPS software token (<code>NSS FIPS 140-2 Certificate DB:&lt;password&gt;</code>) rather than the NSS internal software token (<code>internal:&lt;password&gt;</code>).</td>
 </tr>
-</table>
+</tbody></table>
 </ul>
 <br>
 Apply the appropriate ownership and permissions to the <code>/etc/httpd/password.conf</code> file:<br>
@@ -1695,8 +1778,7 @@ Apply the appropriate ownership and permissions to the <code>/etc/httpd/password
 Redirecting to /bin/systemctl restart  httpd.service<br>
 </code>
 <code>
-<pre>
-# service httpd status
+<pre># service httpd status
 Redirecting to /bin/systemctl status  httpd.service
 httpd.service - The Apache HTTP Server
    Loaded: loaded (/usr/lib/systemd/system/httpd.service; disabled)
@@ -1716,5 +1798,6 @@ Nov 27 16:26:07 server.example.com systemd[1]: Started The Apache HTTP Server.
 </code>
 </ul>
 </ul>
-</body>
-</html>
+
+
+</body></html>

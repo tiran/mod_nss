@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "mod_nss.h"
+#include "nss_engine_cipher.h"
 #include "secerr.h"
 
 static void HandshakeDone(PRFileDesc *fd, void *doneflag);

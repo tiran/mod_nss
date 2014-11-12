@@ -3,9 +3,13 @@ VERSION = 1.0.10
 ## This is the shared library to be built
 lib_LTLIBRARIES = libmodnss.la
 
-bin_PROGRAMS = nss_pcache
+bin_PROGRAMS = nss_pcache test_cipher
 
 nss_pcache_SOURCES = nss_pcache.c
+
+test_cipher_SOURCES = test_cipher.c
+test_cipher_LDADD = .libs/nss_engine_cipher.o
+test_cipher_CFLAGS = $(AM_CFLAGS) $(CFLAGS) $(EXTRA_CPPFLAGS)
 
 man8_MANS =				\
 	gencert.8			\
@@ -16,7 +20,7 @@ install-data-hook:
 	@for i in $(man8_MANS) ; do gzip -f $(DESTDIR)$(man8dir)/$$i ; done
 
 ## Define the source file for the module
-libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c nss_engine_rand.c
+libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engine_io.c nss_engine_kernel.c nss_engine_log.c nss_engine_pphrase.c nss_engine_vars.c nss_expr.c nss_expr_eval.c nss_expr_parse.y nss_expr_scan.l nss_util.c nss_engine_rand.c nss_engine_cipher.c
 libmodnss_la_LDFLAGS = -module -avoid-version
 
 ## Set the includes and libraries needed
@@ -99,12 +103,13 @@ EXTRA_DIST = *.h *.8 LICENSE test docs
 check:
 	cd test;	\
 	rm -rf work;	\
+	nosetests -v test_cipher.py;	\
 	./setup.sh;	\
-	nosetests -v;	\
+	nosetests -v test.py;	\
 	sleep 5;	\
 	rm -rf work;	\
 	./setup.sh sql:;	\
-	DBPREFIX=sql: nosetests -v;	\
+	DBPREFIX=sql: nosetests -v test.py;	\
 	cd ..
 
 .PHONY: all test clean

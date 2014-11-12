@@ -1,5 +1,6 @@
 import socket
 import time
+import subprocess
 
 def host_port_open(host, port, socket_type=socket.SOCK_STREAM, socket_timeout=None):
     for res in socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket_type):
@@ -50,3 +51,38 @@ def wait_for_open_ports(host, ports, timeout=0):
                 raise socket.timeout()
             time.sleep(1)
 
+def shell_quote(string):
+    return "'" + string.replace("'", "'\\''") + "'"
+
+def run(args):
+    """
+    Execute a command and return stdin, stdout and the process return code.
+
+    :param args: List of arguments for the command
+    """
+    p_in = None
+    p_out = None
+
+    p_out = subprocess.PIPE
+    p_err = subprocess.PIPE
+
+    arg_string = ' '.join(shell_quote(a) for a in args)
+
+    try:
+        p = subprocess.Popen(args, stdout=p_out, stderr=p_err,
+                             close_fds=True)
+        stdout,stderr = p.communicate(None)
+    except KeyboardInterrupt:
+        p.wait()
+        raise
+
+    return (stdout, stderr, p.returncode)
+
+
+def assert_equal(got, expected):
+    if got.strip() != expected.strip():
+        raise AssertionError(
+            "assert_deepequal: expected != got. " \
+            "expected = %r got = %r" %
+            (expected, got)
+        )

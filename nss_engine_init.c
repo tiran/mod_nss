@@ -14,6 +14,7 @@
  */
 
 #include "mod_nss.h"
+#include "nss_engine_cipher.h"
 #include "apr_thread_proc.h"
 #include "mpm_common.h"
 #include "secmod.h"
@@ -34,57 +35,7 @@ SECStatus nss_AuthCertificate(void *arg, PRFileDesc *socket, PRBool checksig, PR
  */
 char* INTERNAL_TOKEN_NAME = "internal                         ";
 
-cipher_properties ciphers_def[ciphernum] =
-{
-    /* SSL3/TLS cipher suites */
-    {"rsa_rc4_128_md5", SSL_RSA_WITH_RC4_128_MD5, 0, SSL3 | TLS},
-    {"rsa_rc4_128_sha", SSL_RSA_WITH_RC4_128_SHA, 0, SSL3 | TLS},
-    {"rsa_3des_sha", SSL_RSA_WITH_3DES_EDE_CBC_SHA, 0, SSL3 | TLS},
-    {"rsa_des_sha", SSL_RSA_WITH_DES_CBC_SHA, 0, SSL3 | TLS},
-    {"rsa_rc4_40_md5", SSL_RSA_EXPORT_WITH_RC4_40_MD5, 0, SSL3 | TLS},
-    {"rsa_rc2_40_md5", SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5, 0, SSL3 | TLS},
-    {"rsa_null_md5", SSL_RSA_WITH_NULL_MD5, 0, SSL3 | TLS},
-    {"rsa_null_sha", SSL_RSA_WITH_NULL_SHA, 0, SSL3 | TLS},
-    {"fips_3des_sha", SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA, 0, SSL3 | TLS},
-    {"fips_des_sha", SSL_RSA_FIPS_WITH_DES_CBC_SHA, 0, SSL3 | TLS},
-    {"fortezza", SSL_FORTEZZA_DMS_WITH_FORTEZZA_CBC_SHA, 1, SSL3 | TLS},
-    {"fortezza_rc4_128_sha", SSL_FORTEZZA_DMS_WITH_RC4_128_SHA, 1, SSL3 | TLS},
-    {"fortezza_null", SSL_FORTEZZA_DMS_WITH_NULL_SHA, 1, SSL3 | TLS},
-    /* TLS 1.0: Exportable 56-bit Cipher Suites. */
-    {"rsa_des_56_sha", TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA, 0, SSL3 | TLS},
-    {"rsa_rc4_56_sha", TLS_RSA_EXPORT1024_WITH_RC4_56_SHA, 0, SSL3 | TLS},
-    /* AES ciphers.*/
-    {"rsa_aes_128_sha", TLS_RSA_WITH_AES_128_CBC_SHA, 0, SSL3 | TLS},
-    {"rsa_aes_256_sha", TLS_RSA_WITH_AES_256_CBC_SHA, 0, SSL3 | TLS},
-#ifdef NSS_ENABLE_ECC
-    /* ECC ciphers.*/
-    {"ecdh_ecdsa_null_sha", TLS_ECDH_ECDSA_WITH_NULL_SHA, 0, TLS},
-    {"ecdh_ecdsa_rc4_128_sha", TLS_ECDH_ECDSA_WITH_RC4_128_SHA, 0, TLS},
-    {"ecdh_ecdsa_3des_sha", TLS_ECDH_ECDSA_WITH_3DES_EDE_CBC_SHA, 0, TLS},
-    {"ecdh_ecdsa_aes_128_sha", TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA, 0, TLS},
-    {"ecdh_ecdsa_aes_256_sha", TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA, 0, TLS},
-    {"ecdhe_ecdsa_null_sha", TLS_ECDHE_ECDSA_WITH_NULL_SHA, 0, TLS},
-    {"ecdhe_ecdsa_rc4_128_sha", TLS_ECDHE_ECDSA_WITH_RC4_128_SHA, 0, TLS},
-    {"ecdhe_ecdsa_3des_sha", TLS_ECDHE_ECDSA_WITH_3DES_EDE_CBC_SHA, 0, TLS},
-    {"ecdhe_ecdsa_aes_128_sha", TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, 0, TLS},
-    {"ecdhe_ecdsa_aes_256_sha", TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, 0, TLS},
-    {"ecdh_rsa_null_sha", TLS_ECDH_RSA_WITH_NULL_SHA, 0, TLS},
-    {"ecdh_rsa_128_sha", TLS_ECDH_RSA_WITH_RC4_128_SHA, 0, TLS},
-    {"ecdh_rsa_3des_sha", TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA, 0, TLS},
-    {"ecdh_rsa_aes_128_sha", TLS_ECDH_RSA_WITH_AES_128_CBC_SHA, 0, TLS},
-    {"ecdh_rsa_aes_256_sha", TLS_ECDH_RSA_WITH_AES_256_CBC_SHA, 0, TLS},
-    {"ecdhe_rsa_null", TLS_ECDHE_RSA_WITH_NULL_SHA, 0, TLS},
-    {"ecdhe_rsa_rc4_128_sha", TLS_ECDHE_RSA_WITH_RC4_128_SHA, 0, TLS},
-    {"ecdhe_rsa_3des_sha", TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA, 0, TLS},
-    {"ecdhe_rsa_aes_128_sha", TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, 0, TLS},
-    {"ecdhe_rsa_aes_256_sha", TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, 0, TLS},
-    {"ecdh_anon_null_sha", TLS_ECDH_anon_WITH_NULL_SHA, 0, TLS},
-    {"ecdh_anon_rc4_128sha", TLS_ECDH_anon_WITH_RC4_128_SHA, 0, TLS},
-    {"ecdh_anon_3des_sha", TLS_ECDH_anon_WITH_3DES_EDE_CBC_SHA, 0, TLS},
-    {"ecdh_anon_aes_128_sha", TLS_ECDH_anon_WITH_AES_128_CBC_SHA, 0, TLS},
-    {"ecdh_anon_aes_256_sha", TLS_ECDH_anon_WITH_AES_256_CBC_SHA, 0, TLS},
-#endif
-};
+extern cipher_properties ciphers_def[];
 
 static char *version_components[] = {
     "SSL_VERSION_PRODUCT",
@@ -337,7 +288,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
 
         /* We still need to pass in a legal value to 
          * SSL_ConfigMPServerSIDCache() and SSL_ConfigServerSessionIDCache()
-         * /
+         */
         mc->session_cache_timeout = 0; /* use NSS default */
     }
 
@@ -869,21 +820,6 @@ static void nss_init_ctx_verify(server_rec *s,
     }
 }
 
-static int countciphers(PRBool cipher_state[ciphernum], int version) {
-    int ciphercount = 0;
-    int i;
-
-    for (i = 0; i < ciphernum; i++)
-    {
-        if ((cipher_state[i] == PR_TRUE) &&
-            (ciphers_def[i].version & version)) {
-            ciphercount++;
-        }
-    }
-
-    return ciphercount;
-}
-
 static void nss_init_ctx_cipher_suite(server_rec *s,
                                       apr_pool_t *p,
                                       apr_pool_t *ptemp,
@@ -1025,14 +961,14 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
         }
     }
 
-    if (mctx->ssl3 && countciphers(cipher_state, SSL3) == 0) {
+    if (mctx->ssl3 && countciphers(cipher_state, SSLV3) == 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "%s:  SSL3 is enabled but no SSL3 ciphers are enabled.",
             cipher_suite_marker);
         nss_die();
     }
 
-    if (mctx->tls && countciphers(cipher_state, TLS) == 0) {
+    if (mctx->tls && countciphers(cipher_state, TLSV1|TLSV1_2) == 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "%s:  TLS is enabled but no TLS ciphers are enabled.",
             cipher_suite_marker);
@@ -1650,59 +1586,4 @@ FindServerCertFromNickname(const char* name, const CERTCertList* clist)
 SECStatus NSSHandshakeCallback(PRFileDesc *socket, void *arg)
 {
     return SECSuccess;
-}
-
-int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum])
-{
-    char * cipher;
-    PRBool found, active;
-    int i;
-
-    cipher = ciphers;
-
-    while (ciphers && (strlen(ciphers)))
-    {
-        while ((*cipher) && (isspace(*cipher)))
-           ++cipher;
-
-        switch(*cipher++)
-        {
-            case '+':
-                active = PR_TRUE;
-                break;
-            case '-':
-                active = PR_FALSE;
-                break;
-            default:
-                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                             "invalid cipher string %s. Format is +cipher1,-cipher2...", cipher - 1);
-            return -1;
-        }
-
-        if ((ciphers = strchr(cipher, ','))) {
-            *ciphers++ = '\0';
-        }
-
-        found = PR_FALSE;
-
-        for (i = 0; i < ciphernum; i++)
-        {
-            if (!strcasecmp(cipher, ciphers_def[i].name)) {
-                cipher_list[i] = active;
-                found = PR_TRUE;
-                break;
-            }
-        }
-
-        if (found == PR_FALSE) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                         "Unknown cipher %s", cipher);
-        }
-
-        if (ciphers) {
-            cipher = ciphers;
-        }
-    }
-
-    return 0;
 }

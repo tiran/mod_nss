@@ -24,6 +24,7 @@ mkdir lib
 
 # Create the content
 mkdir content/rc4_cipher
+mkdir content/openssl_rc4_cipher
 mkdir content/acl
 mkdir content/protocolssl2
 mkdir content/protocolssl3

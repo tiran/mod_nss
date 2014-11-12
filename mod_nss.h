@@ -331,15 +331,8 @@ typedef struct {
 } SSLDirConfigRec;
 
 /*
- * Cipher definitions
+ * for cipher definitions see nss_engine_cipher.h
  */
-typedef struct
-{
-    const char *name;
-    int num;
-    int fortezza_only;
-    PRInt32 version; /* protocol version valid for this cipher */
-} cipher_properties;
 
 /* Compatibility between Apache 2.0.x and 2.2.x. The numeric version of
  * the version first appeared in Apache 2.0.56-dev. I picked 2.0.55 as it
@@ -359,15 +352,6 @@ typedef struct regex_t ap_regex_t;
 #define AP_REG_ICASE REG_ICASE
 #endif
  
-enum sslversion { SSL2=1, SSL3=2, TLS=4};
-
-/* the table itself is defined in nss_engine_init.c */
-#ifdef NSS_ENABLE_ECC
-#define ciphernum 42
-#else
-#define ciphernum 17
-#endif
-
 /*
  *  function prototypes
  */
@@ -425,7 +409,7 @@ void nss_init_Child(apr_pool_t *, server_rec *);
 void nss_init_ConfigureServer(server_rec *, apr_pool_t *, apr_pool_t *, SSLSrvConfigRec *, const CERTCertList*);
 apr_status_t nss_init_ModuleKill(void *data);
 apr_status_t nss_init_ChildKill(void *data);
-int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum]);
+/* int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum]); */
 
 /* Apache API hooks */
 int nss_hook_UserCheck(request_rec *r);

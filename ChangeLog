@@ -1,4 +1,10 @@
 2014-11-12  Rob Crittenden <rcritten@redhat.com>
+    * Add compatability for mod_ssl-style cipher definitions (#862938)
+    * Add Camelia ciphers
+    * Remove Fortezza ciphers
+    * Add TLSv1.2-specific ciphers
+
+2014-11-12  Rob Crittenden <rcritten@redhat.com>
     * Initialize ciphers to all disabled before renegotiation
       (#1165408)
 

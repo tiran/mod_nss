@@ -24,7 +24,8 @@ fi
 cp ../.libs/libmodnss.so ${test_root}/lib
 cp ../nss_pcache ${test_root}/bin
 
-bash ../gencert ${DBPREFIX}${test_root}/alias
+echo "Generating a new certificate database..."
+bash ../gencert ${DBPREFIX}${test_root}/alias > /dev/null 2>&1
 echo internal:httptest > ${test_root}/conf/password.conf
 
 # Export the CA cert
