@@ -1,3 +1,7 @@
+2014-11-12  Rob Crittenden <rcritten@redhat.com>
+    * Initialize ciphers to all disabled before renegotiation
+      (#1165408)
+
 2014-11-06  Rob Crittenden <rcritten@redhat.com>
     * Completely remove support for SSLv2
 

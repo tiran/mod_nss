@@ -198,6 +198,10 @@ int nss_hook_Access(request_rec *r)
 
         /* configure new state */
 
+        for (i=0; i<ciphernum; i++)
+        {
+            ciphers_new[i] = PR_FALSE;
+        }
         ciphers = strdup(dc->szCipherSuite);
         if (nss_parse_ciphers(r->server, ciphers, ciphers_new) < 0) {
             ap_log_error(APLOG_MARK, APLOG_WARNING, 0,
@@ -210,6 +214,13 @@ int nss_hook_Access(request_rec *r)
             return HTTP_FORBIDDEN;
         }
         free(ciphers);
+
+        /* Disable all ciphers so only the ones we want will be available */
+
+        for (i = 0; i < SSL_NumImplementedCiphers; i++)
+        {
+            SSL_CipherPrefSet(ssl, SSL_ImplementedCiphers[i], SSL_NOT_ALLOWED);
+        }
 
         /* Actually enable the selected ciphers. Also check to
            see if the existing cipher is in the new list for
@@ -472,6 +483,18 @@ int nss_hook_Access(request_rec *r)
 #endif
                 return HTTP_FORBIDDEN;
             }
+        }
+
+        if (cipher || !cipher_in_list) {
+            int on, keySize, secretKeySize;
+            char *issuer, *subject;
+
+            SSL_SecurityStatus(ssl, &on, &cipher,
+                               &keySize, &secretKeySize, &issuer,
+                               &subject);
+
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
+                "Re-negotiated cipher %s", cipher);
         }
 
         /*
