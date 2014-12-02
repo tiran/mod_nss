@@ -132,9 +132,9 @@ static void nss_init_SSLLibrary(server_rec *base_server)
                 return;
     }
     if (strncasecmp(mc->pCertificateDatabase, "sql:", 4) == 0)
-        dbdir = mc->pCertificateDatabase + 4;
+        dbdir = (char *)mc->pCertificateDatabase + 4;
     else 
-        dbdir = mc->pCertificateDatabase;
+        dbdir = (char *)mc->pCertificateDatabase;
     if (chdir(dbdir) != 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "Unable to change directory to %s", mc->pCertificateDatabase);
