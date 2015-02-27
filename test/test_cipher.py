@@ -159,4 +159,4 @@ class test_ciphers(object):
     def test_invalid_format(self):
         (out, err, rc) = run([exe, "none"])
         assert rc == 1
-        assert_equal(err, 'nss_engine_cipher.c:292, invalid cipher string none. Format is +cipher1,-cipher2...Unable to parse cipher list')
+        assert_equal(err, 'nss_engine_cipher.c:291, invalid cipher string none. Format is +cipher1,-cipher2...Unable to parse cipher list')
