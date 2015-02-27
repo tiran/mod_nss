@@ -7,8 +7,7 @@ bin_PROGRAMS = nss_pcache test_cipher
 
 nss_pcache_SOURCES = nss_pcache.c
 
-test_cipher_SOURCES = test_cipher.c
-test_cipher_LDADD = .libs/nss_engine_cipher.o
+test_cipher_SOURCES = test_cipher.c nss_engine_cipher.c
 test_cipher_CFLAGS = $(AM_CFLAGS) $(CFLAGS) $(EXTRA_CPPFLAGS)
 
 man8_MANS =				\
