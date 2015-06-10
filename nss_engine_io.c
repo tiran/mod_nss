@@ -929,7 +929,7 @@ struct modnss_buffer_ctx {
     apr_pool_t *pool;
 };
 
-int nss_io_buffer_fill(request_rec *r)
+int nss_io_buffer_fill(request_rec *r, apr_size_t maxlen)
 {
     conn_rec *c = r->connection;
     struct modnss_buffer_ctx *ctx;
@@ -945,7 +945,8 @@ int nss_io_buffer_fill(request_rec *r)
     /* ... and a temporary brigade. */
     tempb = apr_brigade_create(r->pool, c->bucket_alloc);
 
-    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "filling buffer");
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "filling buffer, max size "
+                  "%" APR_SIZE_T_FMT " bytes", maxlen);
 
     do {
         apr_status_t rv;
@@ -1001,9 +1002,10 @@ int nss_io_buffer_fill(request_rec *r)
                       total, eos);
 
         /* Fail if this exceeds the maximum buffer size. */
-        if (total > SSL_MAX_IO_BUFFER) {
+        if (total > maxlen) {
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                          "request body exceeds maximum size for SSL buffer");
+                          "request body exceeds maximum size (%" APR_SIZE_T_FMT
+                          ") for SSL buffer", maxlen);
             return HTTP_REQUEST_ENTITY_TOO_LARGE;
         }
 

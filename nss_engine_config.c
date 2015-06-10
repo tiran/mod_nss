@@ -240,6 +240,8 @@ void *nss_config_perdir_create(apr_pool_t *p, char *dir) {
 
     dc->szUserName    = NULL;
 
+    dc->nRenegBufferSize = UNSET;
+
     return dc;
 }
  
@@ -272,6 +274,23 @@ const char *nss_cmd_NSSRequire(cmd_parms *cmd,
     return NULL;
 }
 
+const char *nss_cmd_NSSRenegBufferSize(cmd_parms *cmd,
+                                       void *dcfg,
+                                       const char *arg)
+{
+    SSLDirConfigRec *dc = dcfg;
+    int val;
+
+    val = atoi(arg);
+    if (val < 0) {
+        return apr_pstrcat(cmd->pool, "Invalid size for NSSRenegBufferSize: ",
+                           arg, NULL);
+    }
+    dc->nRenegBufferSize = val;
+
+    return NULL;
+}
+
 void *nss_config_perdir_merge(apr_pool_t *p, void *basev, void *addv) {
     SSLDirConfigRec *base = (SSLDirConfigRec *)basev;
     SSLDirConfigRec *add  = (SSLDirConfigRec *)addv;
@@ -298,6 +317,8 @@ void *nss_config_perdir_merge(apr_pool_t *p, void *basev, void *addv) {
     cfgMerge(nVerifyClient, SSL_CVERIFY_UNSET);
 
     cfgMergeString(szUserName);
+
+    cfgMergeInt(nRenegBufferSize);
 
     return mrg;
 }

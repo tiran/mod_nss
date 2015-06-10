@@ -143,6 +143,11 @@ ap_set_module_config(c->conn_config, &nss_module, val)
 #define SSL_SESSION_CACHE_SIZE     10000
 #endif
 
+/* Default setting for per-dir reneg buffer. */
+#ifndef DEFAULT_RENEG_BUFFER_SIZE
+#define DEFAULT_RENEG_BUFFER_SIZE (128 * 1024)
+#endif
+
 /*
  * Define the SSL options
  */
@@ -328,6 +333,7 @@ typedef struct {
     const char         *szCipherSuite;
     nss_verify_t        nVerifyClient;
     const char         *szUserName;
+    apr_size_t          nRenegBufferSize;
 } SSLDirConfigRec;
 
 /*
@@ -395,6 +401,8 @@ const char *nss_cmd_NSSUserName(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSOptions(cmd_parms *, void *, const char *);
 const char *nss_cmd_NSSRequireSSL(cmd_parms *cmd, void *dcfg);
 const char  *nss_cmd_NSSRequire(cmd_parms *, void *, const char *);
+const char *nss_cmd_NSSRenegBufferSize(cmd_parms *cmd, void *dcfg, const char *arg);
+
 
 const char *nss_cmd_NSSProxyEngine(cmd_parms *cmd, void *dcfg, int flag);
 const char *nss_cmd_NSSProxyProtocol(cmd_parms *, void *, const char *);
@@ -455,7 +463,7 @@ char        *nss_util_readfilter(server_rec *, apr_pool_t *, const char *,
                                  const char * const *);
 /* ssl_io_buffer_fill fills the setaside buffering of the HTTP request
  * to allow an SSL renegotiation to take place. */
-int          nss_io_buffer_fill(request_rec *r);
+int          nss_io_buffer_fill(request_rec *r, apr_size_t maxlen);
 
 int nss_rand_seed(server_rec *s, apr_pool_t *p, ssl_rsctx_t nCtx, char *prefix);
 
