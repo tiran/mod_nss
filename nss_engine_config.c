@@ -140,6 +140,7 @@ static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
     sc->proxy                       = NULL;
     sc->server                      = NULL;
     sc->proxy_ssl_check_peer_cn     = TRUE;
+    sc->session_tickets             = UNSET;
 
     modnss_ctx_init_proxy(sc, p);
 
@@ -215,6 +216,7 @@ void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
     cfgMergeBool(enabled);
     cfgMergeBool(proxy_enabled);
     cfgMergeBool(proxy_ssl_check_peer_cn);
+    cfgMergeBool(session_tickets);
 
     modnss_ctx_cfg_merge_proxy(base->proxy, add->proxy, mrg->proxy);
 
@@ -775,6 +777,14 @@ const char *nss_cmd_NSSRandomSeed(cmd_parms *cmd,
         }
     }
 
+    return NULL;
+}
+
+const char *nss_cmd_NSSSessionTickets(cmd_parms *cmd,
+                                      void *dcfg, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+    sc->session_tickets = flag ? PR_TRUE : PR_FALSE;
     return NULL;
 }
 

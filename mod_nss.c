@@ -113,6 +113,9 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(EnforceValidCerts, FLAG,
                 "Require a valid, trust, non-expired server certificate (default on)"
                 "(`on', `off'")
+    SSL_CMD_SRV(SessionTickets, FLAG,
+                "Enable or disable TLS session tickets"
+                "(`on', `off')")
     SSL_CMD_ALL(UserName, TAKE1,
 		"Set user name to SSL variable value")
     /*

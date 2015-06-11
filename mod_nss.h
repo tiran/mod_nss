@@ -317,6 +317,7 @@ struct SSLSrvConfigRec {
     modnss_ctx_t    *server;
     modnss_ctx_t    *proxy;
     BOOL             proxy_ssl_check_peer_cn;
+    BOOL             session_tickets;
 };
 
 /*
@@ -397,6 +398,7 @@ const char *nss_cmd_NSSSessionCacheSize(cmd_parms *cmd, void *dcfg, const char *
 const char *nss_cmd_NSSPassPhraseDialog(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSPassPhraseHelper(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSRandomSeed(cmd_parms *, void *, const char *, const char *, const char *);
+const char *nss_cmd_NSSSessionTickets(cmd_parms *cmd, void *dcfg, int flag);
 const char *nss_cmd_NSSUserName(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSOptions(cmd_parms *, void *, const char *);
 const char *nss_cmd_NSSRequireSSL(cmd_parms *cmd, void *dcfg);

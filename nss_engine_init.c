@@ -763,6 +763,16 @@ static void nss_init_ctx_protocol(server_rec *s,
 
     mctx->ssl3 = ssl3;
     mctx->tls = tls || tls1_1 || tls1_2;
+
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+        "%sabling TLS Session Tickets", mctx->sc->session_tickets == PR_TRUE ? "En" : "Dis");
+    if (SSL_OptionSet(mctx->model, SSL_ENABLE_SESSION_TICKETS,
+        mctx->sc->session_tickets) != SECSuccess) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "Unable to configure TLS Session Tickets");
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
+    }
 }
 
 static void nss_init_ctx_session_cache(server_rec *s,
