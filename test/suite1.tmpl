@@ -39,6 +39,12 @@ NSSUserName SSL_CLIENT_S_DN_UID
     NSSCipherSuite RC4-SHA
 </Location>
 
+<Location "/openssl_aes_cipher">
+    # In openssl equivalent of AES:-ECDH:-ADH:-PSK:-DH
+    # In NSS equivalent of AES:-ECDH
+    NSSCipherSuite AES+RSA
+</Location>
+
 <Location "/acl/aclS01.html">
     NSSOptions +StdEnvVars +CompatEnvVars +ExportCertData
     NSSVerifyClient require

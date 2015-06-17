@@ -69,6 +69,12 @@ class test_suite1(Declarative):
         ),
 
         dict(
+            desc='server-side OpenSSL-style AES cipher check',
+            request=('/openssl_aes_cipher/', {'ciphers': 'AES128-SHA'}),
+            expected=200,
+        ),
+
+        dict(
             desc='Basic client auth, no certificate',
             request=('/acl/aclS01.html', {}),
             expected=requests.exceptions.SSLError(),

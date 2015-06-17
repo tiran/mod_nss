@@ -29,10 +29,11 @@ cipher_properties ciphers_def[ciphernum] =
     {"rsa_rc4_128_md5", TLS_RSA_WITH_RC4_128_MD5, "RC4-MD5", SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5, SSLV3, SSL_MEDIUM, 128, 128},
     {"rsa_rc4_128_sha", TLS_RSA_WITH_RC4_128_SHA, "RC4-SHA", SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_SHA1, SSLV3, SSL_MEDIUM, 128, 128},
     {"rsa_rc2_40_md5", TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5, "EXP-RC2-CBC-MD5", SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5, SSLV3, SSL_EXPORT40, 40, 128},
+    /* TLS_RSA_EXPORT_WITH_DES40_CBC_SHA not implemented 0x0008 */
     {"rsa_des_sha", TLS_RSA_WITH_DES_CBC_SHA, "DES-CBC-SHA", SSL_kRSA|SSL_aRSA|SSL_DES|SSL_SHA1, SSLV3, SSL_LOW, 56, 56},
-    {"rsa_3des_sha", TLS_RSA_WITH_3DES_EDE_CBC_SHA, "DES-CBC3-SHA", SSL_kRSA|SSL_aRSA|SSL_3DES|SSL_SHA1, SSLV3, SSL_HIGH, 112, 168},
+    {"rsa_3des_sha", TLS_RSA_WITH_3DES_EDE_CBC_SHA, "DES-CBC3-SHA", SSL_kRSA|SSL_aRSA|SSL_3DES|SSL_SHA1, SSLV3, SSL_HIGH, 168, 168},
     {"rsa_aes_128_sha", TLS_RSA_WITH_AES_128_CBC_SHA, "AES128-SHA", SSL_kRSA|SSL_aRSA|SSL_AES128|SSL_SHA1, TLSV1, SSL_HIGH, 128, 128},
-    {"rsa_aes_256_sha", TLS_RSA_WITH_AES_256_CBC_SHA, "AES256-SHA256", SSL_kRSA|SSL_aRSA|SSL_AES256|SSL_SHA1, TLSV1, SSL_HIGH, 256, 256},
+    {"rsa_aes_256_sha", TLS_RSA_WITH_AES_256_CBC_SHA, "AES256-SHA", SSL_kRSA|SSL_aRSA|SSL_AES256|SSL_SHA1, TLSV1, SSL_HIGH, 256, 256},
     {"null_sha_256", TLS_RSA_WITH_NULL_SHA256, "NULL-SHA256", SSL_kRSA|SSL_aRSA|SSL_eNULL|SSL_SHA256, TLSV1_2, SSL_STRONG_NONE, 0, 0},
     {"aes_128_sha_256", TLS_RSA_WITH_AES_128_CBC_SHA256, "AES128-SHA256", SSL_kRSA|SSL_aRSA|SSL_AES128|SSL_SHA256, TLSV1_2, SSL_HIGH, 128, 128},
     {"aes_256_sha_256", TLS_RSA_WITH_AES_256_CBC_SHA256, "AES256-SHA256", SSL_kRSA|SSL_aRSA|SSL_AES256|SSL_SHA256, TLSV1_2, SSL_HIGH, 256, 256},
@@ -73,7 +74,23 @@ cipher_properties ciphers_def[ciphernum] =
     {"ecdhe_rsa_aes_128_sha_256", TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, "ECDHE-RSA-AES128-SHA256", SSL_kEECDH|SSL_aRSA|SSL_AES128|SSL_SHA256, TLSV1_2, SSL_HIGH, 128, 128},
     {"ecdhe_ecdsa_aes_128_gcm_sha_256", TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, "ECDHE-ECDSA-AES128-GCM-SHA256", SSL_kEECDH|SSL_aECDSA|SSL_AES128GCM|SSL_AEAD, TLSV1_2, SSL_HIGH, 128, 128},
     {"ecdhe_rsa_aes_128_gcm_sha_256", TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, "ECDHE-RSA-AES128-GCM-SHA256", SSL_kEECDH|SSL_aRSA|SSL_AES128GCM|SSL_AEAD, TLSV1_2, SSL_HIGH, 128, 128},
+    /* TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256 is not implemented */
+    /* TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256 is not implemented */
+    /* TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256 is not implemented */
+    /* TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256 is not implemented */
 #endif
+};
+
+
+/* Some ciphers are optionally enabled in OpenSSL. For safety sake assume
+ * they are not available.
+ */
+static int skip_ciphers = 4;
+static int ciphers_not_in_openssl[] = {
+    SSL_RSA_FIPS_WITH_DES_CBC_SHA,
+    SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA,
+    TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA,
+    TLS_RSA_EXPORT1024_WITH_RC4_56_SHA,
 };
 
 static int parse_nss_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum]);
@@ -107,12 +124,39 @@ int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum
         rv = parse_nss_ciphers(s, ciphers, cipher_list);
     } else {
         rv = parse_openssl_ciphers(s, ciphers, cipher_list);
-        if (0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2)) {
+        if (rv == 0 && 0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2)) {
             rv = parse_nss_ciphers(s, ciphers, cipher_list);
         }
     }
+    if (0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2)) {
+        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                     "no cipher match");
+    }
 
     return rv;
+}
+
+
+/* Given a set of ciphers perform a given action on the indexed value.
+ * 
+ * This is needed because the + action doesn't do anything in the NSS
+ * context. In OpenSSL it will re-order the cipher list.
+ */
+static int set_cipher_value(PRBool cipher_list[ciphernum], int index, int action)
+{
+    int i;
+
+    for (i = 0; i < skip_ciphers; i++) {
+        if (ciphers_def[index].num == ciphers_not_in_openssl[i]) {
+            cipher_list[index] = -1;
+            return;
+        }
+    }
+
+    if (cipher_list[index] == -1) /* cipher is disabled */
+        return;
+    else
+        cipher_list[index] = action;
 }
 
 
@@ -120,6 +164,8 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
 {
     char * cipher;
     int i, action;
+    PRBool merge = PR_FALSE;
+    PRBool found = PR_FALSE;
 
     cipher = ciphers;
     while (ciphers && (strlen(ciphers)))
@@ -127,12 +173,12 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
         while ((*cipher) && (isspace(*cipher)))
             ++cipher;
 
-        action = 1;
+        action = 1; /* default to enable */
         switch(*cipher)
         {
             case '+': /* Add something */
-                action = 1;
-                cipher++;
+                /* Cipher ordering is not supported in NSS */
+                return 0;
                 break;
             case '-': /* Subtract something */
                 action = 0;
@@ -149,34 +195,58 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
 
         if ((ciphers = strchr(cipher, ':'))) {
             *ciphers++ = '\0';
+            merge = PR_FALSE;
+            found = PR_FALSE;
         }
 
         if (!strcmp(cipher, "ALL")) {
+            found = PR_TRUE;
             for (i=0; i<ciphernum; i++) {
                 if (!(ciphers_def[i].attr & SSL_eNULL))
-                    if (cipher_list[i] != -1)
-                        cipher_list[i] = action;
+                    set_cipher_value(cipher_list, i, action);
             }
         } else if (!strcmp(cipher, "COMPLEMENTOFALL")) {
+            found = PR_TRUE;
             for (i=0; i<ciphernum; i++) {
                 if ((ciphers_def[i].attr & SSL_eNULL))
-                    if (cipher_list[i] != -1)
-                        cipher_list[i] = action;
+                    set_cipher_value(cipher_list, i, action);
             }
         } else if (!strcmp(cipher, "DEFAULT")) {
+            found = PR_TRUE;
             for (i=0; i < ciphernum; i++) {
                 if (cipher_list[i] != -1)
                     SSL_CipherPrefGetDefault(ciphers_def[i].num,
                                              &cipher_list[i]);
             }
+        } else if (!strcmp(cipher, "COMPLEMENTOFDEFAULT")) {
+            found = PR_TRUE;
+            /* no-op. In OpenSSL this is the ADH ciphers */
+        } else if (!strcmp(cipher, "@STRENGTH")) {
+            /* No cipher ordering in NSS */
+            ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                         "Cipher ordering is not supported in NSS");
+            return -1;
         } else {
             int mask = 0;
             int strength = 0;
             int protocol = 0;
             char *c;
+            int i;
+            PRBool candidate_list[ciphernum];
+            PRBool temp_list[ciphernum];
+
+            for (i = 0; i < ciphernum; i++) {
+                candidate_list[i] = 1;
+            }
 
             c = cipher;
             while (c && (strlen(c))) {
+                mask = 0;
+                strength = 0;
+                protocol = 0;
+                for (i = 0; i < ciphernum; i++) {
+                    temp_list[i] = 0;
+                }
 
                 if ((c = strchr(cipher, '+'))) {
                     *c++ = '\0';
@@ -184,12 +254,44 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
 
                 if (!strcmp(cipher, "RSA")) {
                     mask |= SSL_RSA;
+                } else if (!strcmp(cipher, "kRSA")) {
+                    mask |= SSL_kRSA;
+                } else if (!strcmp(cipher, "aRSA")) {
+                    mask |= SSL_aRSA;
                 } else if (!strcmp(cipher, "EDH")) {
                     mask |= SSL_EDH;
+#if 0
+                } else if (!strcmp(cipher, "ADH")) {
+                    mask |= SSL_ADH;
+#endif
+                } else if (!strcmp(cipher, "ECDH")) {
+                    mask |= SSL_ECDH;
+                } else if (!strcmp(cipher, "kECDHe")) {
+                    mask |= SSL_kECDHe;
+                } else if (!strcmp(cipher, "kECDHr")) {
+                    mask |= SSL_kECDHr;
+                } else if (!strcmp(cipher, "kEECDH")) {
+                    mask |= SSL_kEECDH;
+                } else if (!strcmp(cipher, "aECDH")) {
+                    mask |= SSL_aECDH;
                 } else if ((!strcmp(cipher, "NULL")) || (!strcmp(cipher, "eNULL"))) {
                     mask |= SSL_eNULL;
+                } else if (!strcmp(cipher, "aNULL")) {
+                    mask |= SSL_aNULL;
                 } else if (!strcmp(cipher, "AES")) {
                     mask |= SSL_AES;
+                } else if (!strcmp(cipher, "AESGCM")) {
+                    mask |= SSL_AES128GCM|SSL_AES256GCM;
+                } else if (!strcmp(cipher, "AES128")) {
+                    mask |= SSL_AES128|SSL_AES128GCM;
+                } else if (!strcmp(cipher, "AES256")) {
+                    mask |= SSL_AES256|SSL_AES256GCM;
+                } else if (!strcmp(cipher, "CAMELLIA")) {
+                    mask |= SSL_CAMELLIA128|SSL_CAMELLIA256;
+                } else if (!strcmp(cipher, "CAMELLIA128")) {
+                    mask |= SSL_CAMELLIA128;
+                } else if (!strcmp(cipher, "CAMELLIA256")) {
+                    mask |= SSL_CAMELLIA256;
                 } else if (!strcmp(cipher, "3DES")) {
                     mask |= SSL_3DES;
                 } else if (!strcmp(cipher, "DES")) {
@@ -210,7 +312,7 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                     protocol |= SSLV3;
                 } else if (!strcmp(cipher, "TLSv1")) {
                     protocol |= TLSV1;
-                } else if (!strcmp(cipher, "TLSv12")) {
+                } else if (!strcmp(cipher, "TLSv1.2")) {
                     protocol |= TLSV1_2;
                 } else if (!strcmp(cipher, "HIGH")) {
                     strength |= SSL_HIGH;
@@ -229,32 +331,58 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                 if (c)
                     cipher = c;
 
-            } /* while */
-
-            /* If we have a mask, apply it. If not then perhaps they provided
-             * a specific cipher to enable.
-             */
-            if (mask || strength || protocol)
-                for (i=0; i<ciphernum; i++) {
-                    if (((ciphers_def[i].attr & mask) ||
-                     (ciphers_def[i].strength & strength) ||
-                     (ciphers_def[i].version & protocol)) &&
-                     (cipher_list[i] != -1)) {
-                        /* Enable the NULL ciphers only if explicity
-                         * requested */
-                        if (ciphers_def[i].attr & SSL_eNULL) {
-                            if (mask & SSL_eNULL)
-                                cipher_list[i] = action;
-                        } else
-                            cipher_list[i] = action;
+                /* If we have a mask, apply it. If not then perhaps they
+                 * provided a specific cipher to enable.
+                 */
+                if (mask || strength || protocol) {
+                    merge = PR_TRUE;
+                    found = PR_TRUE;
+                    for (i=0; i<ciphernum; i++) {
+                        if (((ciphers_def[i].attr & mask) ||
+                         (ciphers_def[i].strength & strength) ||
+                         (ciphers_def[i].version & protocol)) &&
+                         (cipher_list[i] != -1)) {
+#if 0
+                            /* Enable the NULL ciphers only if explicity
+                             * requested */
+                            if (ciphers_def[i].attr & SSL_eNULL) {
+                                if (mask & SSL_eNULL)
+                                    temp_list[i] = 1;
+                            } else
+#endif
+                                temp_list[i] = 1;
+                            }
+                    }
+                    /* Merge the temp list into the candidate list */
+                    for (i=0; i<ciphernum; i++) {
+                        if (!(candidate_list[i] & temp_list[i])) {
+                            candidate_list[i] = 0;
+                        }
+                    }
+                } else if (!strcmp(cipher, "FIPS")) {
+                        SSLCipherSuiteInfo suite;
+                    for (i=0; i<ciphernum;i++) {
+                        if (SSL_GetCipherSuiteInfo(ciphers_def[i].num,
+                            &suite, sizeof suite) == SECSuccess) {
+                            if (suite.isFIPS)
+                                set_cipher_value(cipher_list, i, action);
+                        }
+                    }
+                } else {
+                    for (i=0; i<ciphernum; i++) {
+                        if (!strcmp(ciphers_def[i].openssl_name, cipher))
+                            set_cipher_value(cipher_list, i, action);
                     }
                 }
-            else {
+            } /* while */
+            if (PR_TRUE == merge) {
+                /* Merge the candidate list into the cipher list */
                 for (i=0; i<ciphernum; i++) {
-                    if (!strcmp(ciphers_def[i].openssl_name, cipher) &&
-                        cipher_list[i] != -1)
-                        cipher_list[i] = action;
+                    if (candidate_list[i])
+                        set_cipher_value(cipher_list, i, action);
                 }
+                merge = PR_FALSE;
+                found = PR_FALSE;
             }
         }
 
@@ -262,6 +390,8 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
             cipher = ciphers;
 
     }
+    if (found && 0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2))
+        return 1; /* no matching ciphers */
     return 0;
 }
 

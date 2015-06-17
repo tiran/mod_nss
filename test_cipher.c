@@ -40,7 +40,7 @@ int ap_log_error_(const char *fn, int line, int module_index,
 
     va_start(args, fmt);
     vsprintf(out, fmt, args);
-    fprintf(stderr,"%s:%d, %s", fn, line, out);
+    fprintf(stderr,"%s:%d, %s\n", fn, line, out);
     va_end(args);
 
     return 0;
@@ -53,10 +53,11 @@ int main(int argc, char ** argv)
     int rv=0;
     int i;
     char *ciphers;
+    PRBool openssl_output = PR_FALSE;
     PRBool ciphers_list[ciphernum];
 
-    if (argc != 2) {
-        fprintf(stderr, "Usage: test_cipher [--count] <cipher_list>\n");
+    if (argc != 2 && argc != 3) {
+        fprintf(stderr, "Usage: test_cipher [--count] [--o] <cipher_list>\n");
         exit(1);
     }
 
@@ -70,9 +71,14 @@ int main(int argc, char ** argv)
         ciphers_list[i] = PR_FALSE;
     }
 
-    ciphers = strdup(argv[1]);
+    i = 1; /* index of ciphers */
+    if (!strcmp(argv[1], "--o")) {
+        openssl_output = PR_TRUE;
+        i = 2;
+    }
+
+    ciphers = strdup(argv[i]);
     if (nss_parse_ciphers(NULL, ciphers, ciphers_list) < 0) {
-        fprintf(stderr, "Unable to parse cipher list\n");
         rv = 1;
     }
     free(ciphers);
@@ -85,12 +91,22 @@ int main(int argc, char ** argv)
         for (i = 0; i < ciphernum; i++)
         {
             if (ciphers_list[i] == 1) {
-                strncat(output,  ciphers_def[i].name, sizeof(output));
-                strncat(output,  ", ", sizeof(output));
+                if (openssl_output) {
+                    strncat(output,  ciphers_def[i].openssl_name, sizeof(output));
+                    strncat(output,  ":", sizeof(output));
+                } else {
+                    strncat(output,  ciphers_def[i].name, sizeof(output));
+                    strncat(output,  ", ", sizeof(output));
+                }
             }
         }
-        output[strlen(output) - 2] = '\0';
+        if (openssl_output)
+            output[strlen(output) - 1] = '\0';
+        else
+            output[strlen(output) - 2] = '\0';
         fprintf(stdout, "%s\n", output);
+    } else {
+        fprintf(stdout, "Unable to parse cipher list\n");
     }
 
     return rv;

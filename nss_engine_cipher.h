@@ -29,27 +29,30 @@ typedef struct
 } cipher_properties;
 
 /* OpenSSL-compatible cipher attributes */
-#define SSL_kRSA  0x00000001L
-#define SSL_aRSA  0x00000002L
-#define SSL_aDSS  0x00000004L
-#define SSL_DSS   SSL_aDSS
-#define SSL_eNULL 0x00000008L
-#define SSL_DES   0x00000010L
-#define SSL_3DES  0x00000020L
-#define SSL_RC4   0x00000040L
-#define SSL_RC2   0x00000080L
-#define SSL_MD5   0x00000200L
-#define SSL_SHA1  0x00000400L
-#define SSL_SHA   SSL_SHA1
-#define SSL_RSA   (SSL_kRSA|SSL_aRSA)
-#define SSL_kEDH  0x00000800L
-#define SSL_EDH   (SSL_kEDH)
-#define SSL_aNULL 0x00001000L
-#define SSL_kECDHe 0x00002000L
-#define SSL_aECDH 0x00004000L
-#define SSL_aECDSA 0x00008000L
-#define SSL_kECDHr 0x00010000L
-#define SSL_kEECDH 0x00020000L
+#define SSL_kRSA	0x00000001L
+#define SSL_aRSA	0x00000002L
+#define SSL_aDSS	0x00000004L
+#define SSL_DSS		SSL_aDSS
+#define SSL_eNULL	0x00000008L
+#define SSL_DES		0x00000010L
+#define SSL_3DES	0x00000020L
+#define SSL_RC4		0x00000040L
+#define SSL_RC2		0x00000080L
+#define SSL_MD5		0x00000200L
+#define SSL_SHA1	0x00000400L
+#define SSL_SHA		SSL_SHA1
+#define SSL_RSA		(SSL_kRSA)
+#define SSL_kEDH	0x00000800L
+#define SSL_EDH		(SSL_kEDH)
+#define SSL_aNULL	0x00001000L
+#define SSL_kECDHe	0x00002000L
+#define SSL_aECDH	0x00004000L
+#define SSL_aECDSA	0x00008000L
+#define SSL_kECDHr	0x00010000L
+#define SSL_kEECDH	0x00020000L
+#define SSL_ECDH	(SSL_kECDHe|SSL_kECDHr|SSL_kEECDH)
+#define SSL_EECDH	(SSL_kEECDH)
+#define SSL_ADH		(SSL_kEDH)
 
 /* cipher strength */
 #define SSL_STRONG_NONE   0x00000001L
@@ -60,14 +63,14 @@ typedef struct
 #define SSL_MEDIUM        0x00000020L
 #define SSL_HIGH          0x00000040L
 
-#define SSL_AES128        0x00004000L
-#define SSL_AES256        0x00008000L
-#define SSL_CAMELLIA128   0x00010000L
-#define SSL_CAMELLIA256   0x00020000L
-#define SSL_AES128GCM     0x00040000L
-#define SSL_AES256GCM     0x00080000L
-#define SSL_SHA256        0x00100000L
-#define SSL_AEAD          0x00200000L
+#define SSL_AES128        0x00400000L
+#define SSL_AES256        0x00800000L
+#define SSL_CAMELLIA128   0x01000000L
+#define SSL_CAMELLIA256   0x02000000L
+#define SSL_AES128GCM     0x04000000L
+#define SSL_AES256GCM     0x08000000L
+#define SSL_SHA256        0x10000000L
+#define SSL_AEAD          0x20000000L
 
 #define SSL_AES           (SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM)
 #define SSL_CAMELLIA      (SSL_CAMELLIA128|SSL_CAMELLIA256)
