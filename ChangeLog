@@ -1,3 +1,11 @@
+2015-07-27  Rob Crittenden <rcritten@redhat.com>
+    * Add RenegBufferSize option (#1214366)
+    * Add support for TLS Session Tickets (RFC 5077)
+    * Fix logical AND support in OpenSSL cipher compatibility (CVE-2015-3276)
+
+2014-12-10  Rob Crittenden <rcritten@redhat.com>
+    * Become 1.0.11
+
 2014-11-12  Rob Crittenden <rcritten@redhat.com>
     * Add compatability for mod_ssl-style cipher definitions (#862938)
     * Add Camelia ciphers
