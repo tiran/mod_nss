@@ -398,7 +398,7 @@ Deprecated.<br>
 <br>
 <big><big>NSSSession3CacheTimeout<br>
 </big></big><br>
-Specifies the number of seconds SSL 3 sessions are cached.<br>
+Specifies the number of seconds SSLv3 sessions are cached.<br>
 <br>
 The valid range is 5 - 86400 seconds. A setting outside the valid
 range is silently constrained.<br>
@@ -453,7 +453,7 @@ Example</span><br>
 <br>
 Enables or disables FIPS 140 mode. This replaces the standard
 internal PKCS#11 module with a FIPS-enabled one. It also forces the
-enabled protocols to TLSv1.2, TLSv1.1 and TLS v1.0 and disables all ciphers
+enabled protocols to TLSv1.2, TLSv1.1 and TLSv1.0 and disables all ciphers
 but the FIPS ones. You may still select which ciphers you would like
 limited to those that are FIPS-certified. Any non-FIPS that are
 included in the NSSCipherSuite entry are automatically disabled.
@@ -881,8 +881,8 @@ and the maximum allowed protocols based upon these entries allowing for the
 inclusion of every protocol in-between. For example, if only SSLv3 and TLSv1.1
 are specified, SSLv3, TLSv1.0, and TLSv1.1 will all be allowed, as NSS utilizes
 protocol ranges to accept all protocols inclusively
-(TLS 1.1 -&gt; TLS 1.0 -&gt; SSL 3.0), and does not allow exclusion of any protocols
-in the middle of a range (e. g. - TLS 1.0).<br>
+(TLSv1.1 -&gt; TLSv1.0 -&gt; SSLv3.0), and does not allow exclusion of any protocols
+in the middle of a range (e. g. - TLSv1.0).<br>
 <br>
 Finally, NSS will always automatically negotiate the use of the strongest
 possible protocol that has been specified which is acceptable to both sides of
@@ -1505,9 +1505,10 @@ certutil: certificate is valid</code><br>
 
 <h1><a name="SSLv2"></a>Why is SSLv2 disabled?</h1>
 All major browsers (Firefox, Internet Explorer, Mozilla, Netscape, Opera, and
-Safari) support SSL 3 and TLS so there is no need for a web server to support
-SSL 2. There are some known attacks against SSL 2 that are handled by SSL
-3/TLS. SSL2 also doesn't support useful features like client authentication.
+Safari) support SSLv3 and TLS so there is no need for a web server to support
+SSLv2. There are some known attacks against SSLv2 that are handled by
+SSLv3/TLS. SSLv2 also doesn't support useful features like client
+authentication.
 <br>
 
 <h1><a name="FAQ"></a>Frequently Asked Questions</h1>
