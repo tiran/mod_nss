@@ -352,7 +352,7 @@ static char *nss_get_password(FILE *input, FILE *output,
             fprintf(output, "non-alphabetic characters\n");
             continue; 
         }
-        if (PK11_IsFIPS() && strlen(phrase) == 0) {
+        if (PK11_IsFIPS() && strlen((char *)phrase) == 0) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
                 "The FIPS security policy requires that a password be set.");
             nss_die();
