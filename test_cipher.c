@@ -92,11 +92,11 @@ int main(int argc, char ** argv)
         {
             if (ciphers_list[i] == 1) {
                 if (openssl_output) {
-                    strncat(output,  ciphers_def[i].openssl_name, sizeof(output));
-                    strncat(output,  ":", sizeof(output));
+                    strncat(output,  ciphers_def[i].openssl_name, sizeof(output) - strlen(output) -1);
+                    strncat(output,  ":", sizeof(output) - strlen(output) -1);
                 } else {
-                    strncat(output,  ciphers_def[i].name, sizeof(output));
-                    strncat(output,  ", ", sizeof(output));
+                    strncat(output,  ciphers_def[i].name, sizeof(output) - strlen(output) -1);
+                    strncat(output,  ", ", sizeof(output) - strlen(output) -1);
                 }
             }
         }
