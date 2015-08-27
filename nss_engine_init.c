@@ -987,7 +987,7 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
 
     /* Finally actually enable the selected ciphers */
     for (i=0; i<ciphernum;i++) {
-        SSL_CipherPrefSet(mctx->model, ciphers_def[i].num, cipher_state[i]);
+        SSL_CipherPrefSet(mctx->model, ciphers_def[i].num, cipher_state[i] == 1 ? PR_TRUE : PR_FALSE);
     }
 }
 
