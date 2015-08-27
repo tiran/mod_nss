@@ -142,7 +142,7 @@ int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum
  * This is needed because the + action doesn't do anything in the NSS
  * context. In OpenSSL it will re-order the cipher list.
  */
-static int set_cipher_value(PRBool cipher_list[ciphernum], int index, int action)
+static void set_cipher_value(PRBool cipher_list[ciphernum], int index, int action)
 {
     int i;
 
@@ -153,9 +153,7 @@ static int set_cipher_value(PRBool cipher_list[ciphernum], int index, int action
         }
     }
 
-    if (cipher_list[index] == -1) /* cipher is disabled */
-        return;
-    else
+    if (cipher_list[index] != -1) /* cipher is disabled */
         cipher_list[index] = action;
 }
 
