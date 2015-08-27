@@ -1,3 +1,10 @@
+2015-08-27  Rob Crittenden <rcritten@redhat.com>
+    * Fix a bunch of compiler warnings
+    * Permanently disabled openssl ciphers could be enabled (CVE-2015-5244)
+    
+2015-07-28  Matthew Harmsen <mharmsen@redhat.com>
+    * Add 'v' to refererences of protocols (e.g. SSLv3) (#1066236)
+
 2015-07-27  Rob Crittenden <rcritten@redhat.com>
     * Add RenegBufferSize option (#1214366)
     * Add support for TLS Session Tickets (RFC 5077)
