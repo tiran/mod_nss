@@ -54,6 +54,11 @@ def assert_equal_openssl(nss_ciphers, ossl_ciphers):
 
     assert nss_list == ossl_list, '%r != %r. Difference %r' % (':'.join(nss_list), ':'.join(ossl_list), diff)
 
+def assert_no_NULL(nss_ciphers):
+    (nss, err, rc) = run([exe, "--o", nss_ciphers])
+    assert rc == 0
+    assert('NULL' not in nss)
+
 class test_ciphers(object):
     @classmethod
     def setUpClass(cls):
@@ -211,6 +216,9 @@ class test_ciphers(object):
 
     def test_negative_plus_RSA_MD5(self):
         assert_equal_openssl("-RC2:RSA+MD5", "-RC2:RSA+MD5:-SSLv2")
+
+    def test_DEFAULT_aRSA(self):
+        assert_no_NULL("DEFAULT:aRSA")
 
     def test_nss_subtraction(self):
         (out, err, rc) = run([exe, "+rsa_rc4_128_md5,+rsa_rc4_128_sha,-rsa_rc4_128_md5"])

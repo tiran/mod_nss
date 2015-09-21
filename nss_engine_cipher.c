@@ -164,6 +164,7 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
     int i, action;
     PRBool merge = PR_FALSE;
     PRBool found = PR_FALSE;
+    PRBool first = PR_TRUE;
 
     cipher = ciphers;
     while (ciphers && (strlen(ciphers)))
@@ -210,11 +211,22 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                     set_cipher_value(cipher_list, i, action);
             }
         } else if (!strcmp(cipher, "DEFAULT")) {
+            /* In OpenSSL the default cipher list is
+             *    ALL:!aNULL:!eNULL:!SSLv2
+             * So we need to disable all the NULL ciphers too.
+             */
+            int mask = SSL_aNULL | SSL_eNULL;
+            PRBool enabled;
             found = PR_TRUE;
             for (i=0; i < ciphernum; i++) {
                 if (cipher_list[i] != -1)
                     SSL_CipherPrefGetDefault(ciphers_def[i].num,
                                              &cipher_list[i]);
+                if (PR_TRUE == first) {
+                    if (ciphers_def[i].attr & mask) {
+                        set_cipher_value(cipher_list, i, -1);
+                    }
+                }
             }
         } else if (!strcmp(cipher, "COMPLEMENTOFDEFAULT")) {
             found = PR_TRUE;
@@ -374,6 +386,7 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                 }
             } /* while */
             if (PR_TRUE == merge) {
+                first = PR_FALSE;
                 /* Merge the candidate list into the cipher list */
                 for (i=0; i<ciphernum; i++) {
                     if (candidate_list[i])
