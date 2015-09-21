@@ -237,6 +237,8 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                          "Cipher ordering is not supported in NSS");
             return -1;
         } else {
+            int amask = 0;
+            int amaskaction = 0;
             int mask = 0;
             int strength = 0;
             int protocol = 0;
@@ -251,6 +253,8 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
 
             c = cipher;
             while (c && (strlen(c))) {
+                amask = 0;
+                amaskaction = 0;
                 mask = 0;
                 strength = 0;
                 protocol = 0;
@@ -276,6 +280,16 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
 #endif
                 } else if (!strcmp(cipher, "ECDH")) {
                     mask |= SSL_ECDH;
+                } else if (!strcmp(cipher, "EECDH")) {
+                    mask |= SSL_kEECDH;
+                    amask = SSL_aNULL;
+                    amaskaction = 1; /* filter anonymous out */
+                } else if (!strcmp(cipher, "AECDH")) {
+                    mask |= SSL_kEECDH;
+                    amask = SSL_aNULL; /* require anonymous */
+                    amaskaction = 0; /* keep these */
+                } else if (!strcmp(cipher, "kECDH")) {
+                    mask |= SSL_kECDHe | SSL_kECDHr;
                 } else if (!strcmp(cipher, "kECDHe")) {
                     mask |= SSL_kECDHe;
                 } else if (!strcmp(cipher, "kECDHr")) {
@@ -284,6 +298,10 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                     mask |= SSL_kEECDH;
                 } else if (!strcmp(cipher, "aECDH")) {
                     mask |= SSL_aECDH;
+                } else if (!strcmp(cipher, "ECDSA")) {
+                    mask |= SSL_aECDSA;
+                } else if (!strcmp(cipher, "aECDSA")) {
+                    mask |= SSL_aECDSA;
                 } else if ((!strcmp(cipher, "NULL")) || (!strcmp(cipher, "eNULL"))) {
                     mask |= SSL_eNULL;
                 } else if (!strcmp(cipher, "aNULL")) {
@@ -352,6 +370,16 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                          (ciphers_def[i].strength & strength) ||
                          (ciphers_def[i].version & protocol)) &&
                          (cipher_list[i] != -1)) {
+                            if (amask != 0) {
+                                PRBool match = PR_FALSE;
+                                if (ciphers_def[i].attr & amask) {
+                                    match = PR_TRUE;
+                                }
+                                if (amaskaction && match)
+                                    continue;
+                                if (!amaskaction && !match)
+                                    continue;
+                            }
 #if 0
                             /* Enable the NULL ciphers only if explicity
                              * requested */

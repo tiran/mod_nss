@@ -183,6 +183,9 @@ class test_ciphers(object):
     def test_aECDH(self):
         assert_equal_openssl("aECDH", "aECDH")
 
+    def test_kECDH(self):
+        assert_equal_openssl("kECDH", "kECDH")
+
     def test_kECDHe(self):
         assert_equal_openssl("kECDHe", "kECDHe")
 
@@ -191,6 +194,21 @@ class test_ciphers(object):
 
     def test_kEECDH(self):
         assert_equal_openssl("kEECDH", "kEECDH")
+
+    def test_AECDH(self):
+        assert_equal_openssl("AECDH", "AECDH")
+
+    def test_EECDH(self):
+        assert_equal_openssl("EECDH", "EECDH")
+
+    def test_ECDSA(self):
+        assert_equal_openssl("ECDSA", "ECDSA")
+
+    def test_aECDSA(self):
+        assert_equal_openssl("aECDSA", "aECDSA")
+
+    def test_AESGCM(self):
+        assert_equal_openssl("AESGCM", "AESGCM:-DH")
 
     def test_ECDH(self):
         assert_equal_openssl("ECDH", "ECDH")
