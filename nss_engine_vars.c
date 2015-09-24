@@ -345,6 +345,13 @@ static char *nss_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
             CERT_DestroyCertificate(xs);
         }
     }
+    else if (ssl != NULL && strcEQ(var, "TLS_SNI")) {
+        SECItem *hostInfo = SSL_GetNegotiatedHostInfo(ssl);
+        if (hostInfo) {
+            result = apr_pstrndup(p, (char *) hostInfo->data, hostInfo->len);
+            PORT_Free(hostInfo);
+        }
+    }
 
     return result;
 }

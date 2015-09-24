@@ -134,6 +134,8 @@ static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
     sc->ocsp_name                   = NULL;
     sc->fips                        = UNSET;
     sc->enabled                     = UNSET;
+    sc->sni                         = TRUE;
+    sc->strict_sni_vhost_check      = TRUE;
     sc->proxy_enabled               = UNSET;
     sc->vhost_id                    = NULL;  /* set during module init */
     sc->vhost_id_len                = 0;     /* set during module init */
@@ -214,6 +216,8 @@ void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
     cfgMerge(ocsp_name, NULL);
     cfgMergeBool(fips);
     cfgMergeBool(enabled);
+    cfgMergeBool(sni);
+    cfgMergeBool(strict_sni_vhost_check);
     cfgMergeBool(proxy_enabled);
     cfgMergeBool(proxy_ssl_check_peer_cn);
     cfgMergeBool(session_tickets);
@@ -340,6 +344,24 @@ const char *nss_cmd_NSSFIPS(cmd_parms *cmd, void *dcfg, int flag)
     
     sc->fips = flag ? TRUE : FALSE;
  
+    return NULL;
+}
+
+const char *nss_cmd_NSSSNI(cmd_parms *cmd, void *dcfg, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->sni = flag ? TRUE : FALSE;
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSStrictSNIVHostCheck(cmd_parms *cmd, void *dcfg, int flag)
+{
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->strict_sni_vhost_check = flag ? TRUE : FALSE;
+
     return NULL;
 }
 

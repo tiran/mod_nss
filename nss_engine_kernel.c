@@ -25,6 +25,8 @@ int nss_hook_ReadReq(request_rec *r)
 {
     SSLConnRec *sslconn = myConnConfig(r->connection);
     PRFileDesc *ssl = sslconn ? sslconn->ssl : NULL;
+    SECItem *hostInfo = NULL;
+    SSLSrvConfigRec *sc = mySrvConfig(r->server);
 
     if (!sslconn) {
         return DECLINED;
@@ -69,6 +71,74 @@ int nss_hook_ReadReq(request_rec *r)
      */
     if (!ssl) {
         return DECLINED; 
+    }
+
+    /*
+     * SNI is on by default. You can  switch SNI off by setting
+     * NSSSNI off.
+     */
+
+    if (sc->sni) {
+        hostInfo = SSL_GetNegotiatedHostInfo(ssl);
+        if (hostInfo != NULL) {
+            if (ap_is_initial_req(r) && (hostInfo->len != 0)) {
+                char *servername = NULL;
+                char *host, *scope_id;
+                apr_port_t port;
+                apr_status_t rv;
+                apr_pool_t *s_p;
+
+                hostInfo->data[hostInfo->len] = '\0';
+                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
+                    "SNI request for %s", (char *)hostInfo->data);
+
+                apr_pool_create(&s_p, NULL);
+                servername = apr_pstrndup(s_p, (char *) hostInfo->data, hostInfo->len);
+
+                if (!r->hostname) {
+                    ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
+                        "Hostname %s provided via SNI, but no hostname"
+                        " provided in HTTP request", servername);
+                    apr_pool_destroy(s_p);
+                    return HTTP_BAD_REQUEST;
+                }
+
+                rv = apr_parse_addr_port(&host, &scope_id, &port, r->hostname, r->pool);
+                if (rv != APR_SUCCESS || scope_id) {
+                    apr_pool_destroy(s_p);
+                    return HTTP_BAD_REQUEST;
+                }
+
+                if (strcasecmp(host, servername)) {
+                    ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
+                        "Hostname %s provided via SNI and hostname %s provided"
+                        " via HTTP are different", servername, host);
+
+                    apr_pool_destroy(s_p);
+                    return HTTP_BAD_REQUEST;
+                } 
+                apr_pool_destroy(s_p);
+            }
+        } else if (((sc->strict_sni_vhost_check)
+                   || (mySrvConfig(r->server))->strict_sni_vhost_check)
+                   && r->connection->vhost_lookup_data) {
+            /*
+             * We are using a name based configuration here, but no hostname
+             * was provided via SNI. Don't allow that if are requested to do
+             * strict checking. Check whether this strict checking was set
+             * up either in the server config we used for handshaking or in
+             * our current server. This should avoid insecure configuration
+             * by accident.
+             */
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
+                         "No hostname was provided via SNI for a name based"
+                         " virtual host");
+            apr_table_setn(r->notes, "error-notes",
+                           "Reason: The client software did not provide a "
+                           "hostname using Server Name Indication (SNI), "
+                           "which is required to access this server.<br />\n");
+            return HTTP_FORBIDDEN;
+        }
     }
 
     /*
@@ -815,6 +885,8 @@ int nss_hook_Fixup(request_rec *r)
     int i;
     CERTCertificate *cert;
     CERTCertificateList *chain = NULL;
+    SECItem *hostInfo = NULL;
+    const char *servername;
 
     /*
      * Check to see if SSL is on
@@ -839,6 +911,13 @@ int nss_hook_Fixup(request_rec *r)
      */
     /* the always present HTTPS (=HTTP over SSL) flag! */
     apr_table_setn(env, "HTTPS", "on");
+
+    /* add content of SNI TLS extension (if supplied with ClientHello) */
+    hostInfo = SSL_GetNegotiatedHostInfo(ssl);
+    if (hostInfo) {
+        servername = apr_pstrndup(r->pool, (char *) hostInfo->data, hostInfo->len);
+        apr_table_set(env, "SSL_TLS_SNI", servername);
+    }
 
     /* standard SSL environment variables */
     if (dc->nOptions & SSL_OPT_STDENVVARS) {

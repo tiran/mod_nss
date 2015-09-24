@@ -85,6 +85,11 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(FIPS, FLAG,
                 "FIPS 140-1 mode "
                 "(`on', `off')")
+    SSL_CMD_SRV(SNI, FLAG,
+                "SNI"
+                "(`on', `off')")
+    SSL_CMD_SRV(StrictSNIVHostCheck, FLAG,
+                "Strict SNI virtual host checking")
     SSL_CMD_ALL(CipherSuite, TAKE1,
                 "Comma-delimited list of permitted SSL Ciphers, + to enable, - to disable "
                 "(`[+-]XXX,...,[+-]XXX' - see manual)")

@@ -29,6 +29,7 @@ static SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg);
 static SECStatus NSSHandshakeCallback(PRFileDesc *socket, void *arg);
 static CERTCertificate* FindServerCertFromNickname(const char* name, const CERTCertList* clist);
 SECStatus nss_AuthCertificate(void *arg, PRFileDesc *socket, PRBool checksig, PRBool isServer);
+PRInt32 nssSSLSNISocketConfig(PRFileDesc *fd, const SECItem *sniNameArr, PRUint32 sniNameArrSize, void *arg);
 
 /*
  * Global variables defined in this file.
@@ -89,6 +90,7 @@ static void nss_init_SSLLibrary(server_rec *base_server)
     int fipsenabled = FALSE;
     int ocspenabled = FALSE;
     int ocspdefault = FALSE;
+    int snienabled = FALSE;
     char *dbdir = NULL;
     const char * ocspurl = NULL;
     const char * ocspname = NULL;
@@ -117,6 +119,10 @@ static void nss_init_SSLLibrary(server_rec *base_server)
                 else
                     return;
             }
+        }
+
+        if (sc->sni == TRUE) {
+            snienabled = TRUE;
         }
     }
 
@@ -243,6 +249,14 @@ static void nss_init_SSLLibrary(server_rec *base_server)
         }
     }
 
+    if (snienabled) {
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, base_server,
+            "SNI is enabled");
+    } else {
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, base_server,
+            "SNI is disabled");
+    }
+
     /* 
      * Seed the Pseudo Random Number Generator (PRNG)
      * only need ptemp here; nothing inside allocated from the pool
@@ -262,6 +276,8 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     int fipsenabled = FALSE;
     int threaded = 0;
     struct semid_ds status;
+    char *split_vhost_id = NULL;
+    char *last1;
 
     mc->nInitCount++;
 
@@ -324,6 +340,14 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
          */
         sc->vhost_id = nss_util_vhostid(p, s);
         sc->vhost_id_len = strlen(sc->vhost_id);
+
+        if (sc->sni && sc->server->nickname != NULL && sc->vhost_id != NULL) {
+            split_vhost_id = apr_strtok(sc->vhost_id, ":", &last1);
+            ap_str_tolower(split_vhost_id);
+            addHashVhostNick(split_vhost_id, (char *)sc->server->nickname);
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                "SNI: %s -> %s", split_vhost_id, (char *)sc->server->nickname);
+	}
 
         /* Fix up stuff that may not have been set */
         if (sc->fips == UNSET) {
@@ -477,7 +501,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
                      "Init: Initializing (virtual) servers for SSL");
 
-        CERTCertList* clist = PK11_ListCerts(PK11CertListUser, NULL);
+        CERTCertList* clist = PK11_ListCerts(PK11CertListUserUnique, NULL);
 
         for (s = base_server; s; s = s->next) {
             sc = mySrvConfig(s);
@@ -1033,12 +1057,20 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
                                  SSLKEAType *KEAtype,
                                  PRFileDesc *model,
                                  int enforce,
+                                 int sni,
                                  const CERTCertList* clist)
 {
+    SSLModConfigRec *mc = myModConfig(s);
     SECCertTimeValidity certtimestatus;
     SECStatus secstatus;
 
     PK11SlotInfo* slot = NULL;
+    CERTCertNicknames *certNickDNS = NULL;
+    char **nnptr = NULL;
+    int nn = 0;
+    apr_array_header_t *names = NULL;
+    apr_array_header_t *wild_names = NULL;
+    int i, j;
  
     if (nickname == NULL) {
         return;
@@ -1105,17 +1137,55 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
 
     *KEAtype = NSS_FindCertKEAType(*servercert);
 
+    /* add ServerAlias entries to hash */
+    names = s->names;
+    if (names) {
+        char **name = (char **)names->elts;
+        for (i = 0; i < names->nelts; ++i) {
+            ap_str_tolower(name[i]);
+            addHashVhostNick(name[i], (char *)nickname);
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                "SNI ServerAlias: %s -> %s", name[i], nickname);
+        }
+    }
+
+    /* add ServerAlias entries with wildcards */
+    wild_names = s->wild_names;
+    if (wild_names) {
+        char **wild_name = (char **)wild_names->elts;
+        for (j = 0; j < wild_names->nelts; ++j) {
+            ap_str_tolower(wild_name[j]);
+            addHashVhostNick(wild_name[j], (char *)nickname);
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                "SNI wildcard: %s -> %s", wild_name[i], nickname);
+        }
+    }
+
+    /* get valid DNS names from certificate to hash */
+    certNickDNS = CERT_GetValidDNSPatternsFromCert(*servercert);
+
+    if (certNickDNS) {
+        nnptr = certNickDNS->nicknames;
+        nn = certNickDNS->numnicknames;
+
+        while ( nn > 0 ) {
+            ap_str_tolower(*nnptr);	
+            addHashVhostNick(*nnptr, (char *)nickname);
+            nnptr++;
+            nn--;
+        }
+    }
+
     /* Subject/hostname check */
     secstatus = CERT_VerifyCertName(*servercert, s->server_hostname);
     if (secstatus != SECSuccess) {
       char *cert_dns = CERT_GetCommonName(&(*servercert)->subject);
       ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-		       "Misconfiguration of certificate's CN and virtual name."
-		       " The certificate CN has %s. We expected %s as virtual"
-                       " name.", cert_dns, s->server_hostname);
+		   "Misconfiguration of certificate's CN and virtual name."
+		   " The certificate CN has %s. We expected %s as virtual"
+		   " name.", cert_dns, s->server_hostname);
       PORT_Free(cert_dns);
     }
-
     /*
      * Check for certs that are expired or not yet valid and WARN about it.
      * No need to refuse working - the client gets a warning.
@@ -1140,12 +1210,22 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
             break;
     }
 
-    secstatus = SSL_ConfigSecureServer(model, *servercert, *serverkey, *KEAtype);
+    secstatus = SSL_ConfigSecureServer(model, *servercert, *serverkey,
+                                       *KEAtype);
     if (secstatus != SECSuccess) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
             "SSL error configuring server: '%s'", nickname);
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
+    }
+
+    if (PR_TRUE == sni) {
+        if (SSL_SNISocketConfigHook(model, (SSLSNISocketConfig) nssSSLSNISocketConfig, (void*) s) != SECSuccess) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                "SSL_SNISocketConfigHook failed");
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+            nss_die();
+        }
     }
 }
 
@@ -1192,11 +1272,13 @@ static void nss_init_server_certs(server_rec *s,
 
         nss_init_certificate(s, mctx->nickname, &mctx->servercert,
                              &mctx->serverkey, &mctx->serverKEAType,
-                             mctx->model, mctx->enforce, clist);
+                             mctx->model, mctx->enforce, mctx->sc->sni,
+                             clist);
 #ifdef NSS_ENABLE_ECC
         nss_init_certificate(s, mctx->eccnickname, &mctx->eccservercert,
                              &mctx->eccserverkey, &mctx->eccserverKEAType,
-                             mctx->model, mctx->enforce, clist);
+                             mctx->model, mctx->enforce, mctx->sc->sni,
+                             clist);
 #endif
     }
 
@@ -1215,6 +1297,7 @@ static void nss_init_server_certs(server_rec *s,
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
+
 }
 
 static void nss_init_proxy_ctx(server_rec *s,
@@ -1281,7 +1364,6 @@ void nss_init_Child(apr_pool_t *p, server_rec *base_server)
         /* If any servers have SSL, we want sslenabled set so we
          * can perform further initialization
          */
-
         if (sc->enabled == UNSET) {
             sc->enabled = FALSE;
         }
@@ -1311,11 +1393,12 @@ void nss_init_Child(apr_pool_t *p, server_rec *base_server)
     nss_init_SSLLibrary(base_server);
 
     /* Configure all virtual servers */
-    CERTCertList* clist = PK11_ListCerts(PK11CertListUser, NULL);
+    CERTCertList* clist = PK11_ListCerts(PK11CertListUserUnique, NULL);
     for (s = base_server; s; s = s->next) {
         sc = mySrvConfig(s);
-        if (sc->server->servercert == NULL && NSS_IsInitialized())
+        if (sc->server->servercert == NULL && NSS_IsInitialized()) {
             nss_init_ConfigureServer(s, p, mc->ptemp, sc, clist);
+        }
     }
     if (clist) {
         CERT_DestroyCertList(clist);
@@ -1345,6 +1428,11 @@ apr_status_t nss_init_ModuleKill(void *data)
 
     if (mc->nInitCount == 1)
         nss_init_ChildKill(base_server);
+
+    if (mp) {
+        apr_pool_destroy(mp);
+        mp = NULL;
+    }
 
     /* NSS_Shutdown() gets called in nss_init_ChildKill */
     return APR_SUCCESS;
@@ -1396,6 +1484,11 @@ apr_status_t nss_init_ChildKill(void *data)
 
             shutdown = 1;
         }
+    }
+
+    if (mp) {
+        apr_pool_destroy(mp);
+        mp = NULL;
     }
 
     if (shutdown) {
@@ -1596,4 +1689,82 @@ FindServerCertFromNickname(const char* name, const CERTCertList* clist)
 SECStatus NSSHandshakeCallback(PRFileDesc *socket, void *arg)
 {
     return SECSuccess;
+}
+
+/*
+ * Callback made during SSL request to see if SNI was requested and
+ * pair it with a configured nickname.
+ */
+PRInt32 nssSSLSNISocketConfig(PRFileDesc *fd, const SECItem *sniNameArr,
+           PRUint32 sniNameArrSize, void *arg)
+{
+    server_rec *s = (server_rec *)arg;
+
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+		 "nssSSLSNISocketConfig");
+
+    void *pinArg;
+    CERTCertificate *cert = NULL;
+    SECKEYPrivateKey *privKey = NULL;
+    char *nickName = NULL;
+    char *vhost = NULL;
+    apr_pool_t *str_p;
+
+    PORT_Assert(fd && sniNameArr);
+    if (!fd || !sniNameArr) {
+        return SSL_SNI_SEND_ALERT;
+    }
+
+    apr_pool_create(&str_p, NULL);
+    vhost = apr_pstrndup(str_p, (char *) sniNameArr->data, sniNameArr->len);
+
+    /* rfc6125 - Checking of Traditional Domain Names */
+    ap_str_tolower(vhost);
+
+    nickName = searchHashVhostbyNick(vhost);
+    if (nickName == NULL)  {
+        /* search for wildcard_names in serverAlises */
+        nickName = searchHashVhostbyNick_match(vhost);
+        if (nickName == NULL) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                "SNI: Search for %s failed. Unrecognized name.", vhost);
+            goto loser;
+        }
+    }
+
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,"SNI: Found nickname %s for vhost: %s", nickName, vhost);
+
+    pinArg = SSL_RevealPinArg(fd);
+
+    /* if pinArg is NULL, then we would not get the key and
+     * return an error status. */
+    cert = PK11_FindCertFromNickname(nickName, &pinArg);
+    if (cert == NULL) {
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+            "Failed to find certificate for nickname: %s", nickName);
+        goto loser;
+    }
+    privKey = PK11_FindKeyByAnyCert(cert, &pinArg);
+    if (privKey == NULL) {
+        goto loser; 
+    }
+
+    SSLKEAType certKEA = NSS_FindCertKEAType(cert);
+
+    if (SSL_ConfigSecureServer(fd, cert, privKey, certKEA) != SECSuccess) {
+        goto loser; /* Send alert */
+    }
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+        "SNI: Successfully paired vhost %s with nickname: %s", vhost, nickName);
+
+    return 0;
+
+loser:
+    if (privKey)
+        SECKEY_DestroyPrivateKey(privKey);
+    if (cert)
+        CERT_DestroyCertificate(cert);
+    apr_pool_destroy(str_p);
+
+    return SSL_SNI_SEND_ALERT;
 }

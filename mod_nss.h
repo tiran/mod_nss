@@ -311,6 +311,8 @@ struct SSLSrvConfigRec {
     const char      *ocsp_name;
     BOOL             ocsp;
     BOOL             enabled;
+    BOOL             sni;
+    BOOL             strict_sni_vhost_check;
     BOOL             proxy_enabled;
     const char      *vhost_id;
     int              vhost_id_len;
@@ -340,6 +342,10 @@ typedef struct {
 /*
  * for cipher definitions see nss_engine_cipher.h
  */
+
+/* pool and hash to store ServerName and NSSNickname pairs for SNI */
+apr_pool_t *mp;
+apr_hash_t *ht;
 
 /* Compatibility between Apache 2.0.x and 2.2.x. The numeric version of
  * the version first appeared in Apache 2.0.56-dev. I picked 2.0.55 as it
@@ -373,6 +379,8 @@ void *nss_config_perdir_merge(apr_pool_t *p, void *basev, void *addv);
 void *nss_config_server_create(apr_pool_t *p, server_rec *s);
 void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv);
 const char *nss_cmd_NSSFIPS(cmd_parms *, void *, int);
+const char *nss_cmd_NSSSNI(cmd_parms *, void *, int);
+const char *nss_cmd_NSSStrictSNIVHostCheck(cmd_parms *, void *, int);
 const char *nss_cmd_NSSEngine(cmd_parms *, void *, int);
 const char *nss_cmd_NSSOCSP(cmd_parms *, void *, int);
 const char *nss_cmd_NSSOCSPDefaultResponder(cmd_parms *, void *, int);
@@ -463,6 +471,9 @@ apr_file_t  *nss_util_ppopen(server_rec *, apr_pool_t *, const char *,
 void         nss_util_ppclose(server_rec *, apr_pool_t *, apr_file_t *);
 char        *nss_util_readfilter(server_rec *, apr_pool_t *, const char *,
                                  const char * const *);
+char *searchHashVhostbyNick(char *vhost_id);
+char *searchHashVhostbyNick_match(char *vhost_id);
+void addHashVhostNick(char *vhost_id, char *nickname);
 /* ssl_io_buffer_fill fills the setaside buffering of the HTTP request
  * to allow an SSL renegotiation to take place. */
 int          nss_io_buffer_fill(request_rec *r, apr_size_t maxlen);

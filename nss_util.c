@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-
 #include "mod_nss.h"
 #include "ap_mpm.h"
 #include "apr_thread_mutex.h"
@@ -99,4 +98,54 @@ char *nss_util_readfilter(server_rec *s, apr_pool_t *p, const char *cmd,
     nss_util_ppclose(s, p, fp);
 
     return buf;
+}
+
+static void initializeHashVhostNick() {
+    if (NULL != ht)
+        return;
+    apr_pool_create(&mp, NULL);
+    ht = apr_hash_make(mp);
+}
+
+char *searchHashVhostbyNick(char *vhost_id) {
+    char *searchVal = NULL;
+
+    if (NULL == ht)
+        return NULL;
+
+    searchVal = apr_hash_get(ht, vhost_id, APR_HASH_KEY_STRING);
+
+    return searchVal;
+}
+
+char *searchHashVhostbyNick_match(char *vhost_id)
+{
+    char *searchValReg = NULL;
+    apr_hash_index_t *hi;
+
+    if (NULL == ht)
+        return NULL;
+
+    for (hi = apr_hash_first(NULL, ht); hi; hi = apr_hash_next(hi)) {
+        const char *k = NULL;
+        const char *v = NULL;
+        
+        apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
+        if (!ap_strcasecmp_match(vhost_id, k)) {
+            searchValReg = apr_hash_get(ht, k, APR_HASH_KEY_STRING);
+            return searchValReg; 
+        }
+    }
+    return NULL;
+}
+
+void addHashVhostNick(char *vhost_id, char *nickname) {
+    if (ht == NULL) {
+        initializeHashVhostNick();
+    }
+    
+    if (searchHashVhostbyNick(vhost_id) == NULL) {
+        apr_hash_set(ht, apr_pstrdup(mp, vhost_id), APR_HASH_KEY_STRING, 
+                     apr_pstrdup(mp, nickname));
+    }
 }

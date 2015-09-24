@@ -184,7 +184,9 @@ following line to httpd.conf (location relative to httpd.conf):<br>
 </code><br>
 This has Apache load the mod_nss configuration file, <code>nss.conf</code>.
 It is here that you will setup your VirtualServer entries to and
-configure your SSL servers.<br>
+configure your SSL servers. If you have a certificate with Subject
+Alternative Names then you can configure separate VirtualServer entries
+for eacon one.<br>
 
 <h1><a name="Generation"></a>Certificate Generation</h1>
 A ksh script, <code>gencert</code>, is included to automatically
@@ -1056,6 +1058,30 @@ If set to 0 then no buffering is done.
 <br>
 <code>NSSRenegBufferSize 262144<br>
 </code><br>
+<br>
+<big><big>NSSSNI</big></big><br>
+<br>
+Enables or disables Server Name Identification (SNI) extension check for
+TLS. This option is enabled by default. To disable SNI, set this to off
+in the default name-based VirtualHost.
+<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSSNI off</code><br>
+<br>
+<big><big>NSSStrictSNIVHostCheck</big></big><br>
+<br>
+Configures whether a non-SNI client is allowed to access a name-based
+VirtualHost. If set to on in the default name-based VirtualHost
+then clients that are SNI unaware cannot access any virtual host. If set
+to on in any other VirtualHost then SNI unaware clients cannot access
+this particular virtual host. 
+<br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSStrictSNIVHostCheck off</code><br>
 <br>
 <big><big>NSSProxyEngine</big></big><br>
 <br>
