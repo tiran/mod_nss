@@ -70,7 +70,8 @@ typedef struct
 #define SSL_AES128GCM     0x04000000L
 #define SSL_AES256GCM     0x08000000L
 #define SSL_SHA256        0x10000000L
-#define SSL_AEAD          0x20000000L
+#define SSL_SHA384        0x20000000L
+#define SSL_AEAD          0x40000000L
 
 #define SSL_AES           (SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM)
 #define SSL_CAMELLIA      (SSL_CAMELLIA128|SSL_CAMELLIA256)
@@ -83,7 +84,11 @@ typedef struct
 
 /* the table itself is defined in nss_engine_cipher.c */
 #ifdef NSS_ENABLE_ECC
-#define ciphernum 49
+# ifdef ENABLE_SHA384
+#  define ciphernum 54
+# else
+#  define ciphernum 49
+# endif
 #else
 #define ciphernum 20
 #endif

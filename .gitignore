@@ -29,3 +29,4 @@ py-compile
 # Generated files
 gencert
 nss.conf
+test/variable.py

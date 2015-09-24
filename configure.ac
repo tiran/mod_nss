@@ -1,6 +1,8 @@
 # Required initializer
 AC_INIT
 
+m4_include([acinclude.m4])
+
 # Automake initialization
 AM_INIT_AUTOMAKE(mod_nss, 1.0)
 
@@ -238,6 +240,16 @@ fi
 
 nspr_dir=`echo "$nspr_lib" | sed 's/\/lib[[/]]*$//' | sed 's/-L//'`
 nss_dir=`echo "$nss_lib" | sed 's/\/lib[[/]]*$//' | sed 's/-L//'`
+
+AX_CHECK_DEFINE(nss3/sslproto.h, TLS_RSA_WITH_AES_256_GCM_SHA384, sha384=$enableval, sha384=no)
+if test $sha384 = yes; then
+   AC_MSG_RESULT(yes)
+   extra_cppflags="$extra_cppflags -DENABLE_SHA384"
+   echo "ENABLE_SHA384=1" > test/variable.py
+else
+   echo "ENABLE_SHA384=0" > test/variable.py
+   AC_MSG_RESULT(no)
+fi
 
 # Substitute values 
 AC_SUBST(APXS)
