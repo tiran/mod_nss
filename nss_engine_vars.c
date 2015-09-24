@@ -578,19 +578,14 @@ static char *nss_var_lookup_nss_cert_PEM(apr_pool_t *p, CERTCertificate *xs)
      * similar to mod_ssl. */
     i=0;
     len = strlen(tmp);
-    while (tmp[i] != '\0') {
+    for (i=0; i < len; i++) {
         if (tmp[i] == '\r') {
-            memmove(&tmp[i], &tmp[i+1], 1+(len - i));
+            memmove(&tmp[i], &tmp[i+1], 1+(len - i - 1));
         }
         i++;
     }
 
-    /* Allocate the size of the cert + header + footer + 1 */
-    result = apr_palloc(p, strlen(tmp) + 29 + 27 + 1);
-    strcpy(result, CERT_HEADER);
-    strcat(result, tmp);
-    strcat(result, CERT_TRAILER);
-    result[strlen(tmp) + 29 + 27] = '\0';
+    result = apr_pstrcat(p, CERT_HEADER, tmp, CERT_TRAILER, NULL);
 
     /* Clean up memory. */
     PR_Free(tmp);
