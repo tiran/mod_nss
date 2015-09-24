@@ -1,3 +1,10 @@
+2015-09-24  Rob Crittenden <rcritten@redhat.com>
+    * Fix bad memory access and memory leak in CGI variables
+    * Add optional support for some SHA384 ciphers
+
+2015-09-21  Rob Crittenden <rcritten@redhat.com>
+    * Fix a bunch of issues related to OpenSSL cipher parsing
+
 2015-08-27  Rob Crittenden <rcritten@redhat.com>
     * Fix a bunch of compiler warnings
     * Permanently disabled openssl ciphers could be enabled (CVE-2015-5244)
