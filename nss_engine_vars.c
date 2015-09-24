@@ -691,8 +691,9 @@ static char *nss_var_lookup_nss_cipher(apr_pool_t *p, conn_rec *c, char *var)
     if (result != NULL && resdup)
         result = apr_pstrdup(p, result);
 
-    PR_Free(issuer);
-    PR_Free(subject);
+    PORT_Free(issuer);
+    PORT_Free(subject);
+    PORT_Free(cipher);
 
     return result;
 }
