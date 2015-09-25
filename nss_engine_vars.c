@@ -352,6 +352,13 @@ static char *nss_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
             PORT_Free(hostInfo);
         }
     }
+    else if (ssl != NULL && strcEQ(var, "SECURE_RENEG")) {
+        PRInt32 flag = 0;
+#ifdef SSL_ENABLE_RENEGOTIATION
+        SSL_OptionGet(ssl, SSL_ENABLE_RENEGOTIATION, &flag);
+#endif
+        result = apr_pstrdup(p, flag ? "true" : "false");
+    }
 
     return result;
 }
