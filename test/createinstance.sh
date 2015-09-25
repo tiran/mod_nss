@@ -2,15 +2,45 @@
 #
 # Make a temporary Apache instance for testing.
 
-if [ " $#" -eq 0 ]; then
-    echo "Usage: $0 /path/to/instance"
-    exit 1
-fi
+function create_content_dirs {
+    local dir=$1
+
+    mkdir $1
+
+    # Create the content
+    mkdir $dir/rc4_cipher
+    mkdir $dir/openssl_rc4_cipher
+    mkdir $dir/openssl_aes_cipher
+    mkdir $dir/acl
+    mkdir $dir/protocolssl2
+    mkdir $dir/protocolssl3
+    mkdir $dir/protocoltls1
+    mkdir $dir/protocoltls11
+    mkdir $dir/protocoltls12
+
+    cat > $dir/index.html << EOF
+    <html>
+    Basic index page for $dir
+    </html
+EOF
+
+    cp $dir/index.html $dir/acl/aclS01.html
+    cp $dir/index.html $dir/acl/aclS02.html
+    cp $dir/index.html $dir/acl/aclS03.html
+    cp $dir/index.html $dir/secret-test.html
+    cp $dir/index.html $dir/protocolssl2/index.html
+    cp $dir/index.html $dir/protocolssl3/index.html
+    cp $dir/index.html $dir/protocoltls1/index.html
+    cp $dir/index.html $dir/protocoltls11/index.html
+    cp $dir/index.html $dir/protocoltls12/index.html
+}
+
 target=$1
 
 echo "Creating instance in $target"
 mkdir -p $target
 
+# Make the default server root
 cd $target
 mkdir alias
 mkdir bin
@@ -18,35 +48,18 @@ mkdir conf
 mkdir conf.d
 mkdir logs
 mkdir run
-mkdir content
 mkdir cgi-bin
 mkdir lib
 
-# Create the content
-mkdir content/rc4_cipher
-mkdir content/openssl_rc4_cipher
-mkdir content/openssl_aes_cipher
-mkdir content/acl
-mkdir content/protocolssl2
-mkdir content/protocolssl3
-mkdir content/protocoltls1
-mkdir content/protocoltls11
-mkdir content/protocoltls12
+touch conf.d/empty.conf
 
-cat > content/index.html << EOF
-<html>
-Basic index page
-</html
-EOF
-cp content/index.html content/acl/aclS01.html
-cp content/index.html content/acl/aclS02.html
-cp content/index.html content/acl/aclS03.html
-cp content/index.html content/secret-test.html
-cp content/index.html content/protocolssl2/index.html
-cp content/index.html content/protocolssl3/index.html
-cp content/index.html content/protocoltls1/index.html
-cp content/index.html content/protocoltls11/index.html
-cp content/index.html content/protocoltls12/index.html
+# Create the content directories
+create_content_dirs content
+count=1
+while test $count -lt 26 ; do
+    create_content_dirs "sni${count}"
+    count=`expr $count + 1`
+done
 
 ln -s /etc/httpd/modules modules
 
@@ -60,6 +73,7 @@ EOF
 cat << EOF >  start
 #!/bin/sh
 HTTPD=/usr/sbin/httpd
+#valgrind --leak-check=full --log-file=valgrind.out --trace-children=yes \$HTTPD -X -k start -d . -f ./conf/httpd.conf
 \$HTTPD -k start -d . -f ./conf/httpd.conf
 EOF
 

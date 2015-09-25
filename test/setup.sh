@@ -5,6 +5,22 @@ server_gid=$USER
 server_port=8000
 server_name=`hostname`
 
+while [[ $# > 1 ]]
+do
+key="$1"
+
+case $key in
+    -s|--sni)
+    SNI="$2"
+        shift # past argument
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+shift # past argument or value
+done
+
 DBPREFIX=$1
 
 test_root=$currentpath/work/httpd
@@ -20,12 +36,14 @@ if [ -e $test_root ]; then
 fi
 
 ./createinstance.sh ${test_root}
+cp printenv.pl ${test_root}/cgi-bin
+chmod 755 ${test_root}/cgi-bin/printenv.pl
 
 cp ../.libs/libmodnss.so ${test_root}/lib
 cp ../nss_pcache ${test_root}/bin
 
 echo "Generating a new certificate database..."
-bash ../gencert ${DBPREFIX}${test_root}/alias > /dev/null 2>&1
+bash ../gencert ${DBPREFIX}${test_root}/alias $SNI > /dev/null 2>&1
 echo internal:httptest > ${test_root}/conf/password.conf
 
 # Export the CA cert

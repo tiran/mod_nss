@@ -1,0 +1,30 @@
+The SNI tests are overly complicated because of the sad state of affairs
+of pyOpenSSL. If I use the SSL client in http.client I can override some
+methods and have access to the negotiated protocol and cipher but don't
+have access to SNI.
+
+Or I can use the SSL client in urllib3.contrib and have working SNI but
+no access to the negotiated protocol or cipher.
+
+So I split the baby. When running the existing test suite I use the original
+override methods so I can continue to do cipher and protocol negotiation
+testing. When running the SNI tests I use the urllib3 SSL client and do
+only SNI testing.
+
+To run the tests:
+
+You need to edit /etc/hosts and add:
+
+your_ip_address www[1-25].example.com
+
+E.g. 
+
+192.168.0.1	www1.example.com
+192.168.0.1	www2.example.com
+...
+192.168.0.1	www25.example.com
+
+Do not create www26 as that is used as a negative test.
+
+setup.sh and gencert have been extended to generate a bunch of certs
+suitable for SNI testing.

@@ -136,21 +136,31 @@ class Declarative(object):
         session.mount('https://', test_request.MyAdapter())
         verify = dict(verify = options)
         port = options.get('port', DEF_PORT)
-        request = session.get('https://%s:%d%s' % (FQDN, port, uri), **verify)
+        host = options.get('host', FQDN)
+        request = session.get('https://%s:%d%s' % (host, port, uri), **verify)
 
         return request
 
-    def check(self, nice, desc, request, expected, cipher=None, protocol=None):
+    def check(self, nice, desc, request, expected, cipher=None, protocol=None,
+              expected_str=None, content=None):
         # TODO: need way to set auth, etc.
         (uri, options) = request
         if not 'verify' in options:
             options['verify'] = 'work/httpd/alias/ca.pem'
         if isinstance(expected, Exception):
-            self.check_exception(nice, uri, options, expected)
+            self.check_exception(nice, uri, options, expected, expected_str)
         else:
-            self.check_result(nice, uri, options, expected, cipher, protocol)
+            self.check_result(nice, uri, options, expected, cipher, protocol,
+                              content)
 
-    def check_exception(self, nice, uri, options, expected):
+    def check_exception(self, nice, uri, options, expected, expected_str):
+        """
+        With some requests we expect an exception to be raised. See if
+        is the one we expect. There is at least one case where depending
+        on the distro either a CertificateError or an SSLError is
+        thrown but the message of the exception is the same, so compare
+        that.
+        """
         klass = expected.__class__
         name = klass.__name__
         try:
@@ -162,15 +172,24 @@ class Declarative(object):
                 EXPECTED % (uri, name, options, output)
             )
         if not isinstance(e, klass):
-            raise AssertionError(
-                UNEXPECTED % (uri, name, options, e.__class__.__name__, e)
-            )
+            if expected_str not in str(e):
+                raise AssertionError(
+                    UNEXPECTED % (uri, name, options, e.__class__.__name__, e)
+                )
 
-
-    def check_result(self, nice, uri, options, expected, cipher=None, protocol=None):
+    def check_result(self, nice, uri, options, expected, cipher=None,
+                     protocol=None, content=None):
         name = expected.__class__.__name__
         request = self.make_request(uri, options)
+        has_sni = options.get('sni', False)
+
+        if content and not content in request.content:
+                raise AssertionError(
+                    'Expected %s not in %s' % (content, request.content)
+                )
         if cipher:
+            if has_sni:
+                raise AssertionError('Cannot do cipher tests in SNI')
             client_cipher = request.raw._pool._get_conn().client_cipher
             if cipher != client_cipher[0]:
                 raise AssertionError(
@@ -178,6 +197,8 @@ class Declarative(object):
                 )
         if protocol:
             client_cipher = request.raw._pool._get_conn().client_cipher
+            if has_sni:
+                raise AssertionError('Cannot do protocol tests in SNI')
             if protocol != client_cipher[1]:
                 raise AssertionError(
                     'Expected protocol %s, got %s' % (protocol, client_cipher[1])

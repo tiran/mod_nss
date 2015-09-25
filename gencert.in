@@ -61,7 +61,7 @@ ALPHA_CERTDN="E=alpha@${FQDN}, CN=Frank Alpha, UID=alpha, OU=People, O=example.c
 BETA_CERTDN="E=beta@${FQDN}, CN=Anna Beta, UID=beta, OU=People, O=example.com, C=US"
 
 # size of the keys
-KEYSIZE=1024
+KEYSIZE=2048
 
 # validity of the certs in months
 VALIDITY=48
@@ -84,8 +84,64 @@ then
 fi
 
 DBDIR=$1
+shift
+
+if [ $# > 0 ]; then
+    SNI=$1
+else
+    SNI=0
+fi
 
 echo "httptest" > $DEST/pw.txt
+
+function generate_server_sni_cert {
+    hostname=$1
+
+    local SERVER_DN="CN=${hostname}, O=SNI, O=example.com, C=US"
+    local NICKNAME="Server-Cert-${hostname}"
+
+    echo ""
+    echo "#####################################################################"
+    echo "Generating $NICKNAME server certificate request"
+    echo "#####################################################################"
+    (ps -elf; date; netstat -a) > $DEST/noise
+    $CERTUTIL -R -d $DBDIR \
+                -s "$SERVER_DN" \
+                -o $DEST/tmpcertreq \
+                -g $KEYSIZE \
+                -z $DEST/noise \
+                -f $DEST/pw.txt
+
+    echo ""
+    echo "#####################################################################"
+    echo "Generating $NICKNAME server certificate"
+    echo "#####################################################################"
+    let CERTSERIAL=CERTSERIAL+1
+    echo -e "2\n9\nn\n1\n9\nn\n" | \
+    $CERTUTIL -C -d $DBDIR \
+                -c cacert \
+                -i $DEST/tmpcertreq \
+                -o $DEST/tmpcert.der \
+                -m $CERTSERIAL \
+                -v $VALIDITY \
+                -f $DEST/pw.txt \
+                -1 \
+                -5 \
+                -8 $hostname
+
+    rm $DEST/tmpcertreq
+
+    echo ""
+    echo "#####################################################################"
+    echo "Importing $NICKNAME certificate into server cert DB"
+    echo "#####################################################################"
+    $CERTUTIL -A -d $DBDIR -n $NICKNAME \
+                -t u,u,u \
+                -i $DEST/tmpcert.der \
+                -f $DEST/pw.txt
+ 
+    rm $DEST/tmpcert.der
+}
 
 echo ""
 echo "#####################################################################"
@@ -115,7 +171,6 @@ $CERTUTIL -S -d $DBDIR -n cacert \
             -z $DEST/noise \
             -2 \
             -1 \
-            -5
 
 echo ""
 echo "#####################################################################"
@@ -185,7 +240,8 @@ $CERTUTIL -C -d $DBDIR \
             -v $VALIDITY \
             -f $DEST/pw.txt \
             -1 \
-            -5
+            -5 \
+            -8 $FQDN
 
 rm $DEST/tmpcertreq
 
@@ -199,6 +255,15 @@ $CERTUTIL -A -d $DBDIR -n Server-Cert \
             -f $DEST/pw.txt
 
 rm $DEST/tmpcert.der
+
+if [ $SNI > 0 ]; then
+    SNI=`expr $SNI + 1`
+    count=1
+    while test $count -lt $SNI ; do
+        generate_server_sni_cert www$count.example.com
+        count=`expr $count + 1`
+    done
+fi
 
 echo ""
 echo "#####################################################################"

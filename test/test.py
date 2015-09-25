@@ -4,10 +4,31 @@ import ssl
 import requests.exceptions
 import os
 
+try:
+    # python3.2+
+    from ssl import CertificateError
+except ImportError:
+    try:
+        # Older python where the backport from pypi is installed
+        from backports.ssl_match_hostname import CertificateError
+    except ImportError:
+        # Other older python we use the urllib3 bundled copy
+        from urllib3.packages.ssl_match_hostname import CertificateError
+
 class test_suite1(Declarative):
     @classmethod
     def setUpClass(cls):
-        write_template_file('suite1.tmpl', 'work/httpd/conf/test.conf', {'DBPREFIX': os.environ.get('DBPREFIX', '')})
+        write_template_file('suite1.tmpl', 'work/httpd/conf/test.conf',
+            {'DBPREFIX': os.environ.get('DBPREFIX', ''),
+             'SNI': 'off'}
+        )
+        # Generate a single VH to do negative SNI testing
+        write_template_file('sni.tmpl', 'work/httpd/conf.d/sni1.conf',
+            {'DBPREFIX': os.environ.get('DBPREFIX', ''),
+             'SNINAME': 'www1.example.com',
+             'SNINUM': 1,
+            }
+        )
         restart_apache()
 
     @classmethod
@@ -32,6 +53,7 @@ class test_suite1(Declarative):
             desc='SSL connection, fail to verify',
             request=('/', {'verify': True}),
             expected=requests.exceptions.SSLError(),
+            expected_str='certificate verify failed',
         ),
 
         dict(
@@ -56,10 +78,10 @@ class test_suite1(Declarative):
         ),
 
         dict(
-            desc='client-side RC4 cipher check',
-            request=('/', {'ciphers': 'RC4-MD5'}),
+            desc='client-side cipher check',
+            request=('/', {'ciphers': 'AES256-SHA'}),
             expected=200,
-            cipher='RC4-MD5',
+            cipher='AES256-SHA',
         ),
 
         dict(
@@ -235,6 +257,15 @@ class test_suite1(Declarative):
                      'ssl_version': ssl.PROTOCOL_TLSv1}
             ),
             expected=requests.exceptions.SSLError(),
+        ),
+
+        dict(
+            desc='Make non-SNI request',
+            request=('/index.html',
+                    {'host': 'www1.example.com', 'port': 8000}
+            ),
+            expected=requests.exceptions.SSLError(),
+            expected_str='doesn\'t match',
         ),
 
     ]

@@ -1,0 +1,28 @@
+<VirtualHost *:8000>
+
+    ServerName $SNINAME
+    DocumentRoot $SERVER_ROOT/sni$SNINUM
+
+    NSSEngine on
+    NSSFIPS off
+    NSSOCSP off
+    NSSRenegotiation on
+
+    NSSCipherSuite +aes_128_sha_256,+aes_256_sha_256,+rsa_aes_128_gcm_sha_256
+
+    NSSProtocol TLSv1.2
+
+    NSSNickname Server-Cert-$SNINAME
+
+    NSSVerifyClient none
+
+    # A bit redundant since the initial handshake should fail if no TLSv1.2
+    <Location "/protocoltls12">
+        NSSRequire %{SSL_PROTOCOL} eq "TLSv1.2"
+    </Location>
+
+    <Directory "$SERVER_ROOT/cgi-bin">
+        NSSOptions +ExportCertData +CompatEnvVars +StdEnvVars
+    </Directory>
+
+</VirtualHost>

@@ -103,12 +103,20 @@ check:
 	cd test;	\
 	rm -rf work;	\
 	nosetests -v test_cipher.py;	\
-	./setup.sh;	\
+	./setup.sh -s 1;	\
 	nosetests -v test.py;	\
 	sleep 5;	\
 	rm -rf work;	\
-	./setup.sh sql:;	\
+	./setup.sh sql: -s 1;	\
 	DBPREFIX=sql: nosetests -v test.py;	\
 	cd ..
+
+checksni:
+	cd test;	\
+	rm -rf work;	\
+	./setup.sh -s 25;	\
+	nosetests -v testsni.py;	\
+	cd ..
+
 
 .PHONY: all test clean

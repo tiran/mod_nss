@@ -4,9 +4,12 @@
 import socket
 import requests
 import urlparse
-from urllib3.util import get_host
-from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
 import logging
+import socket
+from requests.packages.urllib3.util import get_host
+from requests.packages.urllib3.util.timeout import Timeout
+from requests.packages.urllib3.contrib import pyopenssl
+from requests.packages.urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool, VerifiedHTTPSConnection 
 
 # Don't bend over backwards for ssl support, assume it is there.
 import ssl
@@ -29,6 +32,8 @@ except ImportError:
     except ImportError:
         # Other older python we use the urllib3 bundled copy
 		from urllib3.packages.ssl_match_hostname import match_hostname, CertificateError
+
+SAVE_DEFAULT_SSL_CIPHER_LIST = pyopenssl.DEFAULT_SSL_CIPHER_LIST
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +66,7 @@ def connection_from_url(url, **kw):
 
 class MyHTTPSConnectionPool(HTTPSConnectionPool):
     def __init__(self, host, port=None,
-                 strict=False, timeout=None, maxsize=1,
+                 strict=False, timeout=Timeout.DEFAULT_TIMEOUT, maxsize=1,
                  block=False, headers=None,
                  key_file=None, cert_file=None,
                  cert_reqs='CERT_REQUIRED', ca_certs='/etc/ssl/certs/ca-certificates.crt', ssl_version=ssl.PROTOCOL_SSLv23, ciphers=None):
@@ -75,6 +80,8 @@ class MyHTTPSConnectionPool(HTTPSConnectionPool):
         self.ca_certs = ca_certs
         self.ssl_version = ssl_version
         self.ciphers = ciphers
+        self.assert_hostname = None
+        self.assert_fingerprint = None
 
     def _new_conn(self):
         """
@@ -92,13 +99,14 @@ class MyHTTPSConnectionPool(HTTPSConnectionPool):
         #    return HTTPSConnection(host=self.host, port=self.port)
 
         connection = MyVerifiedHTTPSConnection(host=self.host, port=self.port)
+        connection.sni = self.sni
         connection.set_cert(key_file=self.key_file, cert_file=self.cert_file,
                             cert_reqs=self.cert_reqs, ca_certs=self.ca_certs)
         connection.set_ssl_version(self.ssl_version)
         connection.set_ciphers(self.ciphers)
         return connection
 
-class MyVerifiedHTTPSConnection(HTTPSConnection):
+class MyVerifiedHTTPSConnection(VerifiedHTTPSConnection):
     """
     Based on httplib.HTTPSConnection but wraps the socket with
     SSL certification.
@@ -106,6 +114,10 @@ class MyVerifiedHTTPSConnection(HTTPSConnection):
     cert_reqs = None
     ca_certs = None
     client_cipher = None
+    is_verified = True # squelch warning
+    sni = False
+    assert_hostname = None
+    assert_fingerprint = None
 
     def set_cert(self, key_file=None, cert_file=None,
                  cert_reqs='CERT_NONE', ca_certs=None):
@@ -127,6 +139,13 @@ class MyVerifiedHTTPSConnection(HTTPSConnection):
         self.ciphers = ciphers
 
     def connect(self):
+        if self.sni:
+            if self.ciphers:
+                pyopenssl.DEFAULT_SSL_CIPHER_LIST = self.ciphers
+            else:
+                pyopenssl.DEFAULT_SSL_CIPHER_LIST = SAVE_DEFAULT_SSL_CIPHER_LIST
+            return super(MyVerifiedHTTPSConnection, self).connect()
+
         # Add certificate verification
         sock = socket.create_connection((self.host, self.port), self.timeout)
 
@@ -141,9 +160,10 @@ class MyVerifiedHTTPSConnection(HTTPSConnection):
             match_hostname(self.sock.getpeercert(), self.host)
 
     def close(self):
-        if self.sock:
-            self.client_cipher = self.sock.cipher()
-        HTTPSConnection.close(self)
+        if not self.sni:
+            if self.sock:
+                self.client_cipher = self.sock.cipher()
+        super(MyVerifiedHTTPSConnection, self).close()
 
 class MyAdapter(requests.adapters.HTTPAdapter):
 
@@ -171,6 +191,7 @@ class MyAdapter(requests.adapters.HTTPAdapter):
                 conn.cert_file = verify['cert_file']
             if 'key_file' in verify:
                 conn.key_file = verify['key_file']
+            conn.sni = verify.get('sni', False)
         else: # huh? Do nothing
             pass
 
