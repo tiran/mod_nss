@@ -80,7 +80,7 @@ static void nss_add_version_components(apr_pool_t *p,
  *  Initialize SSL library
  *
  */
-static void nss_init_SSLLibrary(server_rec *base_server)
+static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
 {
     SECStatus rv;
     SSLModConfigRec *mc = myModConfig(base_server);
@@ -144,6 +144,8 @@ static void nss_init_SSLLibrary(server_rec *base_server)
     if (chdir(dbdir) != 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "Unable to change directory to %s", mc->pCertificateDatabase);
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+            "Does the directory exist and do the permissions allow access?");
         if (mc->nInitCount == 1)
             nss_die();
         else
@@ -154,6 +156,8 @@ static void nss_init_SSLLibrary(server_rec *base_server)
     if (chdir(cwd) != 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "Unable to change directory to %s", cwd);
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+            "Does the directory exist and do the permissions allow access?");
         if (mc->nInitCount == 1)
             nss_die();
         else
@@ -162,14 +166,38 @@ static void nss_init_SSLLibrary(server_rec *base_server)
 
     /* Assuming everything is ok so far, check the cert database password(s). */
     if (rv != SECSuccess) {
+        apr_finfo_t finfo;
+        char keypath[1024];
+        int rv;
+        uid_t user_id;
+        gid_t gid;
+
+        user_id = ap_uname2id(mc->user);
+        gid = getegid();
+
         NSS_Shutdown();
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "NSS_Initialize failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
+
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
-        if (mc->nInitCount == 1)
-            nss_die();
-        else
-            return;
+        apr_snprintf(keypath, 1024, "%s/key3.db", mc->pCertificateDatabase);
+        if (rv = apr_stat(&finfo, keypath, APR_FINFO_PROT | APR_FINFO_OWNER, p)
+                           == APR_SUCCESS) {
+            if (((user_id == finfo.user) &&
+                    (!(finfo.protection & APR_FPROT_UREAD))) ||
+                ((gid == finfo.group) &&
+                    (!(finfo.protection & APR_FPROT_GREAD))) ||
+                (!(finfo.protection & APR_FPROT_WREAD))
+               )
+            {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                    "Server user lacks read access to NSS database.");
+            }
+        } else {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                "Does the NSS database exist?");
+        }
+        nss_die();
     }
 
     if (fipsenabled) {
@@ -494,7 +522,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
     nss_io_layer_init();
 
     if (mc->nInitCount == 1) {
-        nss_init_SSLLibrary(base_server);
+        nss_init_SSLLibrary(base_server, mc->pPool);
         /*
          *  initialize servers
          */
@@ -1390,7 +1418,7 @@ void nss_init_Child(apr_pool_t *p, server_rec *base_server)
         }
     }
 
-    nss_init_SSLLibrary(base_server);
+    nss_init_SSLLibrary(base_server, mc->pPool);
 
     /* Configure all virtual servers */
     CERTCertList* clist = PK11_ListCerts(PK11CertListUserUnique, NULL);
