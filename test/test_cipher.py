@@ -130,7 +130,7 @@ class test_ciphers(object):
     # skipping COMPLEMENTOFDEFAULT as these are all ADH ciphers
 
     def test_SSLv3(self):
-        assert_equal_openssl("SSLv3", "SSLv3:-KRB5:-PSK:-ADH:-EDH:-SEED:-IDEA")
+        assert_equal_openssl("SSLv3", "SSLv3:-KRB5:-PSK:-ADH:-EDH:-DH:-SEED:-IDEA")
 
     def test_SSLv3_equals_TLSv1(self):
         (nss, err, rc) = run([exe, "--o", "SSLv3"])
