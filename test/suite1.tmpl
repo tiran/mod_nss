@@ -12,6 +12,8 @@ Listen 0.0.0.0:8001
 
 LogLevel debug
 
+CoreDumpDirectory $SERVER_ROOT
+
 <VirtualHost *:$SERVER_PORT>
 
     ServerName $SERVER_NAME
