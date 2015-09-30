@@ -398,7 +398,7 @@ static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *v
     else if (strcEQ(var, "S_DN")) {
         xsname = CERT_NameToAscii(&xs->subject);
         result = apr_pstrdup(p, xsname);
-        PR_Free(xsname);
+        PORT_Free(xsname);
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "S_DN_", 5)) {
@@ -408,7 +408,7 @@ static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *v
     else if (strcEQ(var, "I_DN")) {
         xsname = CERT_NameToAscii(&xs->issuer);
         result = apr_pstrdup(p, xsname);
-        PR_Free(xsname);
+        PORT_Free(xsname);
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "I_DN_", 5)) {
@@ -602,7 +602,7 @@ static char *nss_var_lookup_nss_cert_PEM(apr_pool_t *p, CERTCertificate *xs)
     result = apr_pstrcat(p, CERT_HEADER, tmp, CERT_TRAILER, NULL);
 
     /* Clean up memory. */
-    PR_Free(tmp);
+    PORT_Free(tmp);
 
     return result;
 }
