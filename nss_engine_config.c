@@ -142,7 +142,7 @@ static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
     sc->proxy                       = NULL;
     sc->server                      = NULL;
     sc->proxy_ssl_check_peer_cn     = TRUE;
-    sc->session_tickets             = UNSET;
+    sc->session_tickets             = FALSE;
 
     modnss_ctx_init_proxy(sc, p);
 
