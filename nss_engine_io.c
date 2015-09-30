@@ -673,6 +673,37 @@ static apr_status_t nss_io_filter_cleanup(void *data)
     return APR_SUCCESS;
 }
 
+static apr_status_t nss_io_filter_handshake(ap_filter_t *f)
+{
+    conn_rec *c         = f->c;
+    SSLConnRec *sslconn = myConnConfig(c);
+
+    /*
+     * Enable SNI for backend requests. Make sure we don&#39;t do it for
+     * pure SSLv3 connections
+     */
+    if (sslconn->is_proxy) {
+        const char *hostname_note = apr_table_get(c->notes, "proxy-request-hostname");
+        if (hostname_note) {
+            if (SSL_SetURL(sslconn->ssl, hostname_note) == -1) {
+                ap_log_error(APLOG_MARK, APLOG_INFO, 0, c->base_server,
+                              "Error setting SNI extension for SSL Proxy request: %d",
+                              PR_GetError());
+            } else {
+                ap_log_error(APLOG_MARK, APLOG_INFO, 0, c,
+                              "SNI extension for SSL Proxy request set to '%s'",
+                              hostname_note);
+            }
+        }
+        else {
+            ap_log_error(APLOG_MARK, APLOG_INFO, 0, c,
+                              "Can't set SNI extension: no hostname available";
+        }
+    }
+
+    return APR_SUCCESS;
+}
+
 static apr_status_t nss_io_filter_input(ap_filter_t *f,
                                         apr_bucket_brigade *bb,
                                         ap_input_mode_t mode,
@@ -707,6 +738,10 @@ static apr_status_t nss_io_filter_input(ap_filter_t *f,
 
     inctx->mode = mode;
     inctx->block = block;
+
+    if ((status = nss_io_filter_handshake(f)) != APR_SUCCESS) {
+        return nss_io_filter_error(f, bb, status);
+    }
 
     if (is_init) {
         /* protocol module needs to handshake before sending
@@ -828,6 +863,10 @@ static apr_status_t nss_io_filter_output(ap_filter_t *f,
      */
     inctx->mode = AP_MODE_READBYTES;
     inctx->block = APR_BLOCK_READ;
+
+    if ((status = nss_io_filter_handshake(f)) != APR_SUCCESS) {
+        return nss_io_filter_error(f, bb, status);
+    }
 
     while (!APR_BRIGADE_EMPTY(bb)) {
         apr_bucket *bucket = APR_BRIGADE_FIRST(bb);
