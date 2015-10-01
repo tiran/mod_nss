@@ -17,6 +17,8 @@
 #include "secerr.h"
 
 static void HandshakeDone(PRFileDesc *fd, void *doneflag);
+extern cipher_properties ciphers_def[];
+extern int ciphernum;
 
 /*
  *  Post Read Request Handler
@@ -144,7 +146,11 @@ int nss_hook_ReadReq(request_rec *r)
     /*
      * Log information about incoming HTTPS requests
      */
+#if AP_SERVER_MINORVERSION_NUMBER <= 2
+    if (r->server->loglevel >= APLOG_INFO && ap_is_initial_req(r)) {
+#else
     if (r->server->log.level >= APLOG_INFO && ap_is_initial_req(r)) {
+#endif
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
                      "%s HTTPS request received for child %ld (server %s)",
                      (r->connection->keepalives <= 0 ?
@@ -180,7 +186,6 @@ int nss_hook_Access(request_rec *r)
     CERTCertificate *cert;
     CERTCertificate *peercert;
     int verify_old, verify;
-    extern cipher_properties ciphers_def[];
     PRBool ciphers_old[ciphernum];
     PRBool ciphers_new[ciphernum];
     char * cipher = NULL;
@@ -633,7 +638,11 @@ int nss_hook_Access(request_rec *r)
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
                          "Access to %s denied for %s "
                          "(requirement expression not fulfilled)",
+#if AP_SERVER_MINORVERSION_NUMBER <= 2
+                         r->filename, r->connection->remote_ip);
+#else
                          r->filename, r->connection->client_ip);
+#endif
 
             ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
                          "Failed expression: %s", req->cpExpr);

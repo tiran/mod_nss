@@ -375,7 +375,11 @@ static int nss_hook_pre_connection(conn_rec *c, void *csd)
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, c->base_server,
                  "Connection to child %ld established "
                  "(server %s, client %s)", c->id, sc->vhost_id, 
+#if AP_SERVER_MINORVERSION_NUMBER <= 2
+                 c->remote_ip ? c->remote_ip : "unknown");
+#else
                  c->client_ip ? c->client_ip : "unknown");
+#endif
 
     mctx = sslconn->is_proxy ? sc->proxy : sc->server;
 

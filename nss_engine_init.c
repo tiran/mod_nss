@@ -17,6 +17,9 @@
 #include "nss_engine_cipher.h"
 #include "apr_thread_proc.h"
 #include "mpm_common.h"
+#if AP_SERVER_MINORVERSION_NUMBER <= 2
+#include "ap_mpm.h"
+#endif
 #include "secmod.h"
 #include "sslerr.h"
 #include "pk11func.h"

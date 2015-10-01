@@ -83,6 +83,7 @@ typedef struct
 #define TLSV1_2            0x00000004L
 
 /* the table itself is defined in nss_engine_cipher.c */
+#if 0
 #ifdef NSS_ENABLE_ECC
 # ifdef ENABLE_SHA384
 #  define ciphernum 54
@@ -92,7 +93,27 @@ typedef struct
 #else
 #define ciphernum 20
 #endif
+#endif
+
+extern int ciphernum;
 
 /* function prototypes */
 int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum]);
 int countciphers(PRBool cipher_state[ciphernum], int version);
+
+/* I chose an arbitrary cipher to test the existence for to handle older
+ * versions of NSS, at least back to 3.15.1
+ */
+#ifndef TLS_NULL_WITH_NULL_NULL
+#define TLS_NULL_WITH_NULL_NULL                SSL_NULL_WITH_NULL_NULL
+#define TLS_RSA_WITH_NULL_MD5                  SSL_RSA_WITH_NULL_MD5
+#define TLS_RSA_WITH_NULL_SHA                  SSL_RSA_WITH_NULL_SHA
+#define TLS_RSA_EXPORT_WITH_RC4_40_MD5         SSL_RSA_EXPORT_WITH_RC4_40_MD5
+#define TLS_RSA_WITH_RC4_128_MD5               SSL_RSA_WITH_RC4_128_MD5
+#define TLS_RSA_WITH_RC4_128_SHA               SSL_RSA_WITH_RC4_128_SHA
+#define TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5 SSL_RSA_EXPORT_WITH_RC2_CBC_40_MD5
+#define TLS_RSA_WITH_IDEA_CBC_SHA              SSL_RSA_WITH_IDEA_CBC_SHA
+#define TLS_RSA_EXPORT_WITH_DES40_CBC_SHA      SSL_RSA_EXPORT_WITH_DES40_CBC_SHA
+#define TLS_RSA_WITH_DES_CBC_SHA               SSL_RSA_WITH_DES_CBC_SHA
+#define TLS_RSA_WITH_3DES_EDE_CBC_SHA          SSL_RSA_WITH_3DES_EDE_CBC_SHA
+#endif

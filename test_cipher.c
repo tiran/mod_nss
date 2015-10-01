@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <sslproto.h>
+#include "ap_release.h"
 
 /* Fake a few Apache and NSPR data types and definitions */
 typedef char server_rec;
@@ -29,9 +30,14 @@ typedef int PRInt32;
 #include <nss_engine_cipher.h>
 
 extern cipher_properties ciphers_def[];
+extern ciphernum;
 
 /* An Apache-like error logger */
+#if AP_SERVER_MINORVERSION_NUMBER <= 2
+int ap_log_error(const char *fn, int line,
+#else
 int ap_log_error_(const char *fn, int line, int module_index,
+#endif
                  int level, int status,
                  const server_rec *s, char *fmt, ...)
 {
@@ -46,7 +52,9 @@ int ap_log_error_(const char *fn, int line, int module_index,
     return 0;
 }
 
+#if AP_SERVER_MINORVERSION_NUMBER > 2
 #define ap_log_error_ ap_log_error
+#endif
 
 int main(int argc, char ** argv)
 {

@@ -201,7 +201,11 @@ char *nss_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, 
 #endif
         }
         else if (strcEQ(var, "REMOTE_ADDR"))
+#if AP_SERVER_MINORVERSION_NUMBER <= 2
+            result = c->remote_ip;
+#else
             result = c->client_ip;
+#endif
         else if (strcEQ(var, "HTTPS")) {
             if (sslconn && sslconn->ssl)
                 result = "on";

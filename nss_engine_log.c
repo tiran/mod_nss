@@ -321,7 +321,11 @@ void nss_die(void)
     exit(1); 
 }
 
+#if AP_SERVER_MINORVERSION_NUMBER <= 2
+void nss_log_nss_error(const char *file, int line, int level, server_rec *s)
+#else
 void nss_log_nss_error(const char *file, int line, int module_index, int level, server_rec *s)
+#endif
 {
     const char *err;
     PRInt32 error;
@@ -340,7 +344,11 @@ void nss_log_nss_error(const char *file, int line, int module_index, int level, 
          err = "Unknown";
     }
 
+#if AP_SERVER_MINORVERSION_NUMBER <= 2
+    ap_log_error(file, line, level, 0, s,
+#else
     ap_log_error(file, line, module_index, level, 0, s,
+#endif
                  "SSL Library Error: %d %s",
                  error, err);
 }
