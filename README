@@ -130,3 +130,17 @@ TESTING
 
  This is controlled by the environment variable DBPREFIX which needs
  to be set to sql: when using the newer format for the tests.
+
+ A test for the OpenSSL-compatibility is also executed. It tries to
+ compare the output of `openssl ciphers <string>` with the
+ equivalent from mod_nss. This may vary by release of OpenSSL and
+ what ciphers are available in NSS.
+
+ The test suite requires python >= 2.7.10 and
+ python-requests > 2.7.0.
+
+ There is a very small SNI suite included as well. To run it you
+ need to add www[1..25].example.com to your /etc/hosts pointing
+ to your IP address. Then run:
+
+ % make checksni
