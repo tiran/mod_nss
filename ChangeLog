@@ -1,3 +1,13 @@
+2015-10-01  Rob Crittenden <rcritten@redhat.com>
+    * Add compatibility for Apache 2.2 and older versions of NSS.
+      Tested on RHEL 6.5.
+    * Replace some PR_Free calls with more correct PORT_Free.
+    * Initialize session_tickets as FALSE instead of UNSET.
+    * Modernize the autotools configuration, generate config.h
+    * Get the version from config.h to get the proper mod_nss version
+      for reporting at runtime. It previously displayed the version
+      of Apache where the mod_nss version should have gone.
+
 2015-09-25  Rob Crittenden <rcritten@redhat.com>
     * Add support for SNI
     * Display hints if there are issues initializing NSS
