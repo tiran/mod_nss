@@ -1,5 +1,3 @@
-VERSION = 1.0.11
-
 ## This is the shared library to be built
 lib_LTLIBRARIES = libmodnss.la
 
@@ -23,7 +21,7 @@ libmodnss_la_SOURCES = mod_nss.c nss_engine_config.c nss_engine_init.c nss_engin
 libmodnss_la_LDFLAGS = -module -avoid-version
 
 ## Set the includes and libraries needed
-INCLUDES = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
+AM_CPPFLAGS = -I@apache_inc@ @nspr_inc@ @nss_inc@ @apr_inc@
 LIBS = @nspr_lib@ @nss_lib@ -lssl3 -lsmime3 -lnss3 -lplc4 -lplds4 -lnspr4
 EXTRA_CPPFLAGS=@extra_cppflags@
 

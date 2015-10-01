@@ -45,7 +45,7 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
-#define MOD_NSS_VERSION AP_SERVER_BASEREVISION
+#define MOD_NSS_VERSION PACKAGE_VERSION
 
 /* NSPR headers */
 #include "nspr.h"
@@ -58,6 +58,18 @@
 #include <ssl.h>
 #include <nss.h>
 #include <sslproto.h>
+
+/* Apache ships its autoconf-generated config.h which defines these
+ * as empty. We want the mod_nss version in our own config.h so
+ * undefine them to eliminate the build warnings.
+ */
+#undef PACKAGE_NAME
+#undef PACKAGE_VERSION
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_URL
+#undef PACKAGE_BUGREPORT
+#include "config.h"
 
 /* The #ifdef macros are only defined AFTER including the above
  * therefore we cannot include these system files at the top  :-(

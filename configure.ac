@@ -1,15 +1,16 @@
 # Required initializer
-AC_INIT
+AC_INIT([mod_nss],[1.0.11])
 
 m4_include([acinclude.m4])
 
 # Automake initialization
-AM_INIT_AUTOMAKE(mod_nss, 1.0)
+AM_INIT_AUTOMAKE
 
 # Add a test for a compiler.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AM_PROG_LIBTOOL
+AC_CONFIG_HEADERS([config.h])
 
 # Check for header files
 AC_HEADER_STDC
