@@ -101,13 +101,17 @@ check:
 	cd test;	\
 	rm -rf work;	\
 	nosetests -v test_cipher.py;	\
+	if [ `id -u` != 0 ]; then	\
 	./setup.sh -s 1;	\
 	nosetests -v test.py;	\
 	sleep 5;	\
 	rm -rf work;	\
 	./setup.sh sql: -s 1;	\
 	DBPREFIX=sql: nosetests -v test.py;	\
-	cd ..
+	cd ..;	\
+	else	\
+	echo "Skipping live tests as they cannot be run as root";	\
+	fi
 
 checksni:
 	cd test;	\
