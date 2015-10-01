@@ -233,7 +233,6 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
              * So we need to disable all the NULL ciphers too.
              */
             int mask = SSL_aNULL | SSL_eNULL;
-            PRBool enabled;
             found = PR_TRUE;
             for (i=0; i < ciphernum; i++) {
                 if (cipher_list[i] != -1)

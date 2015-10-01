@@ -16,6 +16,7 @@
 #include "mod_nss.h"
 #include "nss_engine_cipher.h"
 #include "apr_thread_proc.h"
+#include "apr_strings.h"
 #include "mpm_common.h"
 #if AP_SERVER_MINORVERSION_NUMBER <= 2
 #include "ap_mpm.h"
@@ -184,8 +185,8 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
 
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
         apr_snprintf(keypath, 1024, "%s/key3.db", mc->pCertificateDatabase);
-        if (rv = apr_stat(&finfo, keypath, APR_FINFO_PROT | APR_FINFO_OWNER, p)
-                           == APR_SUCCESS) {
+        if ((rv = apr_stat(&finfo, keypath, APR_FINFO_PROT | APR_FINFO_OWNER,
+             p)) == APR_SUCCESS) {
             if (((user_id == finfo.user) &&
                     (!(finfo.protection & APR_FPROT_UREAD))) ||
                 ((gid == finfo.group) &&
@@ -373,7 +374,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
         sc->vhost_id_len = strlen(sc->vhost_id);
 
         if (sc->sni && sc->server->nickname != NULL && sc->vhost_id != NULL) {
-            split_vhost_id = apr_strtok(sc->vhost_id, ":", &last1);
+            split_vhost_id = apr_strtok((char *)sc->vhost_id, ":", &last1);
             ap_str_tolower(split_vhost_id);
             addHashVhostNick(split_vhost_id, (char *)sc->server->nickname);
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
@@ -1091,7 +1092,6 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
                                  int sni,
                                  const CERTCertList* clist)
 {
-    SSLModConfigRec *mc = myModConfig(s);
     SECCertTimeValidity certtimestatus;
     SECStatus secstatus;
 
@@ -1188,7 +1188,7 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
             ap_str_tolower(wild_name[j]);
             addHashVhostNick(wild_name[j], (char *)nickname);
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                "SNI wildcard: %s -> %s", wild_name[i], nickname);
+                "SNI wildcard: %s -> %s", wild_name[j], nickname);
         }
     }
 
