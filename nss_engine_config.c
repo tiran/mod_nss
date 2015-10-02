@@ -53,6 +53,7 @@ SSLModConfigRec *nss_config_global_create(server_rec *s)
     mc->pphrase_dialog_path         = NULL;
     mc->aRandSeed                   = apr_array_make(pool, 4,
                                                      sizeof(ssl_randseed_t));
+    mc->semid                       = 0;
 
     apr_pool_userdata_set(mc, SSL_MOD_CONFIG_KEY,
                           apr_pool_cleanup_null,

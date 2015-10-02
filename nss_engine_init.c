@@ -1205,6 +1205,7 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
             nnptr++;
             nn--;
         }
+        PORT_FreeArena(certNickDNS->arena, PR_FALSE);
     }
 
     /* Subject/hostname check */
@@ -1786,6 +1787,10 @@ PRInt32 nssSSLSNISocketConfig(PRFileDesc *fd, const SECItem *sniNameArr,
     }
     ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
         "SNI: Successfully paired vhost %s with nickname: %s", vhost, nickName);
+
+    apr_pool_destroy(str_p);
+    SECKEY_DestroyPrivateKey(privKey);
+    CERT_DestroyCertificate(cert);
 
     return 0;
 

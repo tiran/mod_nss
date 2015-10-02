@@ -90,24 +90,25 @@ int nss_hook_ReadReq(request_rec *r)
                 apr_status_t rv;
                 apr_pool_t *s_p;
 
-                hostInfo->data[hostInfo->len] = '\0';
-                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
-                    "SNI request for %s", (char *)hostInfo->data);
-
                 apr_pool_create(&s_p, NULL);
+
                 servername = apr_pstrndup(s_p, (char *) hostInfo->data, hostInfo->len);
+                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
+                    "SNI request for %s", servername);
 
                 if (!r->hostname) {
                     ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
                         "Hostname %s provided via SNI, but no hostname"
                         " provided in HTTP request", servername);
                     apr_pool_destroy(s_p);
+                    SECITEM_FreeItem(hostInfo, PR_TRUE);
                     return HTTP_BAD_REQUEST;
                 }
 
                 rv = apr_parse_addr_port(&host, &scope_id, &port, r->hostname, r->pool);
                 if (rv != APR_SUCCESS || scope_id) {
                     apr_pool_destroy(s_p);
+                    SECITEM_FreeItem(hostInfo, PR_TRUE);
                     return HTTP_BAD_REQUEST;
                 }
 
@@ -117,9 +118,11 @@ int nss_hook_ReadReq(request_rec *r)
                         " via HTTP are different", servername, host);
 
                     apr_pool_destroy(s_p);
+                    SECITEM_FreeItem(hostInfo, PR_TRUE);
                     return HTTP_BAD_REQUEST;
                 }
                 apr_pool_destroy(s_p);
+                SECITEM_FreeItem(hostInfo, PR_TRUE);
             }
         } else if (((sc->strict_sni_vhost_check)
                    || (mySrvConfig(r->server))->strict_sni_vhost_check)
@@ -927,6 +930,7 @@ int nss_hook_Fixup(request_rec *r)
     if (hostInfo) {
         servername = apr_pstrndup(r->pool, (char *) hostInfo->data, hostInfo->len);
         apr_table_set(env, "SSL_TLS_SNI", servername);
+        SECITEM_FreeItem(hostInfo, PR_TRUE);
     }
 
     /* standard SSL environment variables */
