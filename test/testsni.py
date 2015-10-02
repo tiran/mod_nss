@@ -9,7 +9,9 @@ class test_suite1(Declarative):
     def setUpClass(cls):
         write_template_file('suite1.tmpl', 'work/httpd/conf/test.conf',
             {'DBPREFIX': os.environ.get('DBPREFIX', ''),
-             'SNI': 'on'}
+             'SNI': 'on',
+             'PRESERVEHOST': 'Off',
+            }
         )
         for i in range(1,26):
             write_template_file('sni.tmpl', 'work/httpd/conf.d/sni%d.conf' % i,
@@ -96,6 +98,12 @@ class test_suite1(Declarative):
             desc='Non-existant www26.example.com',
             request=('/', {'host': 'www26.example.com', 'sni': True}),
             expected=requests.exceptions.ConnectionError(),
+        ),
+
+        dict(
+            desc='Reverse proxy request when SNI is enabled',
+            request=('/proxy/index.html', {'sni': True}),
+            expected=200,
         ),
 
     ]

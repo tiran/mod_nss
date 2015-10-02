@@ -17,6 +17,7 @@ function create_content_dirs {
     mkdir $dir/protocoltls1
     mkdir $dir/protocoltls11
     mkdir $dir/protocoltls12
+    mkdir $dir/proxydata
 
     cat > $dir/index.html << EOF
     <html>
@@ -33,6 +34,7 @@ EOF
     cp $dir/index.html $dir/protocoltls1/index.html
     cp $dir/index.html $dir/protocoltls11/index.html
     cp $dir/index.html $dir/protocoltls12/index.html
+    cp $dir/index.html $dir/proxydata/index.html
 }
 
 target=$1

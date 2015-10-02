@@ -102,6 +102,14 @@ CoreDumpDirectory $SERVER_ROOT
         NSSOptions +ExportCertData +CompatEnvVars +StdEnvVars
     </Directory>
 
+    NSSProxyEngine on
+    NSSProxyCipherSuite +rsa_rc4_128_md5,+rsa_3des_sha,+rsa_des_sha,+rsa_aes_128_sha,+rsa_aes_256_sha
+
+    NSSProxyProtocol TLSv1.0,TLSv1.2
+    ProxyPreserveHost $PRESERVEHOST
+    ProxyPass /proxy https://www1.example.com:8000/proxydata
+    ProxyPassReverse /proxy https://www1.example.com:8000/proxydata
+
 </VirtualHost>
 
 #

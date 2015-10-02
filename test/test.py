@@ -20,7 +20,9 @@ class test_suite1(Declarative):
     def setUpClass(cls):
         write_template_file('suite1.tmpl', 'work/httpd/conf/test.conf',
             {'DBPREFIX': os.environ.get('DBPREFIX', ''),
-             'SNI': 'off'}
+             'SNI': 'off',
+             'PRESERVEHOST': 'Off',
+            }
         )
         # Generate a single VH to do negative SNI testing
         write_template_file('sni.tmpl', 'work/httpd/conf.d/sni1.conf',
@@ -260,12 +262,18 @@ class test_suite1(Declarative):
         ),
 
         dict(
-            desc='Make non-SNI request',
+            desc='SNI request when SNI is disabled',
             request=('/index.html',
                     {'host': 'www1.example.com', 'port': 8000}
             ),
             expected=requests.exceptions.SSLError(),
             expected_str='doesn\'t match',
+        ),
+
+        dict(
+            desc='Reverse proxy request when SNI is disabled',
+            request=('/proxy/index.html', {}),
+            expected=400,
         ),
 
     ]
