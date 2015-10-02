@@ -1,3 +1,9 @@
+2015-10-02  Rob Crittenden <rcritten@redhat.com>
+    * Integrate patch from Stanislav Tokos to set the SNI hostname
+      on reverse proxy requests.
+    * Cleanup a bunch of trailing whitespace spread across all the
+      source files.
+
 2015-10-01  Rob Crittenden <rcritten@redhat.com>
     * Add compatibility for Apache 2.2 and older versions of NSS.
       Tested on RHEL 6.5.
