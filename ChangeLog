@@ -3,6 +3,7 @@
       on reverse proxy requests.
     * Cleanup a bunch of trailing whitespace spread across all the
       source files.
+    * Become 1.0.12
 
 2015-10-01  Rob Crittenden <rcritten@redhat.com>
     * Add compatibility for Apache 2.2 and older versions of NSS.
