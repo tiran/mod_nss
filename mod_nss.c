@@ -133,14 +133,14 @@ static const command_rec nss_config_cmds[] = {
                "Require the SSL protocol for the per-directory context "
                "(no arguments)")
     SSL_CMD_DIR(Require, AUTHCFG, RAW_ARGS,
-               "Require a boolean expression to evaluate to true for granting access" 
+               "Require a boolean expression to evaluate to true for granting access"
                "(arbitrary complex boolean expression - see manual)")
     SSL_CMD_DIR(RenegBufferSize, AUTHCFG, TAKE1,
                 "Configure the amount of memory that will be used for buffering the "
                 "request body if a per-location SSL renegotiation is required due to "
                 "changed access control requirements")
 
-    /* 
+    /*
      * Proxy configuration for remote SSL connections
      */
     SSL_CMD_SRV(ProxyEngine, FLAG,
@@ -160,14 +160,14 @@ static const command_rec nss_config_cmds[] = {
 
 #ifdef IGNORE
     /* Deprecated directives. */
-    AP_INIT_RAW_ARGS("NSSLog", ap_set_deprecated, NULL, OR_ALL, 
+    AP_INIT_RAW_ARGS("NSSLog", ap_set_deprecated, NULL, OR_ALL,
       "SSLLog directive is no longer supported - use ErrorLog."),
-    AP_INIT_RAW_ARGS("NSSLogLevel", ap_set_deprecated, NULL, OR_ALL, 
+    AP_INIT_RAW_ARGS("NSSLogLevel", ap_set_deprecated, NULL, OR_ALL,
       "SSLLogLevel directive is no longer supported - use LogLevel."),
 #endif
     AP_INIT_TAKE1("User", set_user, NULL, RSRC_CONF,
                   "Apache user. Comes from httpd.conf."),
-    
+
     AP_END_CMD
 };
 
@@ -273,7 +273,7 @@ SECStatus NSSBadCertHandler(void *arg, PRFileDesc * socket)
     SECStatus rv = SECFailure;
     CERTCertificate *peerCert = SSL_PeerCertificate(socket);
     const char *hostname_note;
-                                                                                
+
     switch (err) {
         case SSL_ERROR_BAD_CERT_DOMAIN:
             if (sc->proxy_ssl_check_peer_cn == TRUE) {
@@ -329,7 +329,7 @@ static SECStatus NSSGetClientAuthData(void *arg, PRFileDesc *socket,
             } else {
                 CERT_DestroyCertificate(cert);
             }
-        } 
+        }
 
         if (rv == SECSuccess) {
             *pRetCert = cert;
@@ -374,7 +374,7 @@ static int nss_hook_pre_connection(conn_rec *c, void *csd)
 
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, c->base_server,
                  "Connection to child %ld established "
-                 "(server %s, client %s)", c->id, sc->vhost_id, 
+                 "(server %s, client %s)", c->id, sc->vhost_id,
 #if AP_SERVER_MINORVERSION_NUMBER <= 2
                  c->remote_ip ? c->remote_ip : "unknown");
 #else
@@ -462,7 +462,7 @@ static apr_port_t nss_hook_default_port(const request_rec *r)
 static void nss_register_hooks(apr_pool_t *p)
 {
     /* nss_hook_ReadReq needs to use the BrowserMatch settings so must
-     * run after mod_setenvif's post_read_request hook. */ 
+     * run after mod_setenvif's post_read_request hook. */
     static const char *pre_prr[] = { "mod_setenvif.c", NULL };
 
     nss_io_filter_register(p);

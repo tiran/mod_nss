@@ -331,10 +331,10 @@ int main(int argc, char ** argv)
 
     /* Initialize NSPR */
     PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 256);
- 
+
     /* Set the PKCS #11 strings for the internal token. */
     PK11_ConfigurePKCS11(NULL,NULL,NULL, INTERNAL_TOKEN_NAME, NULL, NULL,NULL,NULL,8,1);
- 
+
     /* Initialize NSS and open the certificate database read-only. */
     rv = NSS_Initialize(argv[3], argc == 5 ? argv[4] : NULL, argc == 5 ? argv[4] : NULL, "secmod.db", NSS_INIT_READONLY);
 
@@ -356,13 +356,13 @@ int main(int argc, char ** argv)
                  exit(1);
             }
             PR_smprintf_free(internal_name);
-        } 
+        }
     }
 
     in = PR_GetSpecialFD(PR_StandardInput);
     out = PR_GetSpecialFD(PR_StandardOutput);
     if (in == NULL || out == NULL) {
-        fprintf(stderr, "PR_GetInheritedFD failed\n"); 
+        fprintf(stderr, "PR_GetInheritedFD failed\n");
         exit(1);
     }
 
@@ -397,8 +397,8 @@ int main(int argc, char ** argv)
                     if (!node) { err = PIN_NOMEMORY; }
 
                     node->tokenName = strdup(tokenName);
-                    node->store = 0; 
-                    node->next = 0; 
+                    node->store = 0;
+                    node->next = 0;
 
                     if (err == PIN_SUCCESS)
                         err = CreatePk11PinStore(&node->store, tokenName, tokenpw);
@@ -459,7 +459,7 @@ int main(int argc, char ** argv)
     return 0;
 }
 
-/* 
+/*
  * Given a \t-deliminated string, pick out the el-th element
  */
 static

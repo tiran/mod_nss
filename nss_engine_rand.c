@@ -49,7 +49,7 @@ int nss_rand_seed(server_rec *s, apr_pool_t *p, ssl_rsctx_t nCtx, char *prefix)
                 /*
                  * seed in contents of an external file
                  */
-                if (apr_file_open(&fp, pRandSeed->cpPath, 
+                if (apr_file_open(&fp, pRandSeed->cpPath,
                                   APR_READ, APR_OS_DEFAULT, p) != APR_SUCCESS)
                     continue;
                 nDone += nss_rand_feedfp(p, fp, pRandSeed->nBytes);
@@ -89,7 +89,7 @@ int nss_rand_seed(server_rec *s, apr_pool_t *p, ssl_rsctx_t nCtx, char *prefix)
                 l = sizeof(my_seed);
                 PK11_RandomUpdate((unsigned char *)&my_seed, l);
                 nDone += l;
-                
+
                 /*
                  * seed in some current state of the run-time stack (128 bytes)
                  */

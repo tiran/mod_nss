@@ -147,7 +147,7 @@ ap_set_module_config(c->conn_config, &nss_module, val)
 #define SSL_SESSION_CACHE_TIMEOUT  100
 #endif
 
-#ifndef SSL3_SESSION_CACHE_TIMEOUT 
+#ifndef SSL3_SESSION_CACHE_TIMEOUT
 #define SSL3_SESSION_CACHE_TIMEOUT  86400
 #endif
 
@@ -176,7 +176,7 @@ typedef int nss_opt_t;
 
 /*
  * Define the SSL requirement structure
- */ 
+ */
 typedef struct {
     char     *cpExpr;
     nss_expr *mpExpr;
@@ -231,7 +231,7 @@ typedef enum {
 typedef struct {
     PRFileDesc *ssl;
     const char *client_dn;
-    CERTCertificate *client_cert; 
+    CERTCertificate *client_cert;
     int is_proxy;
     int disabled;
     int non_nss_request;
@@ -282,7 +282,7 @@ typedef struct {
 
 typedef struct {
     SSLSrvConfigRec *sc; /* pointer back to server config */
-    
+
     char *cipherSuite;
 
     int as_server;
@@ -376,7 +376,7 @@ typedef struct regex_t ap_regex_t;
 #define AP_REG_NOSUB REG_NOSUB
 #define AP_REG_ICASE REG_ICASE
 #endif
- 
+
 /*
  *  function prototypes
  */
@@ -455,7 +455,7 @@ void         nss_var_log_config_register(apr_pool_t *p);
 
 APR_DECLARE_OPTIONAL_FN(char *, nss_var_lookup,
                         (apr_pool_t *, server_rec *,
-                         conn_rec *, request_rec *, 
+                         conn_rec *, request_rec *,
                          char *));
 
 /* An optional function which returns non-zero if the given connection

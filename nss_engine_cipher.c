@@ -155,7 +155,7 @@ int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum
 
 
 /* Given a set of ciphers perform a given action on the indexed value.
- * 
+ *
  * This is needed because the + action doesn't do anything in the NSS
  * context. In OpenSSL it will re-order the cipher list.
  */

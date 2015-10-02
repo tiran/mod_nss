@@ -47,12 +47,12 @@ static char *version_components[] = {
     "SSL_VERSION_INTERFACE",
     "SSL_VERSION_LIBRARY",
     NULL
-}; 
+};
 
 static char *nss_add_version_component(apr_pool_t *p,
                                        server_rec *s,
                                        char *name)
-{   
+{
     char *val = nss_var_lookup(p, s, NULL, NULL, name);
 
     if (val && *val) {
@@ -61,7 +61,7 @@ static char *nss_add_version_component(apr_pool_t *p,
 
     return val;
 }
- 
+
 static void nss_add_version_components(apr_pool_t *p,
                                        server_rec *s)
 {
@@ -88,7 +88,7 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
 {
     SECStatus rv;
     SSLModConfigRec *mc = myModConfig(base_server);
-    SSLSrvConfigRec *sc; 
+    SSLSrvConfigRec *sc;
     char cwd[PATH_MAX];
     server_rec *s;
     int fipsenabled = FALSE;
@@ -143,7 +143,7 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
     }
     if (strncasecmp(mc->pCertificateDatabase, "sql:", 4) == 0)
         dbdir = (char *)mc->pCertificateDatabase + 4;
-    else 
+    else
         dbdir = (char *)mc->pCertificateDatabase;
     if (chdir(dbdir) != 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
@@ -254,7 +254,7 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
         /* We ensure that ocspname and ocspurl are not NULL above. */
         if (ocspdefault) {
             SECStatus sv;
- 
+
             sv = CERT_SetOCSPDefaultResponder(CERT_GetDefaultCertDB(),
                      ocspurl, ocspname);
 
@@ -289,7 +289,7 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
             "SNI is disabled");
     }
 
-    /* 
+    /*
      * Seed the Pseudo Random Number Generator (PRNG)
      * only need ptemp here; nothing inside allocated from the pool
      * needs to live once we return from nss_rand_seed().
@@ -302,7 +302,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
                     server_rec *base_server)
 {
     SSLModConfigRec *mc = myModConfig(base_server);
-    SSLSrvConfigRec *sc; 
+    SSLSrvConfigRec *sc;
     server_rec *s;
     int sslenabled = FALSE;
     int fipsenabled = FALSE;
@@ -313,7 +313,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
 
     mc->nInitCount++;
 
-    /* 
+    /*
      * Let us cleanup on restarts and exists
      */
     apr_pool_cleanup_register(p, base_server,
@@ -321,7 +321,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
                               apr_pool_cleanup_null);
 
     mc->ptemp = ptemp;
- 
+
     /*
      * Any init round fixes the global config
      */
@@ -334,7 +334,7 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
         ap_log_error(APLOG_MARK, APLOG_WARNING, 0, base_server,
             "NSSSessionCacheTimeout is deprecated. Ignoring.");
 
-        /* We still need to pass in a legal value to 
+        /* We still need to pass in a legal value to
          * SSL_ConfigMPServerSIDCache() and SSL_ConfigServerSessionIDCache()
          */
         mc->session_cache_timeout = 0; /* use NSS default */
@@ -893,14 +893,14 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
 {
     PRBool cipher_state[ciphernum];
     PRBool fips_state[ciphernum];
-    const char *suite = mctx->auth.cipher_suite; 
+    const char *suite = mctx->auth.cipher_suite;
     char * object_type = NULL;
     char * cipher_suite_marker = NULL;
     char * ciphers;
     char * fipsciphers = NULL;
     int i;
- 
-    /* 
+
+    /*
      *  Configure SSL Cipher Suite
      */
     if (!suite) {
@@ -1067,17 +1067,17 @@ static void nss_init_server_check(server_rec *s,
 static void nss_init_ctx(server_rec *s,
                          apr_pool_t *p,
                          apr_pool_t *ptemp,
-                         modnss_ctx_t *mctx) 
+                         modnss_ctx_t *mctx)
 {
 
     nss_init_ctx_socket(s, p, ptemp, mctx);
 
     nss_init_ctx_protocol(s, p, ptemp, mctx);
-    
+
     nss_init_ctx_session_cache(s, p, ptemp, mctx);
-    
+
     nss_init_ctx_callbacks(s, p, ptemp, mctx);
-    
+
     nss_init_ctx_verify(s, p, ptemp, mctx);
 
     nss_init_ctx_cipher_suite(s, p, ptemp, mctx);
@@ -1102,7 +1102,7 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
     apr_array_header_t *names = NULL;
     apr_array_header_t *wild_names = NULL;
     int i, j;
- 
+
     if (nickname == NULL) {
         return;
     }
@@ -1132,13 +1132,13 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
 
     if (strchr(nickname, ':'))
     {
-        char* token = strdup(nickname); 
+        char* token = strdup(nickname);
         char* colon = strchr(token, ':');
         if (colon) {
             *colon = 0;
             slot = PK11_FindSlotByName(token);
             if (!slot) {
-                /* 
+                /*
                  * Slot not found. This should never happen because we
                  * already found the cert.
                  */
@@ -1200,7 +1200,7 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
         nn = certNickDNS->numnicknames;
 
         while ( nn > 0 ) {
-            ap_str_tolower(*nnptr);	
+            ap_str_tolower(*nnptr);
             addHashVhostNick(*nnptr, (char *)nickname);
             nnptr++;
             nn--;
@@ -1327,7 +1327,7 @@ static void nss_init_server_certs(server_rec *s,
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
-    
+
 }
 
 static void nss_init_proxy_ctx(server_rec *s,
@@ -1434,7 +1434,7 @@ void nss_init_Child(apr_pool_t *p, server_rec *base_server)
         CERT_DestroyCertList(clist);
     }
 
-    /* 
+    /*
      * Let us cleanup on restarts and exits
      */
     apr_pool_cleanup_register(p, base_server,
@@ -1574,7 +1574,7 @@ SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg)
  */
 static PRBool
 cert_IsNewer(CERTCertificate *certa, CERTCertificate *certb)
-{ 
+{
     PRTime notBeforeA, notAfterA, notBeforeB, notAfterB, now;
     SECStatus rv;
     PRBool newerbefore, newerafter;
@@ -1662,11 +1662,11 @@ FindServerCertFromNickname(const char* name, const CERTCertList* clist)
              * Otherwise just return the cert if the nickname matches.
              */
             if (CERT_CheckCertUsage(cert, certUsageSSLServer) == SECSuccess) {
-                matchedUsage = 2; 
+                matchedUsage = 2;
             } else {
-                if (CERT_CheckCertUsage(cert, certUsageEmailRecipient) == SECSuccess) 
+                if (CERT_CheckCertUsage(cert, certUsageEmailRecipient) == SECSuccess)
                 {
-                    matchedUsage = 1; 
+                    matchedUsage = 1;
                 }
             }
 
@@ -1776,7 +1776,7 @@ PRInt32 nssSSLSNISocketConfig(PRFileDesc *fd, const SECItem *sniNameArr,
     }
     privKey = PK11_FindKeyByAnyCert(cert, &pinArg);
     if (privKey == NULL) {
-        goto loser; 
+        goto loser;
     }
 
     SSLKEAType certKEA = NSS_FindCertKEAType(cert);

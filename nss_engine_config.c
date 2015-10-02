@@ -126,7 +126,7 @@ static void modnss_ctx_init_server(SSLSrvConfigRec *sc,
 static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
 {
     SSLSrvConfigRec *sc = apr_palloc(p, sizeof(*sc));
-    
+
     sc->mc                          = NULL;
     sc->ocsp                        = UNSET;
     sc->ocsp_default                = UNSET;
@@ -250,13 +250,13 @@ void *nss_config_perdir_create(apr_pool_t *p, char *dir) {
 
     return dc;
 }
- 
+
 const char *nss_cmd_NSSRequireSSL(cmd_parms *cmd, void *dcfg)
 {
     SSLDirConfigRec *dc = (SSLDirConfigRec *)dcfg;
 
     dc->bSSLRequired = TRUE;
- 
+
     return NULL;
 }
 
@@ -334,16 +334,16 @@ const char *nss_cmd_NSSEngine(cmd_parms *cmd, void *dcfg, int flag)
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->enabled = flag ? TRUE : FALSE;
- 
+
     return NULL;
 }
 
 const char *nss_cmd_NSSFIPS(cmd_parms *cmd, void *dcfg, int flag)
 {
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
-    
+
     sc->fips = flag ? TRUE : FALSE;
- 
+
     return NULL;
 }
 
@@ -521,7 +521,7 @@ const char *nss_cmd_NSSRenegotiation(cmd_parms *cmd, void *dcfg, int flag)
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->server->enablerenegotiation = flag ? PR_TRUE : PR_FALSE;
- 
+
     return NULL;
 }
 
@@ -530,7 +530,7 @@ const char *nss_cmd_NSSRequireSafeNegotiation(cmd_parms *cmd, void *dcfg, int fl
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->server->requiresafenegotiation = flag ? PR_TRUE : PR_FALSE;
- 
+
     return NULL;
 }
 #endif
@@ -551,12 +551,12 @@ const char *nss_cmd_NSSECCNickname(cmd_parms *cmd,
 const char *nss_cmd_NSSProxyEngine(cmd_parms *cmd, void *dcfg, int flag)
 {
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
- 
+
     sc->proxy_enabled = flag ? TRUE : FALSE;
 
     return NULL;
 }
- 
+
 const char *nss_cmd_NSSProxyProtocol(cmd_parms *cmd,
                                      void *dcfg,
                                      const char *arg)
@@ -573,12 +573,12 @@ const char *nss_cmd_NSSProxyCipherSuite(cmd_parms *cmd,
                                         const char *arg)
 {
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
- 
+
     sc->proxy->auth.cipher_suite = arg;
- 
+
     return NULL;
 }
- 
+
 const char *nss_cmd_NSSProxyNickname(cmd_parms *cmd,
                                 void *dcfg,
                                 const char *arg)
@@ -606,7 +606,7 @@ const char *nss_cmd_NSSEnforceValidCerts(cmd_parms *cmd,
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->server->enforce = flag ? PR_TRUE : PR_FALSE;
- 
+
     return NULL;
 }
 
@@ -716,16 +716,16 @@ const char *nss_cmd_NSSRandomSeed(cmd_parms *cmd,
                                   const char *arg1,
                                   const char *arg2,
                                   const char *arg3)
-{   
+{
     SSLModConfigRec *mc = myModConfig(cmd->server);
     const char *err;
     ssl_randseed_t *seed;
     int arg2len = strlen(arg2);
-    
+
     if ((err = ap_check_cmd_context(cmd, GLOBAL_ONLY))) {
         return err;
     }
-    
+
     /* Only run through this once. Otherwise the random seed sources are
      * pushed into the array for each server start (and we are guaranteed 2) */
     if (mc->nInitCount >= 1) {
@@ -823,10 +823,10 @@ const char *nss_cmd_NSSOptions(cmd_parms *cmd,
                                const char *arg)
 {
     SSLDirConfigRec *dc = (SSLDirConfigRec *)dcfg;
-    nss_opt_t opt;   
-    int first = TRUE; 
-    char action, *w; 
- 
+    nss_opt_t opt;
+    int first = TRUE;
+    char action, *w;
+
     while (*arg) {
         w = ap_getword_conf(cmd->pool, &arg);
         action = NUL;

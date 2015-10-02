@@ -311,14 +311,14 @@ l_error_t libnss_errors[] = {
     { 114, "Unexpected uncompressed record" },
 };
 
-void nss_die(void) 
+void nss_die(void)
 {
     /*
      * This is used for fatal errors and here
      * it is common module practice to really
-     * exit from the complete program. 
-     */ 
-    exit(1); 
+     * exit from the complete program.
+     */
+    exit(1);
 }
 
 #if AP_SERVER_MINORVERSION_NUMBER <= 2

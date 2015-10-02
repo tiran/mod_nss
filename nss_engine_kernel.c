@@ -72,7 +72,7 @@ int nss_hook_ReadReq(request_rec *r)
      * delayed interlinking from SSL back to request_rec
      */
     if (!ssl) {
-        return DECLINED; 
+        return DECLINED;
     }
 
     /*
@@ -118,7 +118,7 @@ int nss_hook_ReadReq(request_rec *r)
 
                     apr_pool_destroy(s_p);
                     return HTTP_BAD_REQUEST;
-                } 
+                }
                 apr_pool_destroy(s_p);
             }
         } else if (((sc->strict_sni_vhost_check)
@@ -178,8 +178,8 @@ int nss_hook_Access(request_rec *r)
     SSLSrvConfigRec *sc = mySrvConfig(r->server);
     SSLConnRec *sslconn = myConnConfig(r->connection);
     PRFileDesc *ssl     = sslconn ? sslconn->ssl : NULL;
-    apr_array_header_t *requires; 
-    nss_require_t *nss_requires; 
+    apr_array_header_t *requires;
+    nss_require_t *nss_requires;
     char *cp;
     int ok, i;
     BOOL renegotiate = FALSE, renegotiate_quick = FALSE;
@@ -217,7 +217,7 @@ int nss_hook_Access(request_rec *r)
 
     /*
      * Support for per-directory reconfigured SSL connection parameters.
-     * 
+     *
      * This is implemented by forcing an SSL renegotiation with the
      * reconfigured parameter suite. But Apache's internal API processing
      * makes our life very hard here, because when internal sub-requests occur
@@ -235,7 +235,7 @@ int nss_hook_Access(request_rec *r)
      * the reconfigured parameter suite is stronger (more restrictions) than
      * the currently active one.
      */
-    
+
     /*
      * Override of NSSCipherSuite
      *
@@ -286,7 +286,7 @@ int nss_hook_Access(request_rec *r)
                          "permitted SSL ciphers");
             nss_log_nss_error(APLOG_MARK, APLOG_ERR, r->server);
             free(ciphers);
-    
+
             return HTTP_FORBIDDEN;
         }
         free(ciphers);
@@ -375,7 +375,7 @@ int nss_hook_Access(request_rec *r)
             SSL_OptionSet(ssl, SSL_REQUEST_CERTIFICATE, PR_FALSE);
             SSL_OptionSet(ssl, SSL_REQUIRE_CERTIFICATE, SSL_REQUIRE_NEVER);
         }
-    
+
         /* determine whether we've to force a renegotiation */
         if (!renegotiate && verify != verify_old) {
             if (((verify_old == SSL_CVERIFY_NONE) &&
@@ -415,7 +415,7 @@ int nss_hook_Access(request_rec *r)
      * handshake immediately; once the SSL library moves to the
      * "accept" state, it will reject the SSL packets which the client
      * is sending for the request body.
-     * 
+     *
      * To allow authentication to complete in this auth hook, the
      * solution used here is to fill a (bounded) buffer with the
      * request body, and then to reinject that request body later.
@@ -476,16 +476,16 @@ int nss_hook_Access(request_rec *r)
                          "just re-verifying the peer");
 
             peerCert = SSL_PeerCertificate(sslconn->ssl);
- 
+
             pinArg = SSL_RevealPinArg(sslconn->ssl);
- 
+
             rv = CERT_VerifyCertNow(CERT_GetDefaultCertDB(),
                                     peerCert,
                                     PR_TRUE,
                                     certUsageSSLClient,
                                     pinArg);
- 
-            CERT_DestroyCertificate(peerCert); 
+
+            CERT_DestroyCertificate(peerCert);
 
             if (rv != SECSuccess) {
                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, r->server,
@@ -686,7 +686,7 @@ int nss_hook_UserCheck(request_rec *r)
     SSLDirConfigRec *dc = myDirConfig(r);
     char *clientdn;
     const char *auth_line, *username, *password;
-     
+
     /*
      * Additionally forbid access (again)
      * when strict require option is used.
@@ -729,7 +729,7 @@ int nss_hook_UserCheck(request_rec *r)
         }
     }
 
-    /* 
+    /*
      * We decline operation in various situations...
      * - NSSOptions +FakeBasicAuth not configured
      * - r->user already authenticated
@@ -769,7 +769,7 @@ int nss_hook_UserCheck(request_rec *r)
                                                          ":password", NULL)),
                             NULL);
     apr_table_set(r->headers_in, "Authorization", auth_line);
-    
+
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
                  "Faking HTTP Basic Auth header: \"Authorization: %s\"",
                  auth_line);
@@ -784,7 +784,7 @@ int nss_hook_Auth(request_rec *r)
 
     ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server, "nss_hook_Auth");
     /*
-     * Additionally forbid access (again) 
+     * Additionally forbid access (again)
      * when strict require option is used.
      */
     if ((dc->nOptions & SSL_OPT_STRICTREQUIRE) &&
@@ -796,10 +796,10 @@ int nss_hook_Auth(request_rec *r)
     return DECLINED;
 }
 
-/*  
+/*
  *   Fixup Handler
- */ 
-    
+ */
+
 static const char *nss_hook_Fixup_vars[] = {
     "SSL_VERSION_INTERFACE",
     "SSL_VERSION_LIBRARY",
@@ -954,8 +954,8 @@ int nss_hook_Fixup(request_rec *r)
 
         apr_table_setn(env, "SSL_CLIENT_CERT", val);
 
-        
-        /* Need to fetch the entire SSL cert chain and add it to the 
+
+        /* Need to fetch the entire SSL cert chain and add it to the
          * variable SSL_CLIENT_CERT_CHAIN_[0..n]
          */
         cert = SSL_PeerCertificate(ssl);

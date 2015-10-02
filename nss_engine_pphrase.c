@@ -100,12 +100,12 @@ SECStatus nss_Init_Tokens(server_rec *s)
                2. We'll get a bogus error message from nss_engine_init, -8053,
                   instead of -8177.
              */
-            return SECFailure; 
+            return SECFailure;
         }
         parg->retryCount = 0; /* reset counter to 0 for the next token */
         PK11_FreeSlot(slot);
     }
-    
+
     /*
      * reset NSS password callback to blank, so that the server won't prompt
      * again after initialization is done.
@@ -113,7 +113,7 @@ SECStatus nss_Init_Tokens(server_rec *s)
     PK11_SetPasswordFunc(nss_no_password);
 
     free(parg);
-    return status; 
+    return status;
 }
 
 /*
@@ -179,7 +179,7 @@ static char * nss_password_prompt(PK11SlotInfo *slot, PRBool retry, void *arg)
  * Enforce basic password sanity rules on the password. We don't do
  * any actual enforcement here but it demonstrates the sorts of things
  * that may be done.
- */ 
+ */
 static PRBool nss_check_password(unsigned char *cp)
 {
     int len;
@@ -316,17 +316,17 @@ static char *nss_get_password(FILE *input, FILE *output,
             nss_die();
         }
 
-        /* Just return what we got. If we got this far and we don't have a 
+        /* Just return what we got. If we got this far and we don't have a
          * PIN then I/O is already shut down, so we can't do anything really
          * clever.
          */
         pwdstr = strdup(buf);
     }
 
-    /* If we got a password we're done */ 
+    /* If we got a password we're done */
     if (pwdstr)
         return pwdstr;
-    
+
     for (;;) {
         /* Prompt for password */
         if (isTTY) {
@@ -341,7 +341,7 @@ static char *nss_get_password(FILE *input, FILE *output,
             fprintf(output, "\n");
             echoOn(infd);
         }
-        /* stomp on newline */ 
+        /* stomp on newline */
         phrase[strlen((char*)phrase)-1] = 0;
 
         /* Validate password */
@@ -350,7 +350,7 @@ static char *nss_get_password(FILE *input, FILE *output,
             if (!isTTY) return 0;
             fprintf(output, "Password must be at least 8 characters long with one or more\n");
             fprintf(output, "non-alphabetic characters\n");
-            continue; 
+            continue;
         }
         if (PK11_IsFIPS() && strlen((char *)phrase) == 0) {
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,

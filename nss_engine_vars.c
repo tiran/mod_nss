@@ -311,7 +311,7 @@ static char *nss_var_lookup_ssl(apr_pool_t *p, conn_rec *c, char *var)
     else if (ssl != NULL && strcEQ(var, "SESSION_ID")) {
         char *idstr;
         SECItem *iditem;
- 
+
         if ((iditem = SSL_GetSessionID(ssl)) == NULL)
             return NULL;
 
@@ -432,7 +432,7 @@ static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *v
                 &suite, sizeof suite) == SECSuccess)
             {
                 result = apr_psprintf(p, "%s-%s", suite.macAlgorithmName, suite.authAlgorithmName);
-            } 
+            }
         } else
             result = apr_pstrdup(p, "UNKNOWN");
         resdup = FALSE;
@@ -527,7 +527,7 @@ static char *nss_var_lookup_nss_cert_valid(apr_pool_t *p, CERTCertificate *xs, i
 }
 
 /* Return a string giving the number of days remaining until the cert
- * expires "0" if this can't be determined. 
+ * expires "0" if this can't be determined.
  *
  * In mod_ssl this is more generic, passing in a time to calculate against,
  * but I see no point in converting the end date into a string and back again.
@@ -648,7 +648,7 @@ static char *nss_var_lookup_nss_cert_verify(apr_pool_t *p, conn_rec *c)
 
 static char *nss_var_lookup_nss_cipher(apr_pool_t *p, conn_rec *c, char *var)
 {
-    SSLConnRec *sslconn = myConnConfig(c);    
+    SSLConnRec *sslconn = myConnConfig(c);
     char *result;
     BOOL resdup;
     PRFileDesc *ssl;
@@ -738,7 +738,7 @@ static char *nss_var_lookup_nss_version(apr_pool_t *p, char *var)
     return result;
 }
 
-static char *nss_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c) 
+static char *nss_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c)
 {
     char *result;
     SSLChannelInfo      channel;
@@ -813,7 +813,7 @@ void nss_var_log_config_register(apr_pool_t *p)
 static const char *nss_var_log_handler_c(request_rec *r, char *a)
 {
     SSLConnRec *sslconn = myConnConfig(r->connection);
-    char *result; 
+    char *result;
 
     if (sslconn == NULL || sslconn->ssl == NULL)
         return NULL;

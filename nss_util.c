@@ -50,12 +50,12 @@ apr_file_t *nss_util_ppopen(server_rec *s, apr_pool_t *p, const char *cmd,
     apr_procattr_t *procattr;
     apr_proc_t *proc;
 
-    if (apr_procattr_create(&procattr, p) != APR_SUCCESS) 
+    if (apr_procattr_create(&procattr, p) != APR_SUCCESS)
         return NULL;
-    if (apr_procattr_io_set(procattr, APR_FULL_BLOCK, APR_FULL_BLOCK, 
+    if (apr_procattr_io_set(procattr, APR_FULL_BLOCK, APR_FULL_BLOCK,
                             APR_FULL_BLOCK) != APR_SUCCESS)
         return NULL;
-    if (apr_procattr_dir_set(procattr, 
+    if (apr_procattr_dir_set(procattr,
                              ap_make_dirstr_parent(p, cmd)) != APR_SUCCESS)
         return NULL;
     if (apr_procattr_cmdtype_set(procattr, APR_PROGRAM) != APR_SUCCESS)
@@ -129,11 +129,11 @@ char *searchHashVhostbyNick_match(char *vhost_id)
     for (hi = apr_hash_first(NULL, ht); hi; hi = apr_hash_next(hi)) {
         const char *k = NULL;
         const char *v = NULL;
-        
+
         apr_hash_this(hi, (const void**)&k, NULL, (void**)&v);
         if (!ap_strcasecmp_match(vhost_id, k)) {
             searchValReg = apr_hash_get(ht, k, APR_HASH_KEY_STRING);
-            return searchValReg; 
+            return searchValReg;
         }
     }
     return NULL;
@@ -143,9 +143,9 @@ void addHashVhostNick(char *vhost_id, char *nickname) {
     if (ht == NULL) {
         initializeHashVhostNick();
     }
-    
+
     if (searchHashVhostbyNick(vhost_id) == NULL) {
-        apr_hash_set(ht, apr_pstrdup(mp, vhost_id), APR_HASH_KEY_STRING, 
+        apr_hash_set(ht, apr_pstrdup(mp, vhost_id), APR_HASH_KEY_STRING,
                      apr_pstrdup(mp, nickname));
     }
 }

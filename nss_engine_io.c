@@ -415,7 +415,7 @@ static apr_status_t nss_io_input_read(nspr_filter_in_ctx_t *inctx,
                 if (APR_STATUS_IS_EAGAIN(inctx->rc)
                         || APR_STATUS_IS_EINTR(inctx->rc)) {
                     /* Already read something, return APR_SUCCESS instead. */
-                    if (*len > 0) { 
+                    if (*len > 0) {
                         inctx->rc = APR_SUCCESS;
                         break;
                     }
@@ -458,7 +458,7 @@ static apr_status_t nss_io_input_getline(nspr_filter_in_ctx_t *inctx,
 
     while (tmplen > 0) {
         status = nss_io_input_read(inctx, buf + offset, &tmplen);
-     
+
         if (status != APR_SUCCESS) {
             return status;
         }
@@ -551,13 +551,13 @@ static apr_status_t nss_filter_write(ap_filter_t *f,
 /* Just use a simple request.  Any request will work for this, because
  * we use a flag in the conn_rec->conn_vector now.  The fake request just
  * gets the request back to the Apache core so that a response can be sent.
- * 
+ *
  * To avoid calling back for more data from the socket, use an HTTP/0.9
  * request, and tack on an EOS bucket.
  */
 #define HTTP_ON_HTTPS_PORT \
     "GET /" CRLF
- 
+
 #define HTTP_ON_HTTPS_PORT_BUCKET(alloc) \
     apr_bucket_immortal_create(HTTP_ON_HTTPS_PORT, \
                                sizeof(HTTP_ON_HTTPS_PORT) - 1, \
@@ -569,15 +569,15 @@ static void nss_io_filter_disable(SSLConnRec *sslconn, ap_filter_t *f)
     nspr_filter_in_ctx_t *inctx = f->ctx;
     sslconn->ssl = NULL;
     inctx->filter_ctx->pssl = NULL;
-}   
+}
 
 static apr_status_t nss_io_filter_error(ap_filter_t *f,
                                         apr_bucket_brigade *bb,
                                         apr_status_t status)
-{   
+{
     SSLConnRec *sslconn = myConnConfig(f->c);
     apr_bucket *bucket;
-    
+
     switch (status) {
       case HTTP_BAD_REQUEST:
             /* log the situation */
@@ -612,7 +612,7 @@ static apr_status_t nss_filter_io_shutdown(nss_filter_ctx_t *filter_ctx,
 {
     PRFileDesc *ssl = filter_ctx->pssl;
     SSLConnRec *sslconn = myConnConfig(c);
-     
+
     if (!ssl) {
         return APR_SUCCESS;
     }
@@ -1010,7 +1010,7 @@ int nss_io_buffer_fill(request_rec *r, apr_size_t maxlen)
     apr_bucket_brigade *tempb;
     apr_off_t total = 0; /* total length buffered */
     int eos = 0; /* non-zero once EOS is seen */
-    
+
     /* Create the context which will be passed to the input filter. */
     ctx = apr_palloc(r->pool, sizeof *ctx);
     apr_pool_create(&ctx->pool, r->pool);
@@ -1038,10 +1038,10 @@ int nss_io_buffer_fill(request_rec *r, apr_size_t maxlen)
                           "could not read request body for SSL buffer");
             return HTTP_INTERNAL_SERVER_ERROR;
         }
-        
+
         /* Iterate through the returned brigade: setaside each bucket
          * into the context's pool and move it into the brigade. */
-        for (e = APR_BRIGADE_FIRST(tempb); 
+        for (e = APR_BRIGADE_FIRST(tempb);
              e != APR_BRIGADE_SENTINEL(tempb) && !eos; e = next) {
             const char *data;
             apr_size_t len;
@@ -1059,19 +1059,19 @@ int nss_io_buffer_fill(request_rec *r, apr_size_t maxlen)
                 }
                 total += len;
             }
-                
+
             rv = apr_bucket_setaside(e, ctx->pool);
             if (rv != APR_SUCCESS) {
                 ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
                               "could not setaside bucket for SSL buffer");
                 return HTTP_INTERNAL_SERVER_ERROR;
             }
-            
+
             APR_BUCKET_REMOVE(e);
             APR_BRIGADE_INSERT_TAIL(ctx->bb, e);
         }
 
-        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, 
+        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
                       "total of %" APR_OFF_T_FMT " bytes in buffer, eos=%d",
                       total, eos);
 
@@ -1133,7 +1133,7 @@ static apr_status_t nss_io_filter_buffer(ap_filter_t *f,
             apr_bucket *d = APR_BRIGADE_FIRST(ctx->bb);
 
             e = APR_BUCKET_PREV(e);
-            
+
             /* Unsplice the partitioned segment and move it into the
              * passed-in brigade; no convenient way to do this with
              * the APR_BRIGADE_* macros. */
@@ -1158,7 +1158,7 @@ static apr_status_t nss_io_filter_buffer(ap_filter_t *f,
 
     if (APR_BRIGADE_EMPTY(ctx->bb)) {
         apr_bucket *e = APR_BRIGADE_LAST(bb);
-        
+
         /* Ensure that the brigade is terminated by an EOS if the
          * buffered request body has been entirely consumed. */
         if (e == APR_BRIGADE_SENTINEL(bb) || !APR_BUCKET_IS_EOS(e)) {
@@ -1219,9 +1219,9 @@ void nss_io_filter_init(conn_rec *c, PRFileDesc *ssl)
 void nss_io_filter_register(apr_pool_t *p)
 {
     ap_register_input_filter  (nss_io_filter, nss_io_filter_input,  NULL, AP_FTYPE_CONNECTION + 5);
-    ap_register_output_filter (nss_io_filter, nss_io_filter_output, NULL, AP_FTYPE_CONNECTION + 5);  
+    ap_register_output_filter (nss_io_filter, nss_io_filter_output, NULL, AP_FTYPE_CONNECTION + 5);
     ap_register_input_filter  (nss_io_buffer, nss_io_filter_buffer, NULL, AP_FTYPE_PROTOCOL - 1);
-    return; 
+    return;
 }
 
 PRFileDesc * nss_io_new_fd() {
@@ -1248,7 +1248,7 @@ static PRStatus PR_CALLBACK nspr_filter_getpeername(PRFileDesc *fd, PRNetAddr *a
 #endif
 }
 
-/* 
+/*
  * Translate NSPR PR_GetSocketOption() calls into apr_socket_opt_get() calls.
  */
 static PRStatus PR_CALLBACK nspr_filter_getsocketoption(PRFileDesc *fd, PRSocketOptionData *data) {
@@ -1309,7 +1309,7 @@ static PRStatus PR_CALLBACK nspr_filter_getsocketoption(PRFileDesc *fd, PRSocket
     return rv;
 }
 
-/* 
+/*
  * Translate NSPR PR_SetSocketOption() calls into apr_socket_opt_set() calls.
  */
 static PRStatus PR_CALLBACK nspr_filter_setsocketOption(PRFileDesc *fd, const PRSocketOptionData *data) {
@@ -1370,7 +1370,7 @@ static PRStatus PR_CALLBACK nspr_filter_setsocketOption(PRFileDesc *fd, const PR
 }
 
 static PRStatus PR_CALLBACK
-nspr_filter_shutdown(PRFileDesc *fd, PRIntn how) 
+nspr_filter_shutdown(PRFileDesc *fd, PRIntn how)
 {
     return PR_SUCCESS;
 }
@@ -1391,7 +1391,7 @@ static PRInt32 PR_CALLBACK nspr_filter_send(PRFileDesc *fd, const void *buf, PRI
     return nspr_filter_out_write(fd, buf, amount);
 }
 
-/* 
+/*
  * Called once to initialize the NSPR layer that we push for each
  * request.
  */
