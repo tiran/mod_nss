@@ -673,31 +673,58 @@ static apr_status_t nss_io_filter_cleanup(void *data)
     return APR_SUCCESS;
 }
 
+/*
+ * This can't be done in a callback because of the way that mod_proxy
+ * handles reuqests. It creates the connection, which for NSS
+ * just generates a socket from the model, then it sets the proxy
+ * hostname, then it writes the request. For NSS the writing of the
+ * request is what generates the handshake but we don't have the
+ * proxy hostname to set the SNI value for yet, so do it here.
+ */
 static apr_status_t nss_io_filter_handshake(ap_filter_t *f)
 {
     conn_rec *c         = f->c;
     SSLConnRec *sslconn = myConnConfig(c);
+    SECStatus rv;
 
     /*
-     * Enable SNI for backend requests. Make sure we don&#39;t do it for
-     * pure SSLv3 connections
+     * Enable SNI for proxy backend requests. Make sure we don't do it for
+     * pure SSLv3 connections, and also prevent IP addresses
+     * from being included in the SNI extension.
      */
     if (sslconn->is_proxy) {
-        const char *hostname_note = apr_table_get(c->notes, "proxy-request-hostname");
-        if (hostname_note) {
-            if (SSL_SetURL(sslconn->ssl, hostname_note) == -1) {
-                ap_log_error(APLOG_MARK, APLOG_INFO, 0, c->base_server,
-                              "Error setting SNI extension for SSL Proxy request: %d",
-                              PR_GetError());
-            } else {
-                ap_log_error(APLOG_MARK, APLOG_INFO, 0, c,
-                              "SNI extension for SSL Proxy request set to '%s'",
-                              hostname_note);
-            }
+        char *name = SSL_RevealURL(sslconn->ssl);
+        const char *hostname_note;
+        SSLChannelInfo channel;
+        apr_ipsubnet_t *ip;
+
+        if (name) {
+            /* handshake is completed, SNI hostname already set */
+            PORT_Free(name);
+            return APR_SUCCESS;
         }
-        else {
-            ap_log_error(APLOG_MARK, APLOG_INFO, 0, c,
-                              "Can't set SNI extension: no hostname available";
+
+        hostname_note = apr_table_get(c->notes, "proxy-request-hostname");
+
+        if ((hostname_note) &&
+            (SSL_GetChannelInfo(sslconn->ssl, &channel, sizeof channel)
+                == SECSuccess) &&
+            (channel.protocolVersion != SSL_LIBRARY_VERSION_3_0) &&
+             apr_ipsubnet_create(&ip, hostname_note, NULL, c->pool)
+                != APR_SUCCESS)
+        {
+            if ((rv = SSL_SetURL(sslconn->ssl, hostname_note)) != SECSuccess) {
+                ap_log_error(APLOG_MARK, APLOG_INFO, 0, c->base_server,
+                    "Error setting SNI extension for SSL Proxy request: %d",
+                     PR_GetError());
+            } else {
+                ap_log_error(APLOG_MARK, APLOG_INFO, 0, c->base_server,
+                    "SNI extension for SSL Proxy request set to '%s'",
+                     hostname_note);
+            }
+        } else {
+            ap_log_error(APLOG_MARK, APLOG_INFO, 0, c->base_server,
+                "Can't set SNI extension: no hostname available");
         }
     }
 

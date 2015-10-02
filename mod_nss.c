@@ -283,7 +283,7 @@ SECStatus NSSBadCertHandler(void *arg, PRFileDesc * socket)
                     if (rv != SECSuccess) {
                         char *remote = CERT_GetCommonName(&peerCert->subject);
                         ap_log_error(APLOG_MARK, APLOG_ERR, 0, NULL,
-                            "SSL Proxy: Possible man-in-the-middle attack. The remove server is %s, we expected %s", remote, hostname_note);
+                            "SSL Proxy: Possible man-in-the-middle attack. The remote server is %s, we expected %s", remote, hostname_note);
                         PORT_Free(remote);
                     }
                 } else {

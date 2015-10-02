@@ -1319,7 +1319,6 @@ static void nss_init_server_certs(server_rec *s,
             "Error setting PKCS11 pin argument: '%s'", mctx->nickname);
         nss_die();
     }
-    
     secstatus = (SECStatus)SSL_HandshakeCallback(mctx->model, (SSLHandshakeCallback)NSSHandshakeCallback, NULL);
     if (secstatus != SECSuccess)
     {
@@ -1328,7 +1327,7 @@ static void nss_init_server_certs(server_rec *s,
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
-
+    
 }
 
 static void nss_init_proxy_ctx(server_rec *s,
