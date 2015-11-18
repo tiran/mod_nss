@@ -237,6 +237,9 @@ class test_ciphers(object):
     def test_additive_RSA_RC4(self):
         assert_equal_openssl("RSA:+RC4", "RSA:+RC4:-SSLv2:-SEED:-IDEA")
 
+    def test_additive_ECDH_plus_aRSA(self):
+        assert_equal_openssl("ECDH+aRSA", "ECDH+aRSA")
+
     def test_negative_plus_RSA_MD5(self):
         assert_equal_openssl("-RC2:RSA+MD5", "-RC2:RSA+MD5:-SSLv2")
 
