@@ -244,7 +244,7 @@ nspr_dir=`echo "$nspr_lib" | sed 's/\/lib[[/]]*$//' | sed 's/-L//'`
 nss_dir=`echo "$nss_lib" | sed 's/\/lib[[/]]*$//' | sed 's/-L//'`
 
 AX_CHECK_DEFINE(nss3/sslproto.h, TLS_RSA_WITH_AES_128_GCM_SHA256, gcm=$enableval, gcm=no)
-if test $gcm = yes; then
+if test "$gcm" = yes; then
    extra_cppflags="$extra_cppflags -DENABLE_GCM"
    echo "ENABLE_GCM=1" > test/variable.py
 else
@@ -252,7 +252,7 @@ else
 fi
 
 AX_CHECK_DEFINE(nss3/sslproto.h, TLS_RSA_WITH_AES_256_GCM_SHA384, sha384=$enableval, sha384=no)
-if test $sha384 = yes; then
+if test "$sha384" = yes; then
    extra_cppflags="$extra_cppflags -DENABLE_SHA384"
    echo "ENABLE_SHA384=1" >> test/variable.py
 else
