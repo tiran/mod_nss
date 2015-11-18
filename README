@@ -120,6 +120,11 @@ TESTING
  against which some basic tests can be run to validate that the in-tree
  library works.
 
+ The following dependencies are needed to run the tests:
+  python-nose
+  python-requests
+  python-ndg_httpsclient
+
  From the source tree run:
 
  % make check
