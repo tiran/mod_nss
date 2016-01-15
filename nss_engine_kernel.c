@@ -607,8 +607,25 @@ int nss_hook_Access(request_rec *r)
     if ((dc->nOptions & SSL_OPT_FAKEBASICAUTH) == 0 && dc->szUserName) {
         char *val = nss_var_lookup(r->pool, r->server, r->connection,
                                    r, (char *)dc->szUserName);
-        if (val && val[0])
-            r->user = val;
+        if (val && val[0]) {
+            /* RFC2617 denies usage of colon in BasicAuth */
+            char *colon = strchr(val, ':');
+            if (colon == NULL) {
+                r->user = val;
+            }
+            else {
+                cp = apr_psprintf(r->pool,
+                                "FakeBasicAuth is configured and colon "
+                                "(\":\") character exists in the \"%s\" "
+                                "username", val);
+
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+                            "access to %s failed, reason: %s",
+                            r->filename, cp);
+
+                return HTTP_FORBIDDEN;
+            }
+        }
     }
 
     /*
@@ -752,6 +769,20 @@ int nss_hook_UserCheck(request_rec *r)
     }
 
     clientdn = (char *)sslconn->client_dn;
+
+    char *colon = strchr(clientdn, ':');
+    if (colon != NULL) {
+        char *cp = apr_psprintf(r->pool,
+                        "FakeBasicAuth is configured and colon "
+                        "(\":\") character exists in the \"%s\" ",
+                        "username", clientdn);
+
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+                    "access to %s failed, reason: %s",
+                    r->filename, cp);
+
+        return HTTP_FORBIDDEN;
+    }
 
     /*
      * Fake a password - which one would be immaterial, as, it seems, an empty
