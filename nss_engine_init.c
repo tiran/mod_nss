@@ -1731,9 +1731,6 @@ PRInt32 nssSSLSNISocketConfig(PRFileDesc *fd, const SECItem *sniNameArr,
 {
     server_rec *s = (server_rec *)arg;
 
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-		 "nssSSLSNISocketConfig");
-
     void *pinArg;
     CERTCertificate *cert = NULL;
     SECKEYPrivateKey *privKey = NULL;
@@ -1758,8 +1755,25 @@ PRInt32 nssSSLSNISocketConfig(PRFileDesc *fd, const SECItem *sniNameArr,
         nickName = searchHashVhostbyNick_match(vhost);
         if (nickName == NULL) {
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                "SNI: Search for %s failed. Unrecognized name.", vhost);
-            goto loser;
+                "SNI: No matching SSL virtual host for servername "
+                "%s found (using default/first virtual host)",
+                vhost);
+            /*
+             * RFC 6066 section 3 says "It is NOT RECOMMENDED to send
+             * a warning-level unrecognized_name(112) alert, because
+             * the client's behavior in response to warning-level alerts
+             * is unpredictable."
+             *
+             * To maintain compatibility with mod_ssl, we won't send
+             * any alert (neither warning- nor fatal-level),
+             * i.e. we take the second action suggested in RFC 6066:
+             * "If the server understood the ClientHello extension but
+             * does not recognize the server name, the server SHOULD take
+             * one of two actions: either abort the handshake by sending
+             * a fatal-level unrecognized_name(112) alert or continue
+             * the handshake."
+             */
+             return 0;
         }
     }
 
