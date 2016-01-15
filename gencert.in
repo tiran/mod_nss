@@ -59,6 +59,7 @@ CA_CERTDN="CN=Certificate Shack, O=example.com, C=US"
 SERVER_CERTDN="CN=${FQDN}, O=example.com, C=US"
 ALPHA_CERTDN="E=alpha@${FQDN}, CN=Frank Alpha, UID=alpha, OU=People, O=example.com, C=US"
 BETA_CERTDN="E=beta@${FQDN}, CN=Anna Beta, UID=beta, OU=People, O=example.com, C=US"
+COLON_CERTDN="E=colon:user@${FQDN}, CN=Colon User, UID=colon, OU=People, O=example.com, C=US"
 
 # size of the keys
 KEYSIZE=2048
@@ -86,11 +87,30 @@ fi
 DBDIR=$1
 shift
 
-if [ $# > 0 ]; then
-    SNI=$1
-else
-    SNI=0
-fi
+TEST=0
+SNI=0
+
+while [[ $# -ge 1 ]]
+do
+    key="$1"
+    case $key in
+        -s|--sni)
+            SNI="$2"
+            shift
+            ;;
+        -t|--test)
+            TEST=1
+            ;;
+        *)
+            echo "Unknown option $1"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+echo "TEST = $TEST"
+echo "SNI = $SNI"
 
 echo "httptest" > $DEST/pw.txt
 
@@ -213,6 +233,33 @@ $CERTUTIL -S -d $DBDIR -n beta \
             -z $DEST/noise \
             -1 \
             -5
+
+if [ $TEST == 1 ]; then
+echo ""
+echo "#####################################################################"
+echo "Generating user certificate for \"colon\"."
+echo "#####################################################################"
+(ps -elf; date; netstat -a) > $DEST/noise
+let CERTSERIAL=CERTSERIAL+1
+# 0 2 9 n  -> Key usage: Key Encipherment, Digital Signature
+# 0 9 n  -> SSL Client
+echo -e "0\n2\n9\nn\n0\n9\nn\n" | \
+$CERTUTIL -S -d $DBDIR -n colon \
+            -s "$COLON_CERTDN" \
+            -c cacert \
+            -t u,pu,u \
+            -g $KEYSIZE \
+            -m $CERTSERIAL \
+            -v $VALIDITY \
+            -f $DEST/pw.txt \
+            -z $DEST/noise \
+            -1 \
+            -5
+fi
+
+echo ""
+echo "#####################################################################"
+echo "Generating server certificate request"
 
 echo ""
 echo "#####################################################################"

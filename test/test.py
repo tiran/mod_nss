@@ -162,6 +162,15 @@ class test_suite1(Declarative):
         ),
 
         dict(
+            desc='FakeBasicAuth, certificate with colon',
+            request=('/acl/aclS03.html', {
+                      'key_file': 'work/httpd/colon.key',
+                      'cert_file': 'work/httpd/colon.crt',}
+            ),
+            expected=403,
+        ),
+
+        dict(
             desc='Secret key size',
             request=('/secret-test.html', {}),
             expected=200,
