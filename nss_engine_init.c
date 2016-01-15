@@ -1448,7 +1448,7 @@ apr_status_t nss_init_ModuleKill(void *data)
     server_rec *base_server = (server_rec *)data;
     SSLModConfigRec *mc = myModConfig(base_server);
 
-    if (!NSS_IsInitialized()) {
+    if (!NSS_IsInitialized() && !PR_Initialized()) {
         return APR_SUCCESS;
     }
 
@@ -1483,7 +1483,7 @@ apr_status_t nss_init_ChildKill(void *data)
     for (s = base_server; s; s = s->next) {
         sc = mySrvConfig(s);
 
-        if (sc->enabled == TRUE) {
+        if (sc->enabled == TRUE && NSS_IsInitialized()) {
             if (sc->server->nickname) {
                 CERT_DestroyCertificate(sc->server->servercert);
                 SECKEY_DestroyPrivateKey(sc->server->serverkey);
@@ -1502,7 +1502,7 @@ apr_status_t nss_init_ChildKill(void *data)
 
             shutdown = 1;
         }
-        if (sc->proxy_enabled) {
+        if (sc->proxy_enabled && NSS_IsInitialized()) {
             if (sc->proxy->servercert != NULL) {
                 CERT_DestroyCertificate(sc->proxy->servercert);
                 SECKEY_DestroyPrivateKey(sc->proxy->serverkey);
