@@ -53,6 +53,16 @@ mkdir run
 mkdir cgi-bin
 mkdir lib
 
+if [ -e /usr/lib64/libnssckbi.so ]; then
+    cd alias
+    ln -s /usr/lib64/libnssckbi.so  .
+    cd ..
+elif [ -e /usr/lib/libnssckbi.so ]; then
+    cd alias
+    ln -s /usr/lib/libnssckbi.so  .
+    cd ..
+fi
+
 touch conf.d/empty.conf
 
 # Create the content directories

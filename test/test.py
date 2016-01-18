@@ -271,6 +271,12 @@ class test_suite1(Declarative):
         ),
 
         dict(
+            desc='Basic reverse proxy request',
+            request=('/google/', {}),
+            expected=200,
+        ),
+
+        dict(
             desc='SNI request when SNI is disabled',
             request=('/index.html',
                     {'host': 'www1.example.com', 'port': 8000}
