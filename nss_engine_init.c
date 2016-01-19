@@ -1281,22 +1281,14 @@ static void nss_init_server_certs(server_rec *s,
 #endif
         {
             /*
-             * Since this is a 'fatal' error, regardless of whether this
-             * particular invocation is from a 'server' object or a 'proxy'
-             * object, issue all error message(s) as appropriate.
+             * This is a 'fatal' error since a 'nickname' is required for
+             * a 'server' object; log error message(s) as appropriate.
              */
             if ((mctx->sc->enabled == TRUE) &&
                 (mctx->sc->server) &&
                 (mctx->sc->server->nickname == NULL)) {
                 ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                     "NSSEngine on; no certificate nickname provided by NSSNickname.");
-            }
-
-            if ((mctx->sc->proxy_enabled == TRUE) &&
-                (mctx->sc->proxy) &&
-                (mctx->sc->proxy->nickname == NULL)) {
-                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
-                    "NSSProxyEngine on; no certificate nickname provided by NSSProxyNickname.");
             }
 
             nss_die();
@@ -1327,6 +1319,11 @@ static void nss_init_server_certs(server_rec *s,
             "SSL error configuring handshake callback: '%s'", mctx->nickname);
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
+    } else {
+        if (!mctx->as_server && mctx->nickname != NULL) {
+            ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                "Configured proxy nickname as '%s'", mctx->nickname);
+        }
     }
 
 }
