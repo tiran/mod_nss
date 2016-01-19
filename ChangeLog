@@ -1,3 +1,17 @@
+2016-01-18  Rob Crittenden <rcritten@redhat.com>
+    * Drop the check that NSSProxyNickname be required
+    * Add basic reverse proxy test case
+
+2016-01-14  Rob Crittenden <rcritten@redhat.com>
+    * Don't send SSL alert on SNI lookup failure
+    * Fail for colons in credentials with FakeBasicAuth
+    * Always call SSL_ShutdownServerSessionIDCache() in ModuleKill
+
+2015-11-18  Rob Crittenden <rcritten@redhat.com>
+    * Document some python dependencies needed by make check
+    * Add cipher test for ECDH+aRSA
+    * Quote gcm and sha384 config values when comparing them
+
 2015-10-02  Rob Crittenden <rcritten@redhat.com>
     * Integrate patch from Stanislav Tokos to set the SNI hostname
       on reverse proxy requests.
