@@ -259,6 +259,15 @@ else
    echo "ENABLE_SHA384=0" >> test/variable.py
 fi
 
+CPPFLAGS="$CPPFLAGS $nspr_inc"
+AX_CHECK_DEFINE(nss3/ssl.h, SSL_ENABLE_SERVER_DHE, server_dhe=yes, server_dhe=no)
+if test "$server_dhe" = yes; then
+   extra_cppflags="$extra_cppflags -DENABLE_SERVER_DHE"
+   echo "ENABLE_SERVER_DHE=1" >> test/variable.py
+else
+   echo "ENABLE_SERVER_DHE=0" >> test/variable.py
+fi
+
 # Substitute values 
 AC_SUBST(APXS)
 AC_SUBST(apr_inc)

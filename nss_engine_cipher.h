@@ -53,6 +53,8 @@ typedef struct
 #define SSL_ECDH	(SSL_kECDHe|SSL_kECDHr|SSL_kEECDH)
 #define SSL_EECDH	(SSL_kEECDH)
 #define SSL_ADH		(SSL_kEDH)
+#define SSL_kDHE	0x00040000L
+#define SSL_DHE		(SSL_kDHE)
 
 /* cipher strength */
 #define SSL_STRONG_NONE   0x00000001L

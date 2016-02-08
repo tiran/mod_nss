@@ -522,7 +522,7 @@ If it contains neither then mod_nss first tries to apply OpenSSL ciphers then NS
 <br>
 All ciphers are disabled by default. <br>
 <br>
-Available ciphers are:<br>
+Available RSA ciphers are:<br>
 <br>
 <table style="width: 70%; text-align: left;" cellpadding="2" cellspacing="2" border="1">
   <tbody>
@@ -674,6 +674,43 @@ Available ciphers are:<br>
 </tr>
 
   </tbody>
+</table>
+<br>The available server-side DHE ciphers are:<br>
+<br>
+<table style="width: 70%; text-align: left;" border="1" cellpadding="2" cellspacing="2">
+<tbody><tr><td style="vertical-align: top; font-weight: bold;">Cipher Name<br>
+      </td><td style="vertical-align: top; font-weight: bold;">NSS Cipher definition<br>
+      </td><td style="vertical-align: top; font-weight: bold;">Protocol<br>
+      </td></tr><tr><td style="vertical-align: top;">dhe_rsa_des_sha<br>
+      </td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_DES_CBC_SHA<br>
+</td><td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2<br>
+      </td></tr><tr><td style="vertical-align: top;">dhe_rsa_3des_sha<br>
+      </td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA<br>
+      </td><td style="vertical-align: top;">TLSv1.0/TLSv1.1/TLSv1.2</td></tr><tr><td style="vertical-align: top;">dhe_rsa_aes_128_sha<br>
+      </td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA<br>
+      </td><td style="vertical-align: top;">TLSv1.0/TLSv1.1/TLSv1.2</td></tr><tr><td style="vertical-align: top;">dhe_rsa_aes_256_sha<br>
+      </td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_AES_256_CBC_SHA<br>
+      </td><td style="vertical-align: top;">TLSv1.0/TLSv1.1/TLSv1.2</td></tr><tr><td style="vertical-align: top;">dhe_rsa_camellia_128_sha<br>
+</td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA<br>
+      </td><td style="vertical-align: top;">TLSv1.0/TLSv1.1/TLSv1.2</td></tr><tr><td style="vertical-align: top;">dhe_rsa_camellia_256_sha<br>
+</td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA<br>
+      </td><td style="vertical-align: top;">TLSv1.0/TLSv1.1/TLSv1.2</td></tr><tr><td style="vertical-align: top;">dhe_rsa_aes_128_sha256<br>
+</td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_AES_128_CBC_SHA256<br>
+      </td><td style="vertical-align: top;">TLSv1.2</td></tr><tr>
+    <td valign="top">dhe_rsa_aes_256_sha256<br>
+    </td>
+    <td valign="top">TLS_DHE_RSA_WITH_AES_256_CBC_SHA256<br>
+    </td>
+    <td valign="top">TLSv1.2</td>
+  </tr>
+  <tr>
+    <td valign="top">dhe_rsa_aes_128_gcm_sha_256<br>
+    </td>
+    <td valign="top">TLS_DHE_RSA_WITH_AES_128_GCM_SHA256<br>
+    </td>
+    <td valign="top">TLSv1.2</td>
+  </tr>
+</tbody>
 </table>
 <br>
 Additionally there are a number of ECC ciphers:<br>
@@ -979,6 +1016,7 @@ The default is off.<br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
 <big><big>NSSSessionTickets on<br>
+</big></big>
 <br>
 <big><big>NSSUserName<br>
 </big></big><br>

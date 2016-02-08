@@ -829,6 +829,17 @@ static void nss_init_ctx_protocol(server_rec *s,
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
+#ifdef ENABLE_SERVER_DHE
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+        "Enabling DHE key exchange");
+    if (SSL_OptionSet(mctx->model, SSL_ENABLE_SERVER_DHE,
+        PR_TRUE) != SECSuccess) {
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "Unable to enable DHE key exchange");
+        nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
+        nss_die();
+    }
+#endif
 }
 
 static void nss_init_ctx_session_cache(server_rec *s,
@@ -1043,6 +1054,10 @@ static void nss_init_ctx_cipher_suite(server_rec *s,
 
     /* Finally actually enable the selected ciphers */
     for (i=0; i<ciphernum;i++) {
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+            "%sable cipher: %s",
+            cipher_state[i] == 1 ? "En" : "Dis",
+            ciphers_def[i].name);
         SSL_CipherPrefSet(mctx->model, ciphers_def[i].num, cipher_state[i] == 1 ? PR_TRUE : PR_FALSE);
     }
 }

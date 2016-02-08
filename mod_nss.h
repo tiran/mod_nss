@@ -419,6 +419,9 @@ const char *nss_cmd_NSSPassPhraseDialog(cmd_parms *cmd, void *dcfg, const char *
 const char *nss_cmd_NSSPassPhraseHelper(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSRandomSeed(cmd_parms *, void *, const char *, const char *, const char *);
 const char *nss_cmd_NSSSessionTickets(cmd_parms *cmd, void *dcfg, int flag);
+#ifdef ENABLE_SERVER_DHE
+const char *nss_cmd_NSSServerDHE(cmd_parms *cmd, void *dcfg, int flag);
+#endif
 const char *nss_cmd_NSSUserName(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSOptions(cmd_parms *, void *, const char *);
 const char *nss_cmd_NSSRequireSSL(cmd_parms *cmd, void *dcfg);
