@@ -22,6 +22,7 @@ CIPHERS_NOT_IN_NSS = ['ECDH-RSA-AES128-SHA256',
                       'ECDH-ECDSA-AES256-SHA384',
                       'ECDH-RSA-AES256-SHA384',
                       'ECDH-ECDSA-AES256-GCM-SHA384',
+                      'EXP-EDH-RSA-DES-CBC-SHA',
 ]
 
 def assert_equal_openssl(nss_ciphers, ossl_ciphers):
@@ -78,7 +79,7 @@ class test_ciphers(object):
         assert_equal_openssl("kRSA", "kRSA:-SSLv2:-SEED:-IDEA")
 
     def test_aRSA(self):
-        assert_equal_openssl("aRSA", "aRSA:-SSLv2:-SEED:-IDEA:-DH")
+        assert_equal_openssl("aRSA", "aRSA:-SSLv2:-SEED:-IDEA")
 
     def test_EDH(self):
         # No DH ciphers supported yet
@@ -92,37 +93,37 @@ class test_ciphers(object):
         assert_equal_openssl("RC2", "RC2:-SSLv2:-KRB5")
 
     def test_AES(self):
-        assert_equal_openssl("AES", "AES:-PSK:-ADH:-DSS:-DH")
+        assert_equal_openssl("AES", "AES:-PSK:-ADH:-DSS")
 
     def test_AESGCM(self):
-        assert_equal_openssl("AESGCM", "AESGCM:-PSK:-ADH:-DSS:-DH")
+        assert_equal_openssl("AESGCM", "AESGCM:-ADH:-DSS")
 
     def test_AES128(self):
-        assert_equal_openssl("AES128", "AES128:-PSK:-ADH:-DSS:-DH")
+        assert_equal_openssl("AES128", "AES128:-PSK:-ADH:-DSS")
 
     def test_AES256(self):
-        assert_equal_openssl("AES256", "AES256:-PSK:-ADH:-DSS:-DH")
+        assert_equal_openssl("AES256", "AES256:-PSK:-ADH:-DSS")
 
     def test_CAMELLIA(self):
-        assert_equal_openssl("CAMELLIA", "CAMELLIA:-DH")
+        assert_equal_openssl("CAMELLIA", "CAMELLIA:-ADH:-DSS")
 
     def test_CAMELLIA128(self):
-        assert_equal_openssl("CAMELLIA128", "CAMELLIA128:-DH")
+        assert_equal_openssl("CAMELLIA128", "CAMELLIA128:-ADH:-DSS")
 
     def test_CAMELLIA256(self):
-        assert_equal_openssl("CAMELLIA256", "CAMELLIA256:-DH")
+        assert_equal_openssl("CAMELLIA256", "CAMELLIA256:-ADH:-DSS")
 
     def test_3DES(self):
-        assert_equal_openssl("3DES", "3DES:-SSLv2:-PSK:-KRB5:-DH")
+        assert_equal_openssl("3DES", "3DES:-SSLv2:-PSK:-KRB5:-ADH:-DSS")
 
     def test_DES(self):
-        assert_equal_openssl("DES", "DES:-SSLv2:-KRB5:-DH")
+        assert_equal_openssl("DES", "DES:-SSLv2:-KRB5:-ADH:-DSS")
 
     def test_ALL(self):
-        assert_equal_openssl("ALL", "ALL:-SSLv2:-KRB5:-ADH:-DH:-DSS:-PSK:-SEED:-IDEA")
+        assert_equal_openssl("ALL", "ALL:-SSLv2:-KRB5:-ADH:-DSS:-PSK:-SEED:-IDEA")
 
     def test_ALL_no_AES(self):
-        assert_equal_openssl("ALL:-AES", "ALL:-AES:-SSLv2:-KRB5:-ADH:-DH:-DSS:-PSK:-SEED:-IDEA")
+        assert_equal_openssl("ALL:-AES", "ALL:-AES:-SSLv2:-KRB5:-ADH:-DSS:-PSK:-SEED:-IDEA")
 
     def test_COMPLEMENTOFALL(self):
         assert_equal_openssl("COMPLEMENTOFALL", "COMPLEMENTOFALL")
@@ -131,7 +132,7 @@ class test_ciphers(object):
     # skipping COMPLEMENTOFDEFAULT as these are all ADH ciphers
 
     def test_SSLv3(self):
-        assert_equal_openssl("SSLv3", "SSLv3:-KRB5:-PSK:-ADH:-EDH:-DH:-SEED:-IDEA")
+        assert_equal_openssl("SSLv3", "SSLv3:-KRB5:-PSK:-ADH:-SEED:-IDEA:-DSS")
 
     def test_SSLv3_equals_TLSv1(self):
         (nss, err, rc) = run([exe, "--o", "SSLv3"])
@@ -141,7 +142,7 @@ class test_ciphers(object):
         assert_equal(nss, nss2)
 
     def test_TLSv12(self):
-        assert_equal_openssl("TLSv1.2", "TLSv1.2:TLSv1.2:-ADH:-DH:-DSS")
+        assert_equal_openssl("TLSv1.2", "TLSv1.2:TLSv1.2:-ADH:-DSS")
 
     def test_NULL(self):
         assert_equal_openssl("NULL", "NULL")
@@ -153,37 +154,37 @@ class test_ciphers(object):
         assert_equal(out, 'rsa_rc4_128_md5, rsa_rc4_128_sha')
 
     def test_EXP(self):
-        assert_equal_openssl("EXP", "EXP:-SSLv2:-DH:-KRB5")
+        assert_equal_openssl("EXP", "EXP:-SSLv2:-KRB5:-ADH:-DSS")
 
     def test_EXPORT(self):
-        assert_equal_openssl("EXPORT", "EXPORT:-SSLv2:-DH:-KRB5")
+        assert_equal_openssl("EXPORT", "EXPORT:-SSLv2:-KRB5:-ADH:-DSS")
 
     def test_EXPORT40(self):
-        assert_equal_openssl("EXPORT40", "EXPORT40:-SSLv2:-ADH:-DH:-KRB5")
+        assert_equal_openssl("EXPORT40", "EXPORT40:-SSLv2:-ADH:-KRB5:-DSS")
 
     def test_MD5(self):
-        assert_equal_openssl("MD5", "MD5:-SSLv2:-DH:-KRB5")
+        assert_equal_openssl("MD5", "MD5:-SSLv2:-KRB5:-ADH")
 
     def test_SHA(self):
-        assert_equal_openssl("SHA", "SHA:-SSLv2:-DH:-KRB5:-PSK:-IDEA:-SEED")
+        assert_equal_openssl("SHA", "SHA:-SSLv2:-KRB5:-PSK:-IDEA:-SEED:-ADH:-DSS")
 
     def test_HIGH(self):
-        assert_equal_openssl("HIGH", "HIGH:-SSLv2:-DH:-ADH:-KRB5:-PSK")
+        assert_equal_openssl("HIGH", "HIGH:-SSLv2:-ADH:-KRB5:-PSK:-DSS")
 
     def test_MEDIUM(self):
         assert_equal_openssl("MEDIUM", "MEDIUM:-SSLv2:-ADH:-KRB5:-PSK:-SEED:-IDEA")
 
     def test_LOW(self):
-        assert_equal_openssl("LOW", "LOW:-SSLv2:-DH:-ADH:-KRB5")
+        assert_equal_openssl("LOW", "LOW:-SSLv2:-ADH:-KRB5:-DSS")
 
     def test_SHA256(self):
-        assert_equal_openssl("SHA256", "SHA256:-ADH:-DSS:-DH")
+        assert_equal_openssl("SHA256", "SHA256:-ADH:-DSS")
 
     def test_SHA_MD5_minus_AES(self):
-        assert_equal_openssl("SHA:MD5:-AES", "SHA:MD5:-AES:-SSLv2:-DH:-DSS:-KRB5:-SEED:-PSK:-IDEA")
+        assert_equal_openssl("SHA:MD5:-AES", "SHA:MD5:-AES:-SSLv2:-DSS:-KRB5:-SEED:-PSK:-IDEA:-ADH")
 
     def test_SHA_MD5_not_AES(self):
-        assert_equal_openssl("!AES:SHA:MD5", "!AES:SHA:MD5:-SSLv2:-DH:-KRB5:-DSS:-SEED:-PSK:-IDEA")
+        assert_equal_openssl("!AES:SHA:MD5", "!AES:SHA:MD5:-SSLv2:-KRB5:-DSS:-SEED:-PSK:-IDEA:-ADH")
 
     def test_aECDH(self):
         assert_equal_openssl("aECDH", "aECDH")
@@ -212,15 +213,14 @@ class test_ciphers(object):
     def test_aECDSA(self):
         assert_equal_openssl("aECDSA", "aECDSA")
 
-    def test_AESGCM(self):
-        assert_equal_openssl("AESGCM", "AESGCM:-DH")
-
     def test_ECDH(self):
         assert_equal_openssl("ECDH", "ECDH")
 
     def test_AES_no_ECDH(self):
-        assert_equal_openssl("AES:-ECDH", "AES:-ECDH:-ADH:-PSK:-DH")
-        assert_equal_openssl("AES+RSA", "AES+RSA")
+        assert_equal_openssl("AES:-ECDH", "AES:-ECDH:-ADH:-PSK:-ADH:-DSS")
+
+    def test_AES_plus_RSA(self):
+        assert_equal_openssl("AES+RSA", "AES+RSA:-ADH:-DSS")
 
     def test_logical_and_3DES_RSA(self):
         assert_equal_openssl("3DES+RSA", "3DES+RSA:-SSLv2")
