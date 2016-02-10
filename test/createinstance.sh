@@ -11,6 +11,7 @@ function create_content_dirs {
     mkdir $dir/rc4_cipher
     mkdir $dir/openssl_rc4_cipher
     mkdir $dir/openssl_aes_cipher
+    mkdir $dir/dhe_cipher
     mkdir $dir/acl
     mkdir $dir/protocolssl2
     mkdir $dir/protocolssl3

@@ -1,5 +1,6 @@
 from test_config import Declarative, write_template_file, restart_apache
 from test_config import stop_apache
+from variable import ENABLE_SERVER_DHE
 import ssl
 import requests.exceptions
 import os
@@ -292,3 +293,13 @@ class test_suite1(Declarative):
         ),
 
     ]
+
+    if ENABLE_SERVER_DHE:
+        tests.append(
+            dict(
+                desc='server-side DHE cipher check',
+                request=('/dhe_cipher/', {'ciphers': 'ALL'}),
+                expected=200,
+                cipher='DHE-RSA-AES128-SHA',
+            )
+        )

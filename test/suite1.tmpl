@@ -51,6 +51,10 @@ CoreDumpDirectory $SERVER_ROOT
         NSSCipherSuite AES+RSA
     </Location>
 
+    <Location "/dhe_cipher">
+        NSSCipherSuite +dhe_rsa_aes_128_sha
+    </Location>
+
     <Location "/acl/aclS01.html">
         NSSOptions +StdEnvVars +CompatEnvVars +ExportCertData
         NSSVerifyClient require
