@@ -303,7 +303,7 @@ $CERTUTIL -A -d $DBDIR -n Server-Cert \
 
 rm $DEST/tmpcert.der
 
-if [ $SNI > 0 ]; then
+if [ $SNI -gt 0 ]; then
     SNI=`expr $SNI + 1`
     count=1
     while test $count -lt $SNI ; do
