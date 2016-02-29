@@ -649,72 +649,83 @@ static void nss_init_ctx_protocol(server_rec *s,
         protocol_marker = "NSSProxyProtocol";
     }
 
-    if (mctx->sc->fips) {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-            "In FIPS mode ignoring %s list, enabling TLSv1.0, TLSv1.1 and TLSv1.2",
+    if (mctx->auth.protocols == NULL) {
+        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
+            "%s value not set; using: TLSv1.0, TLSv1.1 and TLSv1.2",
             protocol_marker);
         tls = tls1_1 = tls1_2 = 1;
     } else {
-        if (mctx->auth.protocols == NULL) {
-            ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                "%s value not set; using: TLSv1.0, TLSv1.1 and TLSv1.2",
-                protocol_marker);
-            tls = tls1_1 = tls1_2 = 1;
+        lprotocols = strdup(mctx->auth.protocols);
+        ap_str_tolower(lprotocols);
+
+        if (strstr(lprotocols, "all") != NULL) {
+            ssl3 = tls = tls1_1 = tls1_2 = 1;
         } else {
-            lprotocols = strdup(mctx->auth.protocols);
-            ap_str_tolower(lprotocols);
+            char *protocol_list = NULL;
+            char *saveptr = NULL;
+            char *token = NULL;
 
-            if (strstr(lprotocols, "all") != NULL) {
-                ssl3 = tls = tls1_1 = tls1_2 = 1;
-            } else {
-                char *protocol_list = NULL;
-                char *saveptr = NULL;
-                char *token = NULL;
-
-                for (protocol_list = lprotocols; ; protocol_list = NULL) {
-                    token = strtok_r(protocol_list, ",", &saveptr);
-                    if (token == NULL) {
-                        break;
-                    } else if (strcmp(token, "sslv2") == 0) {
-                        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                                     "%s:  SSL2 is not supported",
+            for (protocol_list = lprotocols; ; protocol_list = NULL) {
+                token = strtok_r(protocol_list, ",", &saveptr);
+                if (token == NULL) {
+                    break;
+                } else if (strcmp(token, "sslv2") == 0) {
+                    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                                 "%s:  SSL2 is not supported",
+                                 protocol_marker);
+                } else if (strcmp(token, "sslv3") == 0) {
+                    if (mctx->sc->fips) {
+                        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
+                                     "%s: SSL3 is disabled by FIPS policy",
                                      protocol_marker);
-                    } else if (strcmp(token, "sslv3") == 0) {
+                    } else {
                         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
                                      "%s:  Enabling SSL3",
                                      protocol_marker);
                         ssl3 = 1;
-                    } else if (strcmp(token, "tlsv1") == 0) {
-                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                                     "%s:  Enabling TLSv1.0 via TLSv1",
-                                     protocol_marker);
-                        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                                     "%s:  The 'TLSv1' protocol name has been deprecated; please change 'TLSv1' to 'TLSv1.0'.",
-                                     protocol_marker);
-                        tls = 1;
-                    } else if (strcmp(token, "tlsv1.0") == 0) {
-                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                                     "%s:  Enabling TLSv1.0",
-                                     protocol_marker);
-                        tls = 1;
-                    } else if (strcmp(token, "tlsv1.1") == 0) {
-                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                                     "%s:  Enabling TLSv1.1",
-                                     protocol_marker);
-                        tls1_1 = 1;
-                    } else if (strcmp(token, "tlsv1.2") == 0) {
-                        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                                     "%s:  Enabling TLSv1.2",
-                                     protocol_marker);
-                        tls1_2 = 1;
-                    } else {
-                        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
-                                     "%s:  Unknown protocol '%s' not supported",
-                                     protocol_marker, token);
                     }
+                } else if (strcmp(token, "tlsv1") == 0) {
+                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                 "%s:  Enabling TLSv1.0 via TLSv1",
+                                 protocol_marker);
+                    ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                                 "%s:  The 'TLSv1' protocol name has been deprecated; please change 'TLSv1' to 'TLSv1.0'.",
+                                 protocol_marker);
+                    tls = 1;
+                } else if (strcmp(token, "tlsv1.0") == 0) {
+                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                 "%s:  Enabling TLSv1.0",
+                                 protocol_marker);
+                    tls = 1;
+                } else if (strcmp(token, "tlsv1.1") == 0) {
+                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                 "%s:  Enabling TLSv1.1",
+                                 protocol_marker);
+                    tls1_1 = 1;
+                } else if (strcmp(token, "tlsv1.2") == 0) {
+                    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                                 "%s:  Enabling TLSv1.2",
+                                 protocol_marker);
+                    tls1_2 = 1;
+                } else {
+                    ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
+                                 "%s:  Unknown protocol '%s' not supported",
+                                 protocol_marker, token);
                 }
             }
-            free(lprotocols);
+        }
+        free(lprotocols);
+
+        /*
+         * After processing the specified protocols list,
+         * if FIPS mode is enabled with no TLS protocols,
+         * enable ALL TLS protocols.
+         */
+        if ((mctx->sc->fips) && (tls == 0) && (tls1_1 == 0) && (tls1_2 == 0)) {
+            ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+                "%s: FIPS mode no valid protocols set, enabling TLSv1.0, TLSv1.1 and TLSv1.2",
+                protocol_marker);
+            tls = tls1_1 = tls1_2 = 1;
         }
     }
 
