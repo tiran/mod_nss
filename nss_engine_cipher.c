@@ -307,6 +307,15 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                 } else if (!strcmp(cipher, "aRSA")) {
                     mask |= SSL_aRSA;
                 } else if (!strcmp(cipher, "EDH")) {
+                    /* Normally this is kEDH:-ADH but since we don't
+                     * support ADH this is sufficient.
+                     */
+                    mask |= SSL_kEDH;
+                } else if (!strcmp(cipher, "DH")) {
+                    /* non-ephemeral DH. The ciphers are defined
+                     * but not implemented in OpenSSL so manage
+                     * this here.
+                     */
                     mask |= SSL_kEDH;
 #if 0
                 } else if (!strcmp(cipher, "ADH")) {

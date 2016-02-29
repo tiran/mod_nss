@@ -53,6 +53,8 @@ def assert_equal_openssl(ciphers):
             continue
         if not ENABLE_GCM and 'GCM' in o:
             continue
+        if o.startswith('DH-'):
+            continue
         if o in CIPHERS_NOT_IN_NSS:
             continue
         t.append(o)
