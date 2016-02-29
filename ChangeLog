@@ -1,3 +1,40 @@
+2016-03-03  Rob Crittenden <rcritten@redhat.com>
+
+    * Fix a number of issues discovered by clang-analyzer
+
+2016-03-02  Rob Crittenden <rcritten@redhat.com>
+
+    * Extract SAN from server/client certificates into env
+    * Fix memory leak when renegotiating a cipher
+
+2016-02-29  Rob Crittenden <rcritten@redhat.com>
+
+    * Fix test for DH cipher directive
+    * Check for test and netstat before trying to use them
+    * Don't ignore NSSProtocol when NSSFIPS is enabled
+      Based on patch by Matthew Harmsen <mharmsen@redhat.com>
+
+2016-02-24  Rob Crittenden <rcritten@redhat.com>
+
+    * Use proper shell syntax to avoid creating /0
+    
+2016-02-15  Rob Crittenden <rcritten@redhat.com>
+
+    * tests: Centralize the openssl ciphers flags when comparing
+
+2016-02-10  Rob Crittenden <rcritten@redhat.com>
+
+    * Basic test case for DHE cipher negotiation
+
+2016-02-09  Rob Crittenden <rcritten@redhat.com>
+
+    * Remove -DH from test strings, duplicate test, fix test
+    
+2016-02-08 Christian Heimes <cheimes@redhat.com>
+    * Add server support for DHE ciphers.
+      Similar patch was provided by Vitezslav Cizek <vcizek@suse.com>
+      Heavily modified by Rob Crittenden <rcritten@redhat.com>
+    
 2016-01-18  Rob Crittenden <rcritten@redhat.com>
     * Drop the check that NSSProxyNickname be required
     * Add basic reverse proxy test case
