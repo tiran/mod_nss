@@ -39,7 +39,11 @@ getFQDN() {
                 return
         fi
         defhost=`hostname` 
-        hosthost=`host $defhost | grep -v "not found" | awk '{print $1}'`
+        if [ -e /usr/bin/host -o -e /bin/host ]; then
+            hosthost=`host $defhost | grep -v "not found" | awk '{print $1}'`
+        else
+            hosthost=''
+        fi
         for host in $defhost $hosthost `hostname -f` `hostname -a` ; do
                 len=`echo $host | wc -c` 
                 if [ $len -gt $max ]; then
@@ -124,7 +128,11 @@ function generate_server_sni_cert {
     echo "#####################################################################"
     echo "Generating $NICKNAME server certificate request"
     echo "#####################################################################"
-    (ps -elf; date; netstat -a) > $DEST/noise
+    if [ -e /dev/urandom ]; then
+        (ps -elf; date; dd if=/dev/urandom count=1 bs=1024 2>/dev/null| tr -dc 'a-zA-Z0-9') > $DEST/noise
+    else
+        (ps -elf; date; dd if=/dev/random count=1 bs=128 2>/dev/null| tr -dc 'a-zA-Z0-9') > $DEST/noise
+    fi
     $CERTUTIL -R -d $DBDIR \
                 -s "$SERVER_DN" \
                 -o $DEST/tmpcertreq \
