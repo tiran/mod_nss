@@ -106,7 +106,7 @@ check:
 	nosetests -v test.py;	\
 	sleep 5;	\
 	rm -rf work;	\
-	./setup.sh sql: -s 1;	\
+	./setup.sh -s 1 sql:;	\
 	DBPREFIX=sql: nosetests -v test.py;	\
 	cd ..;	\
 	else	\
