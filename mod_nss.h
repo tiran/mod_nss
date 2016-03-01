@@ -256,6 +256,8 @@ typedef struct {
     const char     *pphrase_dialog_path;
     const char     *pphrase_dialog_helper;
 
+    BOOL             skip_permission_check;
+
     apr_proc_t      proc;
     apr_procattr_t *procattr;
 
@@ -418,6 +420,7 @@ const char *nss_cmd_NSSSessionCacheSize(cmd_parms *cmd, void *dcfg, const char *
 const char *nss_cmd_NSSPassPhraseDialog(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSPassPhraseHelper(cmd_parms *cmd, void *dcfg, const char *arg);
 const char *nss_cmd_NSSRandomSeed(cmd_parms *, void *, const char *, const char *, const char *);
+const char *nss_cmd_NSSSkipPermissionCheck(cmd_parms *cmd, void *dcfg, int flag);
 const char *nss_cmd_NSSSessionTickets(cmd_parms *cmd, void *dcfg, int flag);
 #ifdef ENABLE_SERVER_DHE
 const char *nss_cmd_NSSServerDHE(cmd_parms *cmd, void *dcfg, int flag);

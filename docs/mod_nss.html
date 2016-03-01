@@ -440,6 +440,18 @@ reads that many bytes, otherwise it reads until the program exits.<br>
 NSSRandomSeed startup /dev/urandom 512<br>
 NSSRandomSeed startup /usr/bin/makerandom</code><br>
 <br>
+<big><big>NSSSkipPermissionCheck</big></big><br>
+<br>
+The NSS database will be checked to ensure that the user configured
+to run Apache as has owner or group read access to the database
+configured in <code>NSSCertificateDatabase</code>. This check
+can be disabled by setting <code>NSSSkipPermissionCheck</code>
+to <code>on</code>. The default is <code>off</code><br>
+<br>
+<span style="font-weight: bold;">Example</span><br>
+<br>
+<code>NSSSkipPermissionCheck on</code><br>
+<br>
 <big><big>NSSEngine</big></big><br>
 <br>
 Enables or disables the SSL protocol. This is usually used within a

@@ -54,6 +54,7 @@ SSLModConfigRec *nss_config_global_create(server_rec *s)
     mc->aRandSeed                   = apr_array_make(pool, 4,
                                                      sizeof(ssl_randseed_t));
     mc->semid                       = 0;
+    mc->skip_permission_check       = PR_FALSE;
 
     apr_pool_userdata_set(mc, SSL_MOD_CONFIG_KEY,
                           apr_pool_cleanup_null,
@@ -799,6 +800,16 @@ const char *nss_cmd_NSSRandomSeed(cmd_parms *cmd,
             return "NSSRandomSeed: invalid number of bytes specified";
         }
     }
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSSkipPermissionCheck(cmd_parms *cmd,
+                                           void *dcfg, int flag)
+{
+    SSLModConfigRec *mc = myModConfig(cmd->server);
+
+    mc->skip_permission_check = flag ? PR_TRUE: PR_FALSE;
 
     return NULL;
 }

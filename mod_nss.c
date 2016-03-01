@@ -54,6 +54,9 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(SessionCacheSize, TAKE1,
                 "SSL Session Cache size "
                 "(`N' - number of entries)")
+    SSL_CMD_SRV(SkipPermissionCheck, FLAG,
+                "Skip checking the NSS database read permissions"
+                "(`on', `off')")
     SSL_CMD_SRV(PassPhraseDialog, TAKE1,
                 "SSL dialog mechanism for the pass phrase query "
                 "(`builtin', `file:/path/to/file`")

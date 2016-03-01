@@ -27,6 +27,8 @@
 #include "ocsp.h"
 #include "keyhi.h"
 #include "cert.h"
+#include <sys/types.h>
+#include <pwd.h>
 
 static SECStatus ownBadCertHandler(void *arg, PRFileDesc * socket);
 static SECStatus ownHandshakeCallback(PRFileDesc * socket, void *arg);
@@ -48,6 +50,32 @@ static char *version_components[] = {
     "SSL_VERSION_LIBRARY",
     NULL
 };
+
+/* See if a uid or gid can read a file at a given path. Ignore world
+ * read permissions.
+ *
+ * Return 0 on failure or file doesn't exist
+ * Return 1 on success
+ */
+static int check_path(uid_t uid, gid_t gid, char *filepath, apr_pool_t *p)
+{
+    apr_finfo_t finfo;
+    int rv;
+
+    if ((rv = apr_stat(&finfo, filepath, APR_FINFO_PROT | APR_FINFO_OWNER,
+         p)) == APR_SUCCESS) {
+        if (((uid == finfo.user) &&
+            ((finfo.protection & APR_FPROT_UREAD))) ||
+            ((gid == finfo.group) &&
+                ((finfo.protection & APR_FPROT_GREAD)))
+           )
+        {
+            return 1;
+        }
+        return 0;
+    }
+    return 0;
+}
 
 static char *nss_add_version_component(apr_pool_t *p,
                                        server_rec *s,
@@ -130,6 +158,68 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
         }
     }
 
+    /* Assuming everything is ok so far, check the cert database permissions
+     * for the server user before Apache starts forking. We die now or
+     * get stuck in an endless loop not able to read the NSS database.
+     */
+    if (mc->nInitCount == 1) {
+        if (mc->skip_permission_check == PR_FALSE) {
+            char filepath[1024];
+            struct passwd *pw = NULL;
+
+            pw = getpwnam(mc->user);
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, base_server,
+                "Checking permissions for user %s: uid %d gid %d",
+                mc->user, pw->pw_uid, pw->pw_gid);
+
+            if (strncasecmp(mc->pCertificateDatabase, "sql:", 4) == 0) {
+                apr_snprintf(filepath, 1024, "%s/key4.db",
+                             mc->pCertificateDatabase+4);
+                if (!(check_path(pw->pw_uid, pw->pw_gid, filepath, p))) {
+                    ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                        "Server user %s lacks read access to NSS key "
+                        "database %s.", mc->user, filepath);
+                    nss_die();
+                }
+                apr_snprintf(filepath, 1024, "%s/cert9.db",
+                             mc->pCertificateDatabase+4);
+                if (!(check_path(pw->pw_uid, pw->pw_gid, filepath, p))) {
+                    ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                        "Server user %s lacks read access to NSS cert "
+                        "database %s.", mc->user, filepath);
+                    nss_die();
+                }
+            } else {
+                apr_snprintf(filepath, 1024, "%s/key3.db",
+                             mc->pCertificateDatabase);
+                if (!(check_path(pw->pw_uid, pw->pw_gid, filepath, p))) {
+                    ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                        "Server user %s lacks read access to NSS key "
+                        "database %s.", mc->user, filepath);
+                    nss_die();
+                }
+                apr_snprintf(filepath, 1024, "%s/cert8.db",
+                             mc->pCertificateDatabase);
+                if (!(check_path(pw->pw_uid, pw->pw_gid, filepath, p))) {
+                    ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                        "Server user %s lacks read access to NSS cert "
+                        "database %s.", mc->user, filepath);
+                    nss_die();
+                }
+                apr_snprintf(filepath, 1024, "%s/secmod.db",
+                             mc->pCertificateDatabase);
+                if (!(check_path(pw->pw_uid, pw->pw_gid, filepath, p))) {
+                    ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                        "Server user %s lacks read access to NSS secmod "
+                        "database %s.", mc->user, filepath);
+                    nss_die();
+                }
+            }
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, base_server,
+                "Permissions check out ok");
+        }
+    }
+
     /* We need to be in the same directory as libnssckbi.so to load the
      * root certificates properly.
      */
@@ -155,6 +245,7 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
         else
             return;
     }
+
     /* Initialize NSS and open the certificate database read-only. */
     rv = NSS_Initialize(mc->pCertificateDatabase, mc->pDBPrefix, mc->pDBPrefix, "secmod.db", NSS_INIT_READONLY);
     if (chdir(cwd) != 0) {
@@ -168,39 +259,16 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
             return;
     }
 
-    /* Assuming everything is ok so far, check the cert database password(s). */
     if (rv != SECSuccess) {
-        apr_finfo_t finfo;
-        char keypath[1024];
-        int rv;
-        uid_t user_id;
-        gid_t gid;
-
-        user_id = ap_uname2id(mc->user);
-        gid = getegid();
-
         NSS_Shutdown();
+
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "NSS_Initialize failed. Certificate database: %s.", mc->pCertificateDatabase != NULL ? mc->pCertificateDatabase : "not set in configuration");
 
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
-        apr_snprintf(keypath, 1024, "%s/key3.db", mc->pCertificateDatabase);
-        if ((rv = apr_stat(&finfo, keypath, APR_FINFO_PROT | APR_FINFO_OWNER,
-             p)) == APR_SUCCESS) {
-            if (((user_id == finfo.user) &&
-                    (!(finfo.protection & APR_FPROT_UREAD))) ||
-                ((gid == finfo.group) &&
-                    (!(finfo.protection & APR_FPROT_GREAD))) ||
-                (!(finfo.protection & APR_FPROT_WREAD))
-               )
-            {
-                ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
-                    "Server user lacks read access to NSS database.");
-            }
-        } else {
-            ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
-                "Does the NSS database exist?");
-        }
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+            "Does the NSS database exist?");
+
         nss_die();
     }
 
