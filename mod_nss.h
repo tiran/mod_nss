@@ -511,4 +511,12 @@ void nss_die(void);
 
 /* NSS callback */
 SECStatus nss_AuthCertificate(void *arg, PRFileDesc *socket, PRBool checksig, PRBool isServer);
+
+/* Extract SAN extensions */
+void modnss_var_extract_san_entries(apr_table_t *t, PRFileDesc *ssl, apr_pool_t *p);
+void SECItem_StripTag(SECItem * item);
+const char * SECItem_to_ascii(apr_pool_t *p, SECItem *item);
+const char * SECItem_to_hex(apr_pool_t *p,const SECItem * item);
+const char * SECItem_to_ipaddr(apr_pool_t *p, SECItem *item);
+const char * SECItem_get_oid(apr_pool_t *p, SECItem *oid);
 #endif /* __MOD_NSS_H__ */

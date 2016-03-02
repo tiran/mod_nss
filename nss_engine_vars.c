@@ -17,6 +17,8 @@
 #include "secder.h"     /* DER_GetInteger() */
 #include "base64.h"     /* BTOA_DataToAscii() */
 #include "cert.h"       /* CERT_* */
+#include "prio.h"
+#include "secerr.h"
 
 /*  _________________________________________________________________
 **
@@ -40,6 +42,7 @@ static char *nss_var_lookup_nss_cipher(apr_pool_t *p, conn_rec *c, char *var);
 static char *nss_var_lookup_nss_version(apr_pool_t *p, char *var);
 static char *nss_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c);
 static char *ssl_var_lookup(apr_pool_t *p, server_rec *s, conn_rec *c, request_rec *r, char *var);
+static char *nss_var_lookup_ssl_cert_san(apr_pool_t *p, CERTCertificate *xs, char *var);
 
 static APR_OPTIONAL_FN_TYPE(ssl_is_https) *othermod_is_https;
 static APR_OPTIONAL_FN_TYPE(ssl_var_lookup) *othermod_var_lookup;
@@ -417,6 +420,10 @@ static char *nss_var_lookup_nss_cert(apr_pool_t *p, CERTCertificate *xs, char *v
     }
     else if (strlen(var) > 5 && strcEQn(var, "I_DN_", 5)) {
         result = nss_var_lookup_nss_cert_dn(p, &xs->issuer, var+5);
+        resdup = FALSE;
+    }
+    else if (strlen(var) > 4 && strcEQn(var, "SAN_", 4)) {
+        result = nss_var_lookup_ssl_cert_san(p, xs, var+4);
         resdup = FALSE;
     }
     else if (strcEQ(var, "A_SIG")) {
@@ -847,3 +854,210 @@ static const char *nss_var_log_handler_x(request_rec *r, char *a)
     return result;
 }
 
+/* Get SAN extensions from a certificate.
+ *
+ * Currently only supporting DNS, RFC822 (e-mail), IPaddr and
+ * Other names containing an msUPN.
+ */
+static SECStatus
+getSAN(apr_pool_t *p, CERTCertificate *xs, int type,
+       char * oid, int idx, apr_array_header_t **entries)
+{
+    PLArenaPool * arena = NULL;
+    CERTGeneralName * nameList = NULL;
+    CERTGeneralName * current;
+    SECStatus rv = SECSuccess;
+    SECItem subAltName;
+
+    if (!xs || (idx < -1) ||
+        !(*entries = apr_array_make(p, 0, sizeof(char *)))) {
+        *entries = NULL;
+        return FALSE;
+    }
+
+    subAltName.data = NULL;
+
+    if ((CERT_FindCertExtension(xs, SEC_OID_X509_SUBJECT_ALT_NAME, &subAltName))
+        != SECSuccess)
+    {
+        goto fail;
+    }
+
+    arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+    if (!arena) {
+        goto fail;
+    }
+
+    nameList = current = CERT_DecodeAltNameExtension(arena, &subAltName);
+    if (!current)
+        goto fail;
+
+    do {
+        if (type != current->type) {
+            current = CERT_GetNextGeneralName(current);
+            continue;
+        }
+        switch (current->type) {
+        case certDNSName: {
+            char * name;
+            int buflen;
+            char buf[128];
+            name = buf;
+            buflen = sizeof buf;
+
+            int len = current->name.other.len;
+            rv = CERT_RFC1485_EscapeAndQuote(name, buflen,
+                                             (char *)current->name.other.data,
+                                             len);
+            if (rv != SECSuccess && PORT_GetError() == SEC_ERROR_OUTPUT_LEN) {
+                buflen = len * 3 + 1;
+                name = (char *)PORT_ArenaAlloc(arena, buflen);
+                CERT_RFC1485_EscapeAndQuote(name, buflen,
+                                            (char *)current->name.other.data,
+                                            len);
+            }
+            APR_ARRAY_PUSH(*entries, const char *) = apr_pstrdup(p, name);
+            break;
+        }
+        case certRFC822Name: {
+            const char * name = SECItem_to_ascii(p, &current->name.other);
+            APR_ARRAY_PUSH(*entries, const char *) = name;
+            break;
+        }
+        case certIPAddress: {
+            const char * ipaddr = SECItem_to_ipaddr(p, &current->name.other);
+            APR_ARRAY_PUSH(*entries, const char *) = ipaddr;
+            break;
+        }
+        case certOtherName: {
+            const char * value;
+
+            const char * dataoid = SECItem_get_oid(p, &current->name.OthName.oid);
+
+            if (oid == NULL || (strcmp(oid, dataoid)))
+                break;
+
+            SECItem_StripTag(&current->name.other);
+            value = SECItem_to_ascii(p, &current->name.other);
+            APR_ARRAY_PUSH(*entries, const char *) = value;
+            break;
+        }
+        default:
+            break;
+        }
+        current = CERT_GetNextGeneralName(current);
+    } while (current != nameList);
+
+    goto done;
+
+fail:
+
+    rv = SECFailure;
+
+done:
+
+    /* Don't free nameList, it's part of the arena. */
+    if (arena) {
+        PORT_FreeArena(arena, PR_FALSE);
+    }
+
+    if (subAltName.data) {
+        SECITEM_FreeItem(&subAltName, PR_FALSE);
+    }
+
+    return rv;
+}
+
+static void extract_san_array(apr_table_t *t, const char *pfx,
+                              apr_array_header_t *entries, apr_pool_t *p)
+{
+    int i;
+
+    for (i = 0; i < entries->nelts; i++) {
+        const char *key = apr_psprintf(p, "%s_%d", pfx, i);
+        apr_table_setn(t, key, APR_ARRAY_IDX(entries, i, const char *));
+    }
+}
+
+void modnss_var_extract_san_entries(apr_table_t *t, PRFileDesc *ssl, apr_pool_t *p)
+{
+    CERTCertificate *xs;
+    apr_array_header_t *entries;
+
+    /* subjectAltName entries of the server certificate */
+    xs = SSL_LocalCertificate(ssl);
+    if (xs) {
+        if (getSAN(p, xs, certRFC822Name, NULL, -1, &entries) == SECSuccess) {
+            extract_san_array(t, "SSL_SERVER_SAN_Email", entries, p);
+        }
+        if (getSAN(p, xs, certDNSName, NULL, -1, &entries) == SECSuccess) {
+            extract_san_array(t, "SSL_SERVER_SAN_DNS", entries, p);
+        }
+        if (getSAN(p, xs, certOtherName, "OID.1.3.6.1.4.1.311.20.2.3", -1, &entries) == SECSuccess) {
+            extract_san_array(t, "SSL_SERVER_SAN_OTHER_msUPN", entries, p);
+        }
+        if (getSAN(p, xs, certIPAddress, NULL, -1, &entries) == SECSuccess) {
+            extract_san_array(t, "SSL_SERVER_SAN_IPaddr", entries, p);
+        }
+        CERT_DestroyCertificate(xs);
+    }
+
+    /* subjectAltName entries of the client certificate */
+    xs = SSL_PeerCertificate(ssl);
+    if (xs) {
+        if (getSAN(p, xs, certRFC822Name, NULL, -1, &entries) == SECSuccess) {
+            extract_san_array(t, "SSL_CLIENT_SAN_Email", entries, p);
+        }
+        if (getSAN(p, xs, certDNSName, NULL, -1, &entries) == SECSuccess) {
+            extract_san_array(t, "SSL_CLIENT_SAN_DNS", entries, p);
+        }
+        if (getSAN(p, xs, certOtherName, "OID.1.3.6.1.4.1.311.20.2.3", -1, &entries) == SECSuccess) {
+            extract_san_array(t, "SSL_CLIENT_SAN_OTHER_msUPN", entries, p);
+        }
+        if (getSAN(p, xs, certIPAddress, NULL, -1, &entries) == SECSuccess) {
+            extract_san_array(t, "SSL_CLIENT_SAN_IPaddr", entries, p);
+        }
+        CERT_DestroyCertificate(xs);
+    }
+}
+
+static char *nss_var_lookup_ssl_cert_san(apr_pool_t *p, CERTCertificate *xs, char *var)
+{
+    int type, numlen;
+    char *oid = NULL;
+    apr_array_header_t *entries;
+
+    if (strcEQn(var, "Email_", 6)) {
+        type = certRFC822Name;
+        var += 6;
+    }
+    else if (strcEQn(var, "DNS_", 4)) {
+        type = certDNSName;
+        var += 4;
+    }
+    else if (strcEQn(var, "IPaddr_", 7)) {
+        type = certIPAddress;
+        var += 4;
+    }
+    else if (strcEQn(var, "OTHER_", 6)) {
+        type = certOtherName;
+        var += 6;
+        if (strEQn(var, "msUPN_", 6)) {
+            var += 6;
+            oid = "OID.1.3.6.1.4.1.311.20.2.3";
+        }
+    }
+    else
+        return NULL;
+
+    /* sanity check: number must be between 1 and 4 digits */
+    numlen = strspn(var, "0123456789");
+    if ((numlen < 1) || (numlen > 4) || (numlen != strlen(var)))
+        return NULL;
+
+    if (getSAN(p, xs, type, oid, atoi(var), &entries) == SECSuccess)
+        /* return the first entry from this 1-element array */
+        return APR_ARRAY_IDX(entries, 0, char *);
+    else
+        return NULL;
+}

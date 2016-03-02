@@ -149,3 +149,114 @@ void addHashVhostNick(char *vhost_id, char *nickname) {
                      apr_pstrdup(mp, nickname));
     }
 }
+
+/*
+ * Strip the tag and length from an encoded SECItem
+ */
+void
+SECItem_StripTag(SECItem *item)
+{
+    int start;
+
+    if (!item || !item->data || item->len < 2) {
+        return;
+    }
+    start = ((item->data[1] & 0x80) ? (item->data[1] & 0x7f) + 2 : 2);
+    if (item->len < start) {
+        return;
+    }
+    item->data += start;
+    item->len  -= start;
+}
+
+
+const char *
+SECItem_to_hex(apr_pool_t *p, const SECItem * item)
+{
+    char *result = NULL;
+
+    if (item && item->data) {
+        unsigned char * src = item->data;
+        unsigned int len = item->len;
+        char *dst = NULL;
+
+        result = apr_palloc(p, item->len * 2 + 1);
+        dst = result;
+        for (; len > 0; --len, dst += 2) {
+            sprintf(dst, "%02x", *src++);
+        }
+        *dst = '\0';
+    }
+
+    return result;
+}
+
+const char *
+SECItem_get_oid(apr_pool_t *p, SECItem *oid)
+{
+    SECOidData *oiddata;
+    char *oid_string = NULL;
+
+    if ((oiddata = SECOID_FindOID(oid)) != NULL) {
+        return apr_pstrdup(p, oiddata->desc);
+    }
+    if ((oid_string = CERT_GetOidString(oid)) != NULL) {
+        char * result = apr_pstrdup(p, oid_string);
+        PR_smprintf_free(oid_string);
+        return result;
+    }
+
+    return SECItem_to_hex(p, oid);
+}
+
+
+const char *
+SECItem_to_ascii(apr_pool_t *p, SECItem *item)
+{
+    const unsigned char *s;
+    char *result, *dst;
+    unsigned int len;
+
+    result = apr_palloc(p, item->len+1);
+    for (s = (unsigned char *)item->data, len = item->len, dst = result;
+         len; s++, len--) {
+        if (isprint(*s)) {
+            *dst++ = *s;
+        } else {
+            *dst++ = '.';
+        }
+    }
+
+    *dst = 0;
+
+    return result;
+}
+
+const char *
+SECItem_to_ipaddr(apr_pool_t *p, SECItem *item)
+{
+    PRNetAddr addr;
+    char buf[1024];
+
+    memset(&addr, 0, sizeof(addr));
+    if (item->len == 4) {
+        addr.inet.family = PR_AF_INET;
+        memcpy(&addr.inet.ip, item->data, item->len);
+    } else if (item->len == 16) {
+        addr.ipv6.family = PR_AF_INET6;
+        memcpy(addr.ipv6.ip.pr_s6_addr, item->data, item->len);
+        if (PR_IsNetAddrType(&addr, PR_IpAddrV4Mapped)) {
+            addr.inet.family = PR_AF_INET;
+            memcpy(&addr.inet.ip, &addr.ipv6.ip.pr_s6_addr[12], 4);
+            memset(&addr.inet.pad[0], 0, sizeof addr.inet.pad);
+        }
+    } else {
+        return SECItem_to_hex(p, item);
+    }
+
+    if (PR_NetAddrToString(&addr, buf, sizeof(buf)) != PR_SUCCESS) {
+        return SECItem_to_hex(p, item);
+    }
+
+    return apr_pstrdup(p, buf);
+}

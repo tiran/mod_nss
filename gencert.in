@@ -219,7 +219,8 @@ $CERTUTIL -S -d $DBDIR -n alpha \
             -f $DEST/pw.txt \
             -z $DEST/noise \
             -1 \
-            -5
+            -5 \
+            -7 alpha@${FQDN}
 
 echo ""
 echo "#####################################################################"
@@ -240,7 +241,8 @@ $CERTUTIL -S -d $DBDIR -n beta \
             -f $DEST/pw.txt \
             -z $DEST/noise \
             -1 \
-            -5
+            -5 \
+            -7 beta@${FQDN}
 
 if [ $TEST == 1 ]; then
 echo ""

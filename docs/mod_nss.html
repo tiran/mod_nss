@@ -1333,6 +1333,12 @@ certificate. Only those that exist in the certificate are created.<br>
       </td>
     </tr>
     <tr>
+      <td valign="top">SSL_CLIENT_SAN_[DNS, IPAddr, Email, OTHER_msUPN]_[0..n]<br>
+      </td>
+      <td valign="top">A subset of Subject Alternate Names. Each entry is appended with a unique sequential number.<br>
+      </td>
+    </tr>
+    <tr>
       <td style="vertical-align: top; width: 45%;"><code>SSL_CLIENT_I_DN<br>
       </code></td>
       <td style="vertical-align: top;">Distinguished Name (DN) of the
@@ -1400,6 +1406,11 @@ of the server key</td>
       <td style="vertical-align: top; width: 45%;"><code>SSL_SESSION_ID<br>
       </code></td>
       <td style="vertical-align: top;">SSL Session ID<br>
+      </td>
+    </tr><tr>
+      <td valign="top">SSL_SERVER_SAN_[DNS, IPAddr, Email, OTHER_msUPN]_[0..n]
+      </td>
+      <td valign="top">A subset of Subject Alternate Names. Each entry is appended with a unique sequential number.
       </td>
     </tr>
   </tbody>

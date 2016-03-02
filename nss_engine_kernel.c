@@ -964,6 +964,7 @@ int nss_hook_Fixup(request_rec *r)
         SECITEM_FreeItem(hostInfo, PR_TRUE);
     }
 
+    modnss_var_extract_san_entries(env, sslconn->ssl, r->pool);
     /* standard SSL environment variables */
     if (dc->nOptions & SSL_OPT_STDENVVARS) {
         for (i = 0; nss_hook_Fixup_vars[i]; i++) {
