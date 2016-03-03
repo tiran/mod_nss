@@ -797,8 +797,6 @@ static void nss_init_ctx_protocol(server_rec *s,
         }
     }
 
-    stat = SECSuccess;
-
     stat = SSL_OptionSet(mctx->model, SSL_ENABLE_SSL2, PR_FALSE);
 
     /* Set protocol version ranges:

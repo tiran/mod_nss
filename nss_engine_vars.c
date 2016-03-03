@@ -601,7 +601,6 @@ static char *nss_var_lookup_nss_cert_PEM(apr_pool_t *p, CERTCertificate *xs)
 
     /* NSS uses \r\n as the line terminator. Remove \r so the output is
      * similar to mod_ssl. */
-    i=0;
     len = strlen(tmp);
     for (i=0; i < len; i++) {
         if (tmp[i] == '\r') {

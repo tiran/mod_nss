@@ -133,7 +133,7 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
 
 int countciphers(PRBool cipher_state[ciphernum], int version) {
     int ciphercount = 0;
-    int i = ciphernum;
+    int i = 0;
 
     for (i = 0; i < ciphernum; i++)
     {
