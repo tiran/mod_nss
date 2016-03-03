@@ -30,7 +30,7 @@ typedef int PRInt32;
 #include <nss_engine_cipher.h>
 
 extern cipher_properties ciphers_def[];
-extern ciphernum;
+extern int ciphernum;
 
 /* An Apache-like error logger */
 #if AP_SERVER_MINORVERSION_NUMBER <= 2
