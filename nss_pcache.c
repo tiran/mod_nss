@@ -211,7 +211,11 @@ CreatePk11PinStore(Pk11PinStore **out, const char *tokenName, const char *pin)
 
             ctx = PK11_CreateContextBySymKey(store->mech->type, CKA_ENCRYPT,
                     store->key, store->params);
-            if (!ctx) { err = PIN_SYSTEMERROR; break; }
+            if (!ctx) {
+                err = PIN_SYSTEMERROR;
+                free(plain);
+                break;
+            }
 
             do {
                 rv = PK11_CipherOp(ctx, store->crypt, &outLen, store->length,
@@ -467,6 +471,9 @@ char * getstr(const char * cmd, int el) {
     char *work, *s, *t, *r;
     char *peek;
     int i = 0;
+
+    if (cmd == NULL)
+        return NULL;
 
     work = strdup(cmd);
     s = t = work;
