@@ -273,6 +273,8 @@ int nss_hook_Access(request_rec *r)
             SSL_SecurityStatus(ssl, &on, &cipher,
                                &keySize, &secretKeySize, &issuer,
                                &subject);
+            PORT_Free(issuer);
+            PORT_Free(subject);
         }
 
         /* configure new state */
@@ -577,12 +579,18 @@ int nss_hook_Access(request_rec *r)
             int on, keySize, secretKeySize;
             char *issuer, *subject;
 
+            PORT_Free(cipher);
+
             SSL_SecurityStatus(ssl, &on, &cipher,
                                &keySize, &secretKeySize, &issuer,
                                &subject);
 
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, r->server,
                 "Re-negotiated cipher %s", cipher);
+
+            PORT_Free(cipher);
+            PORT_Free(issuer);
+            PORT_Free(subject);
         }
 
         /*
