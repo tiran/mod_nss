@@ -85,8 +85,8 @@ EOF
 
 cat << EOF >  start
 #!/bin/sh
-MALLOC_CHECK_=3
-MALLOC_PERTURB=9
+MALLOC_CHECK_=2
+MALLOC_PERTURB=\$((\$RANDOM % 255 + 1))
 HTTPD=/usr/sbin/httpd
 #valgrind --leak-check=full --log-file=valgrind.out.%p --trace-children=yes --track-origins=yes \$HTTPD -X -k start -d . -f ./conf/httpd.conf
 \$HTTPD -k start -d . -f ./conf/httpd.conf
