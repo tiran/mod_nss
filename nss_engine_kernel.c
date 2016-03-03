@@ -774,7 +774,7 @@ int nss_hook_UserCheck(request_rec *r)
     if (colon != NULL) {
         char *cp = apr_psprintf(r->pool,
                         "FakeBasicAuth is configured and colon "
-                        "(\":\") character exists in the \"%s\" ",
+                        "(\":\") character exists in the \"%s\" "
                         "username", clientdn);
 
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
