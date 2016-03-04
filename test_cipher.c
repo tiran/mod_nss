@@ -94,7 +94,7 @@ int main(int argc, char ** argv)
     /* Done parsing, print the results, if any */
     if (rv == 0)
     {
-        char output[1024 * 10];
+        char output[1024 * 10] = { 0 };
 
         for (i = 0; i < ciphernum; i++)
         {
