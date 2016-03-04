@@ -80,7 +80,6 @@ then
     echo "usage: $0 <destdir>" 1>&2
     exit 1
 fi
-PREFIX=`echo $1 | cut -d: -f1`
 DEST=`echo $1 | cut -d: -f2`
 if [ ! -d $DEST -o ! -w $DEST ]
 then
