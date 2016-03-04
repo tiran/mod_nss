@@ -398,15 +398,18 @@ int main(int argc, char ** argv)
 
                 if (tokenName && tokenpw) {
                     node = (Node*)malloc(sizeof (Node));
-                    if (!node) { err = PIN_NOMEMORY; }
+                    if (!node) {
+                        err = PIN_NOMEMORY;
+                    } else {
+                        node->tokenName = strdup(tokenName);
+                        node->store = 0;
+                        node->next = 0;
 
-                    node->tokenName = strdup(tokenName);
-                    node->store = 0;
-                    node->next = 0;
-
-                    if (err == PIN_SUCCESS)
-                        err = CreatePk11PinStore(&node->store, tokenName, tokenpw);
-                    memset(tokenpw, 0, strlen(tokenpw));
+                        if (err == PIN_SUCCESS)
+                            err = CreatePk11PinStore(&node->store,
+                                                     tokenName, tokenpw);
+                        memset(tokenpw, 0, strlen(tokenpw));
+                    }
                 } else
                     err = PIN_SYSTEMERROR;
 
