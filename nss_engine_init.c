@@ -1328,6 +1328,7 @@ static void nss_init_certificate(server_rec *s, const char *nickname,
         case secCertTimeNotValidYet:
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "Certificate is not valid yet '%s'", nickname);
+            break;
         default:
             ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "Unhandled Certificate time type %d for: '%s'", certtimestatus, nickname);
