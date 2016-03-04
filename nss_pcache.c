@@ -479,6 +479,8 @@ char * getstr(const char * cmd, int el) {
         return NULL;
 
     work = strdup(cmd);
+    if (!work)
+        return NULL;
     s = t = work;
     r = NULL;
 
