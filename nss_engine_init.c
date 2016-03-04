@@ -439,9 +439,8 @@ int nss_init_Module(apr_pool_t *p, apr_pool_t *plog,
          * Create the server host:port string because we need it a lot
          */
         sc->vhost_id = nss_util_vhostid(p, s);
-        sc->vhost_id_len = strlen(sc->vhost_id);
 
-        if (sc->sni && sc->server->nickname != NULL && sc->vhost_id != NULL) {
+        if (sc->sni && sc->server && sc->server->nickname != NULL && sc->vhost_id != NULL) {
             split_vhost_id = apr_strtok((char *)sc->vhost_id, ":", &last1);
             ap_str_tolower(split_vhost_id);
             addHashVhostNick(split_vhost_id, (char *)sc->server->nickname);
