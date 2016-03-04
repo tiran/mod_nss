@@ -1277,6 +1277,7 @@ static PRStatus PR_CALLBACK nspr_filter_getsocketoption(PRFileDesc *fd, PRSocket
                 data->value.no_delay = (on == 1) ? PR_TRUE : PR_FALSE;
                 rv = PR_SUCCESS;
             }
+            break;
         case PR_SockOpt_Reuseaddr:
             if (apr_socket_opt_get(sslconn->client_socket, APR_SO_REUSEADDR, &on) == APR_SUCCESS) {
                 data->value.reuse_addr = (on == 1) ? PR_TRUE : PR_FALSE;
@@ -1333,6 +1334,7 @@ static PRStatus PR_CALLBACK nspr_filter_setsocketOption(PRFileDesc *fd, const PR
             if (apr_socket_opt_set(sslconn->client_socket, APR_TCP_NODELAY, data->value.no_delay) == APR_SUCCESS) {
                 rv = PR_SUCCESS;
             }
+            break;
         case PR_SockOpt_Reuseaddr:
             if (apr_socket_opt_set(sslconn->client_socket, APR_SO_REUSEADDR, data->value.reuse_addr) == APR_SUCCESS) {
                 rv = PR_SUCCESS;
