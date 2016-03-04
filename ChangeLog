@@ -1,6 +1,7 @@
-2016-03-03  Rob Crittenden <rcritten@redhat.com>
+2016-03-04  Rob Crittenden <rcritten@redhat.com>
 
     * Fix a number of issues discovered by clang-analyzer
+    * Become 1.0.13
 
 2016-03-02  Rob Crittenden <rcritten@redhat.com>
 
