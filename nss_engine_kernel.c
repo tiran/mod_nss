@@ -150,9 +150,9 @@ int nss_hook_ReadReq(request_rec *r)
      * Log information about incoming HTTPS requests
      */
 #if AP_SERVER_MINORVERSION_NUMBER <= 2
-    if (r->server->loglevel >= APLOG_INFO && ap_is_initial_req(r)) {
+    if (r->server && r->server->loglevel >= APLOG_INFO && ap_is_initial_req(r)) {
 #else
-    if (r->server->log.level >= APLOG_INFO && ap_is_initial_req(r)) {
+    if (r->server && r->server->log.level >= APLOG_INFO && ap_is_initial_req(r)) {
 #endif
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
                      "%s HTTPS request received for child %ld (server %s)",
@@ -198,7 +198,7 @@ int nss_hook_Access(request_rec *r)
     /*
      * Support for SSLRequireSSL directive
      */
-    if (dc->bSSLRequired && !ssl) {
+    if (dc->bSSLRequired && (!ssl || !sslconn)) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
                       "access to %s failed, reason: %s",
                       r->filename, "SSL connection required");
@@ -215,6 +215,11 @@ int nss_hook_Access(request_rec *r)
      * sc->enabled is probably strictly unnecessary
      */
     if (!((sc->enabled == TRUE) || !ssl)) {
+        return DECLINED;
+    }
+
+    /* prevent NULL dereferences */
+    if (!sslconn) {
         return DECLINED;
     }
 
