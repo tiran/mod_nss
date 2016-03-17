@@ -20,6 +20,12 @@
 #include <stdlib.h>
 #include <sslproto.h>
 
+/* Cipher actions */
+#define PERMANENTLY_DISABLE_CIPHER   -1 /* !CIPHER */
+#define SUBTRACT_CIPHER               0 /* -CIPHER */
+#define ENABLE_CIPHER                 1 /* CIPHER */
+#define REORDER_CIPHER                2 /* +CIPHER */
+
 /* ciphernum is defined in nss_engine_cipher.h */
 cipher_properties ciphers_def[] =
 {
@@ -181,14 +187,18 @@ static void set_cipher_value(PRBool cipher_list[ciphernum], int index, int actio
 {
     int i;
 
+    if (action == REORDER_CIPHER)
+        /* NSS doesn't allow ordering so do nothing */
+        return;
+
     for (i = 0; i < skip_ciphers; i++) {
         if (ciphers_def[index].num == ciphers_not_in_openssl[i]) {
-            cipher_list[index] = -1;
+            cipher_list[index] = PERMANENTLY_DISABLE_CIPHER;
             return;
         }
     }
 
-    if (cipher_list[index] != -1) /* cipher is disabled */
+    if (cipher_list[index] != PERMANENTLY_DISABLE_CIPHER)
         cipher_list[index] = action;
 }
 
@@ -207,23 +217,24 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
         while ((*cipher) && (isspace(*cipher)))
             ++cipher;
 
-        action = 1; /* default to enable */
+        action = ENABLE_CIPHER; /* default to enable */
         switch(*cipher)
         {
-            case '+': /* Add something */
+            case '+':
                 /* Cipher ordering is not supported in NSS */
-                return 0;
-                break;
-            case '-': /* Subtract something */
-                action = 0;
+                action = REORDER_CIPHER;
                 cipher++;
                 break;
-            case '!':  /* Disable something */
-                action = -1;
+            case '-':
+                action = SUBTRACT_CIPHER;
+                cipher++;
+                break;
+            case '!':
+                action = PERMANENTLY_DISABLE_CIPHER;
                 cipher++;
                 break;
             default:
-               /* do nothing */
+                /* Add the cipher */
                 break;
         }
 
@@ -253,12 +264,13 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
             int mask = SSL_aNULL | SSL_eNULL;
             found = PR_TRUE;
             for (i=0; i < ciphernum; i++) {
-                if (cipher_list[i] != -1)
+                if (cipher_list[i] != PERMANENTLY_DISABLE_CIPHER)
                     SSL_CipherPrefGetDefault(ciphers_def[i].num,
                                              &cipher_list[i]);
                 if (PR_TRUE == first) {
                     if (ciphers_def[i].attr & mask) {
-                        set_cipher_value(cipher_list, i, -1);
+                        set_cipher_value(cipher_list, i,
+                                         PERMANENTLY_DISABLE_CIPHER);
                     }
                 }
             }
@@ -414,7 +426,7 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                         if (((ciphers_def[i].attr & mask) ||
                          (ciphers_def[i].strength & strength) ||
                          (ciphers_def[i].version & protocol)) &&
-                         (cipher_list[i] != -1)) {
+                         (cipher_list[i] != PERMANENTLY_DISABLE_CIPHER)) {
                             if (amask != 0) {
                                 PRBool match = PR_FALSE;
                                 if (ciphers_def[i].attr & amask) {
