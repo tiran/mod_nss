@@ -1,3 +1,6 @@
+2016-03-30  Vitezslav Cizek <vcizek@suse.com>
+    * Improvements to migrate.pl
+
 2016-03-04  Rob Crittenden <rcritten@redhat.com>
 
     * Fix a number of issues discovered by clang-analyzer
