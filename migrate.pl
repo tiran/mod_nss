@@ -17,33 +17,70 @@ BEGIN {
    $passphrase = 0;
 }
 
-%skip = ( "SSLRandomSeed" => "",
-          "SSLSessionCache" => "",
-          "SSLMutex" => "",
-          "SSLCertificateChainFile" => "",
-          "SSLVerifyDepth" => "" ,
-          "SSLCryptoDevice" => "" ,
-          "LoadModule" => "" ,
-         );
+# these directives are common for mod_ssl 2.4.18 and mod_nss 1.0.13
+%keep = ( "SSLCipherSuite" => "",
+          "SSLEngine" => "",
+          "SSLOptions" => "",
+          "SSLPassPhraseDialog" => "",
+          "SSLProtocol" => "",
+          "SSLProxyCipherSuite" => "",
+          "SSLProxyEngine" => "",
+          "SSLProxyCheckPeerCN" => "",
+          "SSLProxyProtocol" => "",
+          "SSLRandomSeed" => "",
+          "SSLRenegBufferSize" => "",
+          "SSLRequire" => "",
+          "SSLRequireSSL" => "",
+          "SSLSessionCacheTimeout" => "",
+          "SSLSessionTickets" => "",
+          "SSLStrictSNIVHostCheck" => "",
+          "SSLUserName" => "",
+          "SSLVerifyClient" => "",
+);
 
-%insert =  ( "NSSSessionCacheTimeout", "NSSSessionCacheSize 10000\nNSSSession3CacheTimeout 86400\n",);
+%insert =  ( "SSLSessionCacheTimeout", "NSSSessionCacheSize 10000\nNSSSession3CacheTimeout 86400\n",);
 
-getopts('ch');
+getopts('chr:w:' , \%opt );
 
-if ($opt_h) {
-    print "Usage: migrate.pl -c\n";
-    print "\t-c convert the certificates\n";
+sub usage() {
+    print STDERR "Usage: migrate.pl [-c] -r <mod_ssl input file> -w <mod_nss output file>\n";
+    print STDERR "\t-c converts the certificates\n";
+    print STDERR "This conversion script is not aware of apache's configuration blocks\n";
+    print STDERR "and nestable conditional directives. Please check the output of the\n";
+    print STDERR "conversion and adjust manually if necessary!\n";
     exit();
 }
 
-open (NSS, "> nss.conf") or die "Unable to open nss.conf: $!.\n";
-open (SSL, "< ssl.conf") or die "Unable to open ssl.conf: $!.\n";
+usage() if ($opt{h} || !$opt{r} || !$opt{w});
+
+print STDERR "input: $opt{r} output: $opt{w}\n";
+
+open (SSL, "<", $opt{r} ) or die "Unable to open $opt{r}: $!.\n";
+open (NSS, ">", $opt{w} ) or die "Unable to open $opt{w}: $!.\n";
+
+print NSS "## This is a conversion of mod_ssl specific options by migrate.pl\n";
+print NSS "## \n";
+print NSS "## Please read through this configuration and verify the individual options!\n\n";
 
 while (<SSL>) {
     my $comment = 0;
 
+    # write through even if in comment before comments are stripped below.
+    if(/(ServerName|ServerAlias)/) {
+	print NSS $_;
+	next;
+    }
+
     # skip blank lines and comments
-    if (/^#/ || /^\s*$/) {
+    if (/^\s*#/ || /^\s*$/) {
+        print NSS $_;
+        next;
+    }
+
+    s/mod_ssl\.c/mod_nss.c/;
+
+    # write through nestable apache configuration block directives:
+    if (/^</ || /^\s</) {
         print NSS $_;
         next;
     }
@@ -59,10 +96,23 @@ while (<SSL>) {
         next;
     }
 
-    if ($stmt eq "SSLCipherSuite") {
-       print NSS "NSSCipherSuite ", get_ciphers($val), "\n";
-       print NSS "NSSProtocol SSLv3,TLSv1\n";
-       $comment = 1;
+    # we support OpenSSL cipher strings now, keeping the string as is
+    #if ($stmt eq "SSLCipherSuite") {
+       #print NSS "NSSCipherSuite ", get_ciphers($val), "\n";
+       #print NSS "NSSProtocol SSLv3,TLSv1\n";
+       #$comment = 1;
+    if ($stmt eq "SSLProtocol" ) {
+       print NSS "## we ignore the arguments to SSLProtocol. The original value was:\n";
+       print NSS "##$_";
+       print NSS "## The following is a _range_ from TLSv1.0 to TLSv1.2.\n";
+       print NSS "NSSProtocol TLSv1.0,TLSv1.2\n\n";
+       next;
+    } elsif ($stmt eq "SSLProxyProtocol" ) {
+       print NSS "## we ignore the arguments to SSLProxyProtocol. The original value was:\n";
+       print NSS "##$_";
+       print NSS "## The following is a _range_ from TLSv1.0 to TLSv1.2.\n";
+       print NSS "NSSProxyProtocol TLSv1.0,TLSv1.2\n\n";
+       next;
     } elsif ($stmt eq "SSLCACertificatePath") {
        $SSLCACertificatePath = $value;
        $comment = 1;
@@ -84,24 +134,26 @@ while (<SSL>) {
        $SSLCARevocationFile = $value;
        $comment = 1;
     } elsif ($stmt eq "SSLPassPhraseDialog") {
-       print NSS "NSSPassPhraseHelper /usr/local/bin/nss_pcache\n";
+       print NSS "NSSPassPhraseHelper /usr/libexec/nss_pcache\n";
        $passphrase = 1;
        $comment = 1;
     }
 
-    if (exists($skip{$stmt})) {
-        print NSS "# Skipping, not applicable in mod_nss\n";
-        print NSS "##$_";
+    if (exists($insert{$stmt})) {
+        #print NSS "$_";
+        print NSS $insert{$stmt};
         next;
     }
 
-    # Fix up any remaining directive names
-    s/^SSL/NSS/;
-
-    if (exists($insert{$stmt})) {
-        print NSS "$_";
-        print NSS $insert{$stmt};
-        next;
+    if (m/^\s*SSL/) {
+        if (!exists($keep{$stmt})) {
+            print NSS "# Skipping, not applicable in mod_nss\n";
+            print NSS "##$_";
+            next;
+        } else {
+            # Fix up any remaining directive names
+            s/^(\s*)SSL/\1NSS/;
+        }
     }
 
     # Fall-through to print whatever is left
@@ -111,7 +163,6 @@ while (<SSL>) {
     } else {
         print NSS $_;
     }
-
 }
 
 if ($passphrase == 0) {
@@ -126,14 +177,14 @@ close(SSL);
 # Create NSS certificate database and import any existing certificates
 #
 
-if ($opt_c) {
-    print "Creating NSS certificate database.\n";
+if ($opt{c}) {
+    print STDERR "Creating NSS certificate database.\n";
     run_command("certutil -N -d $NSSDir");
 
     # Convert the certificate into pkcs12 format
     if ($SSLCertificateFile ne "" && $SSLCertificateKeyFile ne "") {
         my $subject = get_cert_subject($SSLCertificateFile);
-        print "Importing certificate $subject as \"Server-Cert\".\n";
+        print STDERR "Importing certificate $subject as \"Server-Cert\".\n";
         run_command("openssl pkcs12 -export -in $SSLCertificateFile -inkey $SSLCertificateKeyFile -out server.p12 -name \"Server-Cert\" -passout pass:foo");
         run_command("pk12util -i server.p12 -d $NSSDir -W foo");
     }
@@ -141,7 +192,7 @@ if ($opt_c) {
     if ($SSLCACertificateFile ne "") {
         my $subject = get_cert_subject($SSLCACertificateFile);
         if ($subject ne "") {
-            print "Importing CA certificate $subject\n";
+            print STDERR "Importing CA certificate $subject\n";
             run_command("certutil -A -n \"$subject\" -t \"CT,,\" -d $NSSDir -a -i $SSLCACertificateFile");
         }
     }
@@ -156,7 +207,7 @@ if ($opt_c) {
             if ($file =~ /hash.*/) {
                 my $subject = get_cert_subject("$SSLCACertificatePath/$file");
                 if ($subject ne "") {
-                    print "Importing CA certificate $subject\n";
+                    print STDERR "Importing CA certificate $subject\n";
                     run_command("certutil -A -n \"$subject\" -t \"CT,,\" -d $NSSDir -a -i $SSLCACertificatePath/$file");
                 }
             }
@@ -165,11 +216,11 @@ if ($opt_c) {
     }
 
     if ($SSLCARevocationFile ne "") {
-        print "Importing CRL file $CARevocationFile\n";
+        print STDERR "Importing CRL file $CARevocationFile\n";
             # Convert to DER format
-            run_command("openssl crl -in $SSLCARevocationFile -out /tmp/crl.tmp -inform PEM -outform DER");
-            run_command("crlutil -I -t 1 -d $NSSDir -i /tmp/crl.tmp");
-            unlink("/tmp/crl.tmp");
+            run_command("openssl crl -in $SSLCARevocationFile -out /root/crl.tmp -inform PEM -outform DER");
+            run_command("crlutil -I -t 1 -d $NSSDir -i /root/crl.tmp");
+            unlink("/root/crl.tmp");
     }
 
     if ($SSLCARevocationPath ne "") {
@@ -182,11 +233,11 @@ if ($opt_c) {
             if ($file =~ /hash.*/) {
                 my $subject = get_cert_subject("$SSLCARevocationPath/$file");
                 if ($subject ne "") {
-                    print "Importing CRL file $file\n";
+                    print STDERR "Importing CRL file $file\n";
                     # Convert to DER format
-                    run_command("openssl crl -in $SSLCARevocationPath/$file -out /tmp/crl.tmp -inform PEM -outform DER");
-                    run_command("crlutil -I -t 1 -d $NSSDir -i /tmp/crl.tmp");
-                    unlink("/tmp/crl.tmp");
+                    run_command("openssl crl -in $SSLCARevocationPath/$file -out /root/crl.tmp -inform PEM -outform DER");
+                    run_command("crlutil -I -t 1 -d $NSSDir -i /root/crl.tmp");
+                    unlink("/root/crl.tmp");
                 }
             }
         }
@@ -194,10 +245,16 @@ if ($opt_c) {
     }
 }
 
-print "Conversion complete.\n";
-print "You will need to:\n";
-print "  - rename/remove ssl.conf or Apache will not start.\n";
-print "  - verify the location of nss_pcache. It is set as /usr/local/bin/nss_pcache\n";
+print STDERR "\n\nConversion complete.\n";
+print STDERR "The output file should contain a valid mod_nss configuration based on\n";
+print STDERR "the mod_ssl directives from the input file.\n";
+print STDERR "Recommended directory: /etc/apache2/mod_nss.d , suffix .conf!\n";
+print STDERR "Also make sure to edit /etc/apache2/conf.d/mod_nss.conf and to remove the\n";
+print STDERR "<VirtualHost> section if you do not need it.\n\n";
+print STDERR "Also, do not forget to rename the ssl based apache config file";
+print STDERR "(our example: myhost-ssl.conf) to a file that does not end in .conf\n";
+print STDERR "(our example: myhost-ssl.conf-disabled-for-nss)\n\n";
+print STDERR "Then, restart apache (rcapache2 restart) and have a look into the error logs.\n";
 
 exit(0);
 
@@ -207,7 +264,7 @@ sub get_ciphers {
     my $str = shift;
 
     %cipher_list = (
-        "rc4" => ":ALL:SSLv2:RSA:MD5:MEDIUM:RC4:", 
+        "rc4" => ":ALL:SSLv2:RSA:MD5:MEDIUM:RC4:",
         "rc4export" => ":ALL:SSLv2:RSA:EXP:EXPORT40:MD5:RC4:",
         "rc2" => ":ALL:SSLv2:RSA:MD5:MEDIUM:RC2:",
         "rc2export" => ":ALL:SSLv2:RSA:EXP:EXPORT40:MD5:RC2:",
@@ -230,21 +287,21 @@ sub get_ciphers {
     for ($i = 0; $i < $NUM_CIPHERS; $i++) {
         $selected[$i] = 0;
     }
-    
+
     # Don't need to worry about the ordering properties of "+" because
     # NSS always chooses the "best" cipher anyway. You can't specify
     # preferred order.
-    
+
     # -1: this cipher is completely out
     #  0: this cipher is currently unselected, but maybe added later
     #  1: this cipher is selected
-    
+
     @s = split(/:/, $str);
-    
+
     for ($i = 0; $i <= $#s; $i++) {
         $j = 0;
         $val = 1;
-    
+
         # ! means this cipher is disabled forever
         if ($s[$i] =~ /^!/) {
             $val = -1;
@@ -255,10 +312,10 @@ sub get_ciphers {
         } elsif ($s[$i] =~ /^+/) {
             ($s[$i] =~ s/^+//);
         }
-    
+
         for $cipher (sort keys %cipher_list) {
             $match = 0;
-    
+
             # For embedded + we do an AND for all options
             if ($s[$i] =~ m/(\w+\+)+/) {
                 @sub = split(/^\+/, $s[$i]);
@@ -273,22 +330,22 @@ sub get_ciphers {
                     $match = 1;
                 }
             }
-    
+
             if ($match && $selected[$j] != -1) {
                 $selected[$j] = $val;
             }
             $j++;
         }
     }
-    
+
     # NSS doesn't honor the order of a cipher list, it uses the "strongest"
     # cipher available. So we'll print out the ciphers as SSLv2, SSLv3 and
     # the NSS ciphers not available in OpenSSL.
     $str = "SSLv2:SSLv3";
     @s = split(/:/, $str);
-    
+
     $ciphersuite = "";
-    
+
     for ($i = 0; $i <= $#s; $i++) {
         $j = 0;
         for $cipher (sort keys %cipher_list) {
@@ -303,9 +360,9 @@ sub get_ciphers {
             $j++;
         }
     }
-    
+
     $ciphersuite .= "-fortezza,-fortezza_rc4_128_sha,-fortezza_null,-fips_des_sha,+fips_3des_sha,-rsa_aes_128_sha,-rsa_aes_256_sha";
-    
+
     return $ciphersuite;
 }
 
@@ -334,12 +391,12 @@ sub get_cert_subject {
 sub run_command {
     my @args = shift;
     my $status = 0;
-    
+
     $status = 0xffff & system(@args);
 
     return if ($status == 0);
 
-    print "Command '@args' failed: $!\n";
+    print STDERR "Command '@args' failed: $!\n";
 
     exit;
 }
