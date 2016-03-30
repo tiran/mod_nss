@@ -255,6 +255,8 @@ To avoid being prompted for a startup password you can either:<br>
 <ul>
   <li>Use a password file that contains your token passwords. See
 NSSPassPhraseDialog for details.</li>
+  <li>Exec a program which provides the token password (either by
+asking the user or other means.</li>
   <li>Change the internal token password to a blank with:</li>
 </ul>
 <div style="margin-left: 40px;">
@@ -320,10 +322,38 @@ without user intervention. The format of this file is:<br>
 </div>
 <div style="margin-left: 80px;"><code>internal:secret12</code><br>
 </div>
+<ul>
+  <li><code>exec:/path/to/executable</code></li>
+</ul>
+<div style="margin-left: 40px;">The listed program will be executed.
+The only argument is the NSS token name to be authenticated.
+The return value of the program is ignored. Only what is printed on
+stdout is passed along as the password.
+</div>
+<br>
+<div style="margin-left: 40px;">A trivial example script is:<br>
+<br>
+</div>
+<div style="margin-left: 80px;"><code>
+#!/bin/sh<br>
+echo "secret123"
+</code><br>
+</div>
+<br>
+<div style="margin-left: 40px;">To prompt using systemd (as root):<br>
+<br>
+</div>
+<div style="margin-left: 80px;"><code>
+#!/bin/sh<br>
+exec /bin/systemd-ask-password "Enter SSL pass phrase for $1: "
+</code><br>
+</div>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>
 <code>NSSPassPhraseDialog builtin</code><br>
+<code>NSSPassPhraseDialog file:/etc/httpd/alias/password.conf</code><br>
+<code>NSSPassPhraseDialog exec:/usr/libexec/httpd/httpd-ssl-pass-dialog</code><br>
 <div style="margin-left: 80px;"><br>
 </div>
 <font size="+2">NSSPassPhraseHelper</font> <br>

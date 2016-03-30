@@ -221,6 +221,7 @@ typedef enum {
     SSL_PPTYPE_BUILTIN = 0,
     SSL_PPTYPE_FILE    = 1,
     SSL_PPTYPE_DEFER   = 2,
+    SSL_PPTYPE_FILTER  = 3,
 } nss_pphrase_t;
 
 /*

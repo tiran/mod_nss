@@ -692,7 +692,27 @@ const char *nss_cmd_NSSPassPhraseDialog(cmd_parms *cmd,
                                "' does not exist", NULL);
         }
     }
+    else if ((arglen > 5) && strEQn(arg, "exec:", 5)) {
+        apr_finfo_t finfo;
+        apr_status_t rc;
 
+        mc->pphrase_dialog_type  = SSL_PPTYPE_FILTER;
+        mc->pphrase_dialog_path =
+            ap_server_root_relative(cmd->pool, arg+5);
+        if (!mc->pphrase_dialog_path) {
+            return apr_pstrcat(cmd->pool,
+                               "Invalid NSSPassPhraseDialog exec: path ",
+                               arg+5, NULL);
+        }
+        rc = apr_stat(&finfo, mc->pphrase_dialog_path,
+             APR_FINFO_TYPE|APR_FINFO_SIZE, cmd->pool);
+        if ((rc != APR_SUCCESS) || (finfo.filetype != APR_REG)) {
+            return apr_pstrcat(cmd->pool,
+                               "NSSPassPhraseDialog: file '",
+                               mc->pphrase_dialog_path,
+                               "' does not exist", NULL);
+        }
+    }
     return NULL;
 }
 
