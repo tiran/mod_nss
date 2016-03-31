@@ -1,0 +1,310 @@
+{
+   <NSS I/O Layer>
+   Memcheck:Leak
+   ...
+   fun:PR_CreateIOLayerStub
+}
+{
+   <PK11_ConfigurePKCS11>
+   Memcheck:Leak
+   ...
+   fun:PK11_ConfigurePKCS11
+}
+{
+   <NSS_Initialize>
+   Memcheck:Leak
+   ...
+   fun:NSS_Initialize
+}
+{
+   <PK11_GetAllTokens>
+   Memcheck:Leak
+   ...
+   fun:PK11_GetAllTokens
+}
+{
+   <NSSTrustDomain_TraverseCertificates>
+   Memcheck:Leak
+   ...
+   fun:NSSTrustDomain_TraverseCertificates
+}
+{
+   <nssDecodedPKIXCertificate_Create>
+   Memcheck:Leak
+   ...
+   fun:nssDecodedPKIXCertificate_Create
+}
+{
+   <serverCAListSetup>
+   Memcheck:Leak
+   ...
+   fun:serverCAListSetup
+}
+{
+   <Apache resource_config>
+   Memcheck:Leak
+   ...
+   fun:ap_process_resource_config
+}
+{
+   <Apache leak ap_process_config_tree>
+   Memcheck:Leak
+   ...
+   fun:ap_process_config_tree
+}
+{
+   <Apache proxy initialize>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_pool_create_ex
+   ...
+   fun:ap_proxy_initialize_worker
+   fun:child_init
+   fun:ap_run_child_init
+   fun:child_main
+   fun:make_child
+   fun:prefork_run
+   fun:ap_run_mpm
+   fun:main
+}
+{
+   <Apache build config>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   fun:apr_pmemdup
+   fun:ap_build_config_sub
+   fun:ap_build_config
+   fun:ap_process_resource_config
+   fun:ap_read_config
+   fun:main
+}
+{
+   <Apache build config open include file>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   fun:apr_file_open
+   fun:ap_pcfg_openfile
+   fun:ap_process_resource_config
+   fun:process_resource_config_nofnmatch
+   fun:ap_process_fnmatch_configs
+   fun:include_config
+   fun:invoke_cmd
+   fun:execute_now
+   fun:ap_build_config_sub
+   fun:ap_build_config
+   fun:ap_process_resource_config
+}
+{
+   <Apache build config include>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   fun:ap_build_config_sub
+   fun:ap_build_config
+   fun:ap_process_resource_config
+   fun:process_resource_config_nofnmatch
+   fun:ap_process_fnmatch_configs
+   fun:include_config
+   fun:invoke_cmd
+   fun:execute_now
+   fun:ap_build_config_sub
+   fun:ap_build_config
+   fun:ap_process_resource_config
+}
+{
+   <Apache process config>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   fun:apr_strmatch_precompile
+   fun:add_setenvif_core
+   fun:invoke_cmd
+   fun:ap_walk_config_sub
+   fun:ap_walk_config
+   fun:ap_process_config_tree
+   fun:main
+}
+{
+   <Apache config VirtualHost>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   fun:create_empty_config
+   fun:urlsection
+   fun:invoke_cmd
+   fun:ap_walk_config_sub
+   fun:ap_walk_config
+   fun:virtualhost_section
+   fun:invoke_cmd
+   fun:ap_walk_config_sub
+   fun:ap_walk_config
+   fun:ap_process_config_tree
+   fun:main
+}
+{
+   <Apache virtualhost reorder>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_pool_create_ex
+   fun:ap_core_reorder_directories
+   fun:ap_fixup_virtual_hosts
+   fun:main
+}
+{
+   <Apache init pool allocator>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_pool_create_ex
+   ...
+   fun:apr_initialize
+   fun:init_process
+   fun:main
+}
+{
+   <Apache init pool allocator>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_pool_create_ex
+   fun:init_process
+   fun:main
+}
+{
+   <Apache init pool allocator>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:init_process
+   fun:main
+}
+{
+   <Apache apr_pool_create_ex>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_pool_create_ex
+   fun:main
+}
+{
+   <Apache ap_setup_prelinked_modules>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   ...
+   fun:ap_setup_prelinked_modules
+   fun:main
+}
+{
+   <Apache init server config>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   fun:make_array_core
+   fun:apr_array_make
+   fun:so_sconf_create
+   fun:create_server_config
+   fun:init_server_config
+   fun:ap_read_config
+   fun:main
+}
+{
+   <Apache register hooks>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   ...
+   fun:ap_add_module
+   fun:ap_add_loaded_module
+   fun:load_module
+   fun:invoke_cmd
+   fun:execute_now
+   fun:ap_build_config_sub
+   fun:ap_build_config
+}
+{  
+   <Apache apr_sort_hook_all>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   ...
+   fun:apr_hook_sort_all
+   fun:main
+}
+{
+   <Apache apr_strmatch_precompile>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   fun:apr_strmatch_precompile
+   fun:ap_setup_make_content_type
+   fun:core_post_config
+   fun:ap_run_post_config
+   fun:main
+}
+{
+   <Apache rewritelock mutex>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   fun:proc_mutex_sysv_create
+   fun:proc_mutex_create
+   fun:apr_proc_mutex_create
+   fun:apr_global_mutex_create
+   fun:ap_global_mutex_create
+   fun:rewritelock_create
+   fun:post_config
+   fun:ap_run_post_config
+   fun:main
+}
+{
+   <Apache ap_init_rng>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   fun:apr_random_add_entropy
+   fun:ap_init_rng
+   fun:main
+}
+{
+   <Apache mime_post_config>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:allocator_alloc
+   fun:apr_palloc
+   ...
+   fun:mime_post_config
+   fun:ap_run_post_config
+   fun:main
+}

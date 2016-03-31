@@ -1,0 +1,19 @@
+{
+   <NSS_Initialize>
+   Memcheck:Leak
+   ...
+   fun:NSS_Initialize
+   fun:main
+}
+{
+   <secmod_ModuleInit>
+   Memcheck:Leak
+   ...
+   fun:secmod_ModuleInit
+}
+{
+   <nsc_CommonInitialize>
+   Memcheck:Leak
+   ...
+   fun:nsc_CommonInitialize
+}
