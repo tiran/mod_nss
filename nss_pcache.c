@@ -387,14 +387,15 @@ int main(int argc, char ** argv)
                 break;
             }
             command = getstr(buf, 0);
-            tokenName = getstr(buf, 1);
-            tokenpw = getstr(buf, 2);
 
             if (command && !strcmp(command, "QUIT")) {
                 break;
             } else if (command && !strcmp(command, "STOR")) {
                 PRInt32 err = PIN_SUCCESS;
                 Node *node = NULL;
+
+                tokenName = getstr(buf, 1);
+                tokenpw = getstr(buf, 2);
 
                 if (tokenName && tokenpw) {
                     node = (Node*)malloc(sizeof (Node));
@@ -430,6 +431,8 @@ int main(int argc, char ** argv)
                 Node *node;
                 char *pin = 0;
                 PRBool found = PR_FALSE;
+
+                tokenName = getstr(buf, 1);
 
                 for (node = pinList; node != NULL; node = node->next) {
                     if (!strcmp(node->tokenName, tokenName)) {
