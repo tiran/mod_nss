@@ -1,5 +1,5 @@
 # Required initializer
-AC_INIT([mod_nss],[1.0.13])
+AC_INIT([mod_nss],[1.0.14])
 
 m4_include([acinclude.m4])
 
