@@ -1,5 +1,18 @@
+2016-04-15  Rob Crittenden <rcritten@redhat.com>
+    * Become 1.0.14
+
+2016-03-31  Rob Crittenden <rcritten@redhat.com>
+    * Created valgrind suppression files to ease debugging
+
+2016-03-30  Rob Crittenden <rcritten@redhat.com>
+    * Implement SSL_PPTYPE_FILTER to call executables to get
+      the key password pins. Can be used to prompt with systemd.
+
 2016-03-30  Vitezslav Cizek <vcizek@suse.com>
     * Improvements to migrate.pl
+
+2016-03-17  Rob Crittenden <rcritten@redhat.com>
+    * OpenSSL ciphers stopped parsing at +, CVE-2016-3099
 
 2016-03-04  Rob Crittenden <rcritten@redhat.com>
 
