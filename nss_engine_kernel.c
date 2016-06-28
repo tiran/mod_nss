@@ -953,17 +953,6 @@ int nss_hook_Fixup(request_rec *r)
     }
 
     /*
-     * Set r->user if requested
-     */
-    if (dc->szUserName) {
-        val = nss_var_lookup(r->pool, r->server, r->connection,
-                             r, (char *)dc->szUserName);
-        if (val && val[0]) {
-            r->user = val;
-        }
-    }
-
-    /*
      * Annotate the SSI/CGI environment with standard SSL information
      */
     /* the always present HTTPS (=HTTP over SSL) flag! */
