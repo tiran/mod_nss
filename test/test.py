@@ -191,14 +191,6 @@ class test_suite1(Declarative):
         ),
 
         dict(
-            desc='Try SSLv2 on default server',
-            request=('/protocoltls12/index.html',
-                    {'ssl_version': ssl.PROTOCOL_SSLv2}
-            ),
-            expected=requests.exceptions.SSLError(),
-        ),
-
-        dict(
             desc='Try SSLv23 client on SSLv3 location',
             request=('/protocolssl3/index.html',
                     {'ssl_version': ssl.PROTOCOL_SSLv23}
@@ -242,15 +234,6 @@ class test_suite1(Declarative):
             desc='Requires TLSv1.2 on VH that provides it',
             request=('/protocoltls12/index.html', {'port': 8001}),
             expected=200,
-        ),
-
-        dict(
-            desc='Try SSLv2 client on 1.2-only VH',
-            request=('/protocoltls12/index.html',
-                    {'port': 8001,
-                     'ssl_version': ssl.PROTOCOL_SSLv2}
-            ),
-            expected=requests.exceptions.SSLError(),
         ),
 
         dict(
