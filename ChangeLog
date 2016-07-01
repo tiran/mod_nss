@@ -1,3 +1,7 @@
+2016-06-28  Rob Crittenden <rcritten@redhat.com>
+    * Don't set remote user in fixup hook
+    * Drop SSLv2 tests because it is completely disabled now
+
 2016-04-15  Rob Crittenden <rcritten@redhat.com>
     * Become 1.0.14
 
