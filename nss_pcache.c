@@ -95,6 +95,36 @@ struct Node
 
 /* global variables */
 Node *pinList = NULL;
+int semid = 0;
+PRFileDesc *in = NULL;
+PRFileDesc *out = NULL;
+
+void cleanup() {
+    union semun semarg;
+
+    freeList(pinList);
+
+    if (in) {
+        PR_Close(in);
+        in = NULL;
+    }
+
+    if (NSS_IsInitialized()) {
+        NSS_Shutdown();
+    }
+
+    /* Remove the semaphore used for locking here. This is because this
+     * program only goes away when Apache shuts down so we don't have to
+     * worry about reloads.
+     */
+    semctl(semid, 0, IPC_RMID, semarg);
+}
+
+void signalhandler(int signo) {
+    if (signo == SIGTERM) {
+        cleanup();
+    }
+}
 
 /*
  * CreatePk11PinStore
@@ -308,8 +338,6 @@ Pk11StoreGetPin(char **out, Pk11PinStore *store)
 int main(int argc, char ** argv)
 {
     SECStatus rv;
-    PRFileDesc *in;
-    PRFileDesc *out;
     PRPollDesc pd;
     PRIntervalTime timeout = PR_INTERVAL_NO_TIMEOUT;
     char buf[1024];
@@ -318,7 +346,6 @@ int main(int argc, char ** argv)
     char * tokenName;
     char * tokenpw;
     int fipsmode = 0;
-    int semid = 0;
     union semun semarg;
 
     if (argc < 4 || argc > 5) {
@@ -327,6 +354,7 @@ int main(int argc, char ** argv)
     }
 
     signal(SIGHUP, SIG_IGN);
+    signal(SIGTERM, signalhandler);
 
     semid = strtol(argv[1], NULL, 10);
 
@@ -459,13 +487,7 @@ int main(int argc, char ** argv)
             }
         }
     }
-    freeList(pinList);
-    PR_Close(in);
-    /* Remove the semaphore used for locking here. This is because this
-     * program only goes away when Apache shuts down so we don't have to
-     * worry about reloads.
-     */
-    semctl(semid, 0, IPC_RMID, semarg);
+    cleanup();
     return 0;
 }
 
