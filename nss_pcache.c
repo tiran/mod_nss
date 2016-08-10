@@ -103,6 +103,7 @@ void cleanup() {
     union semun semarg;
 
     freeList(pinList);
+    pinList = NULL;
 
     if (in) {
         PR_Close(in);
