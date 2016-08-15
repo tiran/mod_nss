@@ -118,6 +118,11 @@ cipher_properties ciphers_def[] =
     /* TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256 is not implemented */
     /* TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256 is not implemented */
 #endif
+#ifdef ENABLE_CHACHA20
+    {"ecdhe_rsa_chacha20_poly1305_sha_256", TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256, "ECDHE-RSA-CHACHA20-POLY1305", SSL_kEECDH|SSL_aRSA|SSL_CHACHA20POLY1305|SSL_AEAD, TLSV1_2, SSL_HIGH, 256, 256},
+    {"ecdhe_ecdsa_chacha20_poly1305_sha_256", TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, "ECDHE-ECDSA-CHACHA20-POLY1305", SSL_kEECDH|SSL_aECDSA|SSL_CHACHA20POLY1305|SSL_AEAD, TLSV1_2, SSL_HIGH, 256, 256},
+    {"dhe_rsa_chacha20_poly1305_sha_256", TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256, "DHE-RSA-CHACHA20-POLY1305", SSL_kEDH|SSL_aRSA|SSL_CHACHA20POLY1305|SSL_AEAD, TLSV1_2, SSL_HIGH, 256, 256},
+#endif
 };
 
 #define CIPHERNUM sizeof(ciphers_def) / sizeof(cipher_properties)
@@ -369,6 +374,8 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                     mask |= SSL_AES128|SSL_AES128GCM;
                 } else if (!strcmp(cipher, "AES256")) {
                     mask |= SSL_AES256|SSL_AES256GCM;
+                } else if (!strcmp(cipher, "CHACHA20")) {
+                    mask |= SSL_CHACHA20POLY1305;
                 } else if (!strcmp(cipher, "CAMELLIA")) {
                     mask |= SSL_CAMELLIA128|SSL_CAMELLIA256;
                 } else if (!strcmp(cipher, "CAMELLIA128")) {

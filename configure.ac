@@ -259,6 +259,14 @@ else
    echo "ENABLE_SHA384=0" >> test/variable.py
 fi
 
+AX_CHECK_DEFINE(nss3/sslproto.h, TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256, chacha20=yes, chacha20=no)
+if test "$chacha20" = yes; then
+   extra_cppflags="$extra_cppflags -DENABLE_CHACHA20"
+   echo "ENABLE_CHACHA20=1" >> test/variable.py
+else
+   echo "ENABLE_CHACHA20=0" >> test/variable.py
+fi
+
 CPPFLAGS="$CPPFLAGS $nspr_inc"
 AX_CHECK_DEFINE(nss3/ssl.h, SSL_ENABLE_SERVER_DHE, server_dhe=yes, server_dhe=no)
 if test "$server_dhe" = yes; then
@@ -268,7 +276,7 @@ else
    echo "ENABLE_SERVER_DHE=0" >> test/variable.py
 fi
 
-# Substitute values 
+# Substitute values
 AC_SUBST(APXS)
 AC_SUBST(apr_inc)
 AC_SUBST(apache_inc)
