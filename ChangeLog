@@ -1,3 +1,6 @@
+2016-08-10  Rob Crittenden <rcritten@redhat.com>
+    * Fix semaphore leak
+
 2016-06-28  Rob Crittenden <rcritten@redhat.com>
     * Don't set remote user in fixup hook
     * Drop SSLv2 tests because it is completely disabled now
