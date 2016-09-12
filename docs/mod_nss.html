@@ -672,14 +672,14 @@ Available RSA ciphers are:<br>
       </td>
       <td style="vertical-align: top;">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
     </tr><tr>
-  <td valign="top">camelia_128_sha<br>
+  <td valign="top">camellia_128_sha<br>
   </td>
   <td valign="top">TLS_RSA_WITH_CAMELLIA_128_CBC_SHA<br>
   </td>
   <td valign="top">SSLv3/TLSv1.0/TLSv1.1/TLSv1.2</td>
 </tr>
 <tr>
-  <td valign="top">camelia_256_sha<br>
+  <td valign="top">camellia_256_sha<br>
   </td>
   <td valign="top">TLS_RSA_WITH_CAMELLIA_256_CBC_SHA<br>
   </td>
@@ -736,10 +736,10 @@ Available RSA ciphers are:<br>
 </td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA<br>
       </td><td style="vertical-align: top;">TLSv1.0/TLSv1.1/TLSv1.2</td></tr><tr><td style="vertical-align: top;">dhe_rsa_camellia_256_sha<br>
 </td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA<br>
-      </td><td style="vertical-align: top;">TLSv1.0/TLSv1.1/TLSv1.2</td></tr><tr><td style="vertical-align: top;">dhe_rsa_aes_128_sha256<br>
+      </td><td style="vertical-align: top;">TLSv1.0/TLSv1.1/TLSv1.2</td></tr><tr><td style="vertical-align: top;">dhe_rsa_aes_128_sha_256<br>
 </td><td style="vertical-align: top;">TLS_DHE_RSA_WITH_AES_128_CBC_SHA256<br>
       </td><td style="vertical-align: top;">TLSv1.2</td></tr><tr>
-    <td valign="top">dhe_rsa_aes_256_sha256<br>
+    <td valign="top">dhe_rsa_aes_256_sha_256<br>
     </td>
     <td valign="top">TLS_DHE_RSA_WITH_AES_256_CBC_SHA256<br>
     </td>
@@ -922,6 +922,14 @@ Additionally there are a number of ECC ciphers:<br>
 
   </tbody>
 </table>
+The following cipher names contained typos or otherwise didn't follow
+the naming scheme and will be removed in the future:
+<ol>
+<li>dhe_rsa_aes_128_sha256
+<li>dhe_rsa_aes_256_sha256
+<li>camelia_128_sha
+<li>camelia_256_sha
+</ol>
 <br>
 <span style="font-weight: bold;">Example</span><br>
 <br>

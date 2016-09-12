@@ -303,6 +303,26 @@ class test_ciphers(object):
         assert rc == 0
         assert_equal(out, 'aes_128_sha_256')
 
+    def test_nss_dhe_rsa_aes_128_sha256_alias(self):
+        (out, err, rc) = run([exe, "+dhe_rsa_aes_128_sha256"])
+        assert rc == 0
+        assert_equal(out, 'dhe_rsa_aes_128_sha_256')
+
+    def test_nss_dhe_rsa_aes_256_sha256_alias(self):
+        (out, err, rc) = run([exe, "+dhe_rsa_aes_256_sha256"])
+        assert rc == 0
+        assert_equal(out, 'dhe_rsa_aes_256_sha_256')
+
+    def test_nss_camelia_128_sha_alias(self):
+        (out, err, rc) = run([exe, "+camelia_128_sha"])
+        assert rc == 0
+        assert_equal(out, 'camellia_128_sha')
+
+    def test_nss_camelia_256_sha_alias(self):
+        (out, err, rc) = run([exe, "+camelia_256_sha"])
+        assert rc == 0
+        assert_equal(out, 'camellia_256_sha')
+
     def test_openssl_single_cipher(self):
         assert_equal_openssl("RC4-SHA")
 

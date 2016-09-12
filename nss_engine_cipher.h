@@ -26,6 +26,8 @@ typedef struct
     PRInt32 strength;            /* LOW, MEDIUM, HIGH */
     PRInt32 bits;                /* bits of strength */
     PRInt32 alg_bits;            /* bits of the algorithm */
+    const char *alias;           /* Other names, usually typos. Right now a
+                                    single string but could be CSV */
 } cipher_properties;
 
 /* OpenSSL-compatible cipher attributes */

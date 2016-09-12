@@ -1,3 +1,9 @@
+2016-09-12  Rob Crittenden <rcritten@redhat.com>
+    * Add in simple aliases for ciphers to fix those that
+      don't follow the pattern (dhe_rsa_aes_128_sha256,
+      dhe_rsa_aes_256_sha256) and those with typos
+      (camelia_128_sha, camelia_256_sha)
+
 2016-08-10  Rob Crittenden <rcritten@redhat.com>
     * Fix semaphore leak
 
