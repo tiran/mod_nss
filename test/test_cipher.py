@@ -39,6 +39,13 @@ OPENSSL_CIPHERS_IGNORE = ":-SSLv2:-KRB5:-PSK:-ADH:-DSS:-SEED:-IDEA"
 if ENABLE_SERVER_DHE == 0:
     OPENSSL_CIPHERS_IGNORE += ':-DH'
 
+def openssl_CHACHA20():
+    """Check to see if CHACHA20 is available in OpenSSL"""
+    (out, err, rc) = run([openssl, 'ciphers', 'CHACHA20'])
+    return rc == 0
+
+OPENSSL_CHACHA20 = openssl_CHACHA20()
+
 def assert_equal_openssl(ciphers):
     nss_ciphers = ciphers + ":-EXP:-LOW"
     ossl_ciphers = ciphers + OPENSSL_CIPHERS_IGNORE
@@ -68,6 +75,14 @@ def assert_equal_openssl(ciphers):
             continue
         t.append(o)
     ossl_list = t
+
+    # OpenSSL 1.0.2 doesn't support CHACHA20 but NSS might.
+    n = list()
+    for c in nss_list:
+        if not OPENSSL_CHACHA20 and ENABLE_CHACHA20 and 'CHACHA20' in c:
+            continue
+        n.append(c)
+    nss_list = n
 
     if len(nss_list) > len(ossl_list):
         diff = set(nss_list) - set(ossl_list)
