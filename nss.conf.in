@@ -44,10 +44,8 @@ NSSPassPhraseHelper /usr/libexec/nss_pcache
 
 #   Configure the SSL Session Cache. 
 #   NSSSessionCacheSize is the number of entries in the cache.
-#   NSSSessionCacheTimeout is the SSL2 session timeout (in seconds).
 #   NSSSession3CacheTimeout is the SSL3/TLS session timeout (in seconds).
 NSSSessionCacheSize 10000
-NSSSessionCacheTimeout 100
 NSSSession3CacheTimeout 86400
 
 #
