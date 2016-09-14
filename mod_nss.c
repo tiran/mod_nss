@@ -98,7 +98,7 @@ static const command_rec nss_config_cmds[] = {
                 "(`[+-]XXX,...,[+-]XXX' - see manual)")
     SSL_CMD_SRV(Protocol, RAW_ARGS,
                 "Enable the various SSL protocols"
-                "(`[SSLv2|SSLv3|TLSv1.0|TLSv1.1|TLSv1.2|all] ...' - see manual)")
+                "(`[SSLv3|TLSv1.0|TLSv1.1|TLSv1.2|all] ...' - see manual)")
     SSL_CMD_ALL(VerifyClient, TAKE1,
                 "SSL Client Authentication "
                 "(`none', `optional', `require')")
@@ -151,7 +151,7 @@ static const command_rec nss_config_cmds[] = {
                 "(`on', `off')")
     SSL_CMD_SRV(ProxyProtocol, RAW_ARGS,
                "SSL Proxy: enable or disable SSL protocol flavors "
-               "(`[+-][SSLv2|SSLv3|TLSv1.0|TLSv1.1|TLSv1.2] ...' - see manual)")
+               "(`[+-][SSLv3|TLSv1.0|TLSv1.1|TLSv1.2] ...' - see manual)")
     SSL_CMD_SRV(ProxyCipherSuite, TAKE1,
                "SSL Proxy: colon-delimited list of permitted SSL ciphers "
                "(`XXX:...:XXX' - see manual)")
