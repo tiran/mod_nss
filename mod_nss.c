@@ -59,7 +59,7 @@ static const command_rec nss_config_cmds[] = {
                 "(`on', `off')")
     SSL_CMD_SRV(PassPhraseDialog, TAKE1,
                 "SSL dialog mechanism for the pass phrase query "
-                "(`builtin', `file:/path/to/file`")
+                "(`builtin', `file:/path/to/file`, `exec:/path/to/script`")
     SSL_CMD_SRV(PassPhraseHelper, TAKE1,
                 "Process to securely store SSL tokens to handle restarts "
                 "(`/path/to/file`")
