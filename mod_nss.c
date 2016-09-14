@@ -41,10 +41,10 @@ static const command_rec nss_config_cmds[] = {
      */
     SSL_CMD_SRV(CertificateDatabase, TAKE1,
                 "SSL Server Certificate database "
-                "(`/path/to/file'")
+                "(`/path/to/file')")
     SSL_CMD_SRV(DBPrefix, TAKE1,
                 "NSS Database prefix (optional) "
-                "(`my-prefix-'")
+                "(`my-prefix-')")
     SSL_CMD_SRV(SessionCacheTimeout, TAKE1,
                 "SSL 2 Session Cache object lifetime "
                 "(`N' - number of seconds)")
@@ -59,10 +59,10 @@ static const command_rec nss_config_cmds[] = {
                 "(`on', `off')")
     SSL_CMD_SRV(PassPhraseDialog, TAKE1,
                 "SSL dialog mechanism for the pass phrase query "
-                "(`builtin', `file:/path/to/file`, `exec:/path/to/script`")
+                "(`builtin', `file:/path/to/file', `exec:/path/to/script')")
     SSL_CMD_SRV(PassPhraseHelper, TAKE1,
                 "Process to securely store SSL tokens to handle restarts "
-                "(`/path/to/file`")
+                "(`/path/to/file')")
     SSL_CMD_SRV(OCSP, FLAG,
                 "OCSP (Online Certificate Status Protocol)"
                 "(`on', `off')")
@@ -71,10 +71,10 @@ static const command_rec nss_config_cmds[] = {
                 "(`on', `off')")
     SSL_CMD_SRV(OCSPDefaultURL, TAKE1,
                 "The URL of the OCSP default responder"
-                "(`http://example.com:80/ocsp")
+                "(`http://example.com:80/ocsp')")
     SSL_CMD_SRV(OCSPDefaultName, TAKE1,
                 "The nickname of the certificate to trust to sign the OCSP responses."
-                "(`OCSP_Cert`")
+                "(`OCSP_Cert')")
      SSL_CMD_SRV(RandomSeed, TAKE23,
                 "SSL Pseudo Random Number Generator (PRNG) seeding source "
                 "(`startup builtin|file:/path|exec:/path [bytes]')")
@@ -101,10 +101,10 @@ static const command_rec nss_config_cmds[] = {
                 "(`[SSLv2|SSLv3|TLSv1.0|TLSv1.1|TLSv1.2|all] ...' - see manual)")
     SSL_CMD_ALL(VerifyClient, TAKE1,
                 "SSL Client Authentication "
-                "(`none', `optional', `require'")
+                "(`none', `optional', `require')")
     SSL_CMD_SRV(Nickname, TAKE1,
                 "SSL RSA Server Certificate nickname "
-                "(`Server-Cert'")
+                "(`Server-Cert')")
 #ifdef SSL_ENABLE_RENEGOTIATION
     SSL_CMD_SRV(Renegotiation, FLAG,
                 "Enable SSL Renegotiation (default off) "
@@ -116,11 +116,11 @@ static const command_rec nss_config_cmds[] = {
 #ifdef NSS_ENABLE_ECC
     SSL_CMD_SRV(ECCNickname, TAKE1,
                 "SSL ECC Server Certificate nickname "
-                "(`Server-Cert'")
+                "(`Server-Cert')")
 #endif
     SSL_CMD_SRV(EnforceValidCerts, FLAG,
                 "Require a valid, trust, non-expired server certificate (default on)"
-                "(`on', `off'")
+                "(`on', `off')")
     SSL_CMD_SRV(SessionTickets, FLAG,
                 "Enable or disable TLS session tickets"
                 "(`on', `off')")
