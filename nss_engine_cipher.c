@@ -123,6 +123,15 @@ cipher_properties ciphers_def[] =
     {"ecdhe_ecdsa_chacha20_poly1305_sha_256", TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, "ECDHE-ECDSA-CHACHA20-POLY1305", SSL_kEECDH|SSL_aECDSA|SSL_CHACHA20POLY1305|SSL_AEAD, TLSV1_2, SSL_HIGH, 256, 256},
     {"dhe_rsa_chacha20_poly1305_sha_256", TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256, "DHE-RSA-CHACHA20-POLY1305", SSL_kEDH|SSL_aRSA|SSL_CHACHA20POLY1305|SSL_AEAD, TLSV1_2, SSL_HIGH, 256, 256},
 #endif
+#ifdef NSS_SUPPORTS_TLS_1_3
+    /* Special TLS 1.3 cipher suites that really just specify AEAD
+     * TLS 1.3 ciphers don't specify key exchange and authentication.
+     */
+    {"aes_128_gcm_sha_256", TLS_AES_128_GCM_SHA256, "TLS13-AES-128-GCM-SHA256", SSL_AES128GCM|SSL_AEAD, TLSV1_3, SSL_HIGH, 128, 128, NULL},
+    /* OpenSSL has not agreed on names for AES 256 and ChaCha20 TLS 1.3 ciphers yet */
+    {"aes_256_gcm_sha_384", TLS_AES_256_GCM_SHA384, "TLS13-AES-256-GCM-SHA384", SSL_AES256GCM|SSL_AEAD, TLSV1_3, SSL_HIGH, 256, 256, NULL},
+    {"chacha20_poly1305_sha_256", TLS_CHACHA20_POLY1305_SHA256, "TLS13-CHACHA20-POLY1305", SSL_CHACHA20POLY1305|SSL_AEAD, TLSV1_3, SSL_HIGH, 256, 256},
+#endif
 };
 
 #define CIPHERNUM sizeof(ciphers_def) / sizeof(cipher_properties)
@@ -170,11 +179,11 @@ int nss_parse_ciphers(server_rec *s, char *ciphers, PRBool cipher_list[ciphernum
         rv = parse_nss_ciphers(s, ciphers, cipher_list);
     } else {
         rv = parse_openssl_ciphers(s, ciphers, cipher_list);
-        if (rv == 0 && 0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2)) {
+        if (rv == 0 && 0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2|TLSV1_3)) {
             rv = parse_nss_ciphers(s, ciphers, cipher_list);
         }
     }
-    if (0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2)) {
+    if (0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2|TLSV1_3)) {
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
                      "no cipher match");
     }
@@ -406,6 +415,8 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
                     protocol |= TLSV1;
                 } else if (!strcmp(cipher, "TLSv1.2")) {
                     protocol |= TLSV1_2;
+                } else if (!strcmp(cipher, "TLSv1.3")) {
+                    protocol |= TLSV1_3;
                 } else if (!strcmp(cipher, "HIGH")) {
                     strength |= SSL_HIGH;
                 } else if (!strcmp(cipher, "MEDIUM")) {
@@ -493,7 +504,7 @@ static int parse_openssl_ciphers(server_rec *s, char *ciphers, PRBool cipher_lis
             cipher = ciphers;
 
     }
-    if (found && 0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2))
+    if (found && 0 == countciphers(cipher_list, SSLV3|TLSV1|TLSV1_2|TLSV1_3))
         return 1; /* no matching ciphers */
     return 0;
 }

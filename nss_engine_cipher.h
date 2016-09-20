@@ -86,6 +86,7 @@ typedef struct
 #define SSLV3              0x00000002L
 #define TLSV1              SSLV3
 #define TLSV1_2            0x00000004L
+#define TLSV1_3            0x00000005L
 
 /* the table itself is defined in nss_engine_cipher.c */
 #if 0

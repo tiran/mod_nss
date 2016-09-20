@@ -775,6 +775,11 @@ static char *nss_var_lookup_protocol_version(apr_pool_t *p, conn_rec *c)
                 case SSL_LIBRARY_VERSION_TLS_1_2:
                     result = "TLSv1.2";
                     break;
+#ifdef NSS_SUPPORTS_TLS_1_3
+                case SSL_LIBRARY_VERSION_TLS_1_3:
+                    result = "TLSv1.3";
+                    break;
+#endif
             }
         }
     }

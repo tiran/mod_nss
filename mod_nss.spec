@@ -26,7 +26,7 @@ Group: System Environment/Daemons
 URL: http://directory.fedora.redhat.com/
 Source: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-root
-BuildPreReq: httpd-devel,apr-devel
+BuildRequires: httpd-devel,apr-devel,nss-devel,flex,byacc
 # Without Autoreq: 0, rpmbuild finds all sorts of crazy
 # dependencies that we don't care about, and refuses to install
 Autoreq: 0
@@ -56,7 +56,7 @@ fi
 
 # configure requires nspr, nss, ldapsdk, adminutil
 # if can't find apxs, use --with-apxs=/path/to/apxs
-./configure --with-apr-config --with-nspr-inc=%{nsprincdir} --with-nspr-lib=%{nsprlibdir} --with-nss-inc=%{nssincdir} --with-nss-lib=%{nsslibdir}
+./configure --with-apr-config --with-nspr-inc=%{nsprincdir} --with-nspr-lib=%{nsprlibdir} --with-nss-inc=%{nssincdir} --with-nss-lib=%{nsslibdir} --enable-ecc
 CFLAGS="$flag $mycflags" make
 
 %install

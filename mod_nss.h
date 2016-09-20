@@ -175,6 +175,13 @@ ap_set_module_config(c->conn_config, &nss_module, val)
 typedef int nss_opt_t;
 
 /*
+ * TLS 1.3 is enabled since NSS 3.28
+ */
+#if (((NSS_VMAJOR == 3) && (NSS_VMINOR >= 28)) || (NSS_VMAJOR > 3))
+  #define NSS_SUPPORTS_TLS_1_3 1
+#endif
+
+/*
  * Define the SSL requirement structure
  */
 typedef struct {
