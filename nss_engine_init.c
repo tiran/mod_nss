@@ -51,8 +51,7 @@ static char *version_components[] = {
     NULL
 };
 
-/* See if a uid or gid can read a file at a given path. Ignore world
- * read permissions.
+/* See if a uid or gid can read a file or directory at a given path.
  *
  * Return 0 on failure or file doesn't exist
  * Return 1 on success
@@ -65,14 +64,14 @@ static int check_path(uid_t uid, gid_t gid, char *filepath, apr_pool_t *p)
     if ((rv = apr_stat(&finfo, filepath, APR_FINFO_PROT | APR_FINFO_OWNER,
          p)) == APR_SUCCESS) {
         if (((uid == finfo.user) &&
-            ((finfo.protection & APR_FPROT_UREAD))) ||
+            (finfo.protection & APR_FPROT_UREAD)) ||
             ((gid == finfo.group) &&
-                ((finfo.protection & APR_FPROT_GREAD)))
+                (finfo.protection & APR_FPROT_GREAD)) ||
+            (finfo.protection & APR_FPROT_WREAD)
            )
         {
             return 1;
         }
-        return 0;
     }
     return 0;
 }
@@ -158,6 +157,11 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
         }
     }
 
+    if (strncasecmp(mc->pCertificateDatabase, "sql:", 4) == 0)
+        dbdir = (char *)mc->pCertificateDatabase + 4;
+    else
+        dbdir = (char *)mc->pCertificateDatabase;
+
     /* Assuming everything is ok so far, check the cert database permissions
      * for the server user before Apache starts forking. We die now or
      * get stuck in an endless loop not able to read the NSS database.
@@ -171,6 +175,13 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, base_server,
                 "Checking permissions for user %s: uid %d gid %d",
                 mc->user, pw->pw_uid, pw->pw_gid);
+
+            if (!(check_path(pw->pw_uid, pw->pw_gid, dbdir, p))) {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                    "Server user %s lacks read access to NSS "
+                    "database directory %s.", mc->user, dbdir);
+                nss_die();
+            }
 
             if (strncasecmp(mc->pCertificateDatabase, "sql:", 4) == 0) {
                 apr_snprintf(filepath, 1024, "%s/key4.db",
@@ -231,10 +242,6 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
             else
                 return;
     }
-    if (strncasecmp(mc->pCertificateDatabase, "sql:", 4) == 0)
-        dbdir = (char *)mc->pCertificateDatabase + 4;
-    else
-        dbdir = (char *)mc->pCertificateDatabase;
     if (chdir(dbdir) != 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
             "Unable to change directory to %s", mc->pCertificateDatabase);
