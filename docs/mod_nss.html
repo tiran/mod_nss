@@ -544,6 +544,48 @@ Example</span><br>
 <br>
 <code>NSSOCSP on</code><br>
 <br>
+<big><big>NSSOCSPTimeout</big></big><br>
+<br>
+Configure the maximum time to wait for an OCSP response in seconds.
+There are no constraints or special meanings for this value. The default
+is 60 seconds.
+<br>
+<br><span style="font-weight: bold;">
+Example</span><br>
+<br>
+<code>NSSOCSPTimeout 30</code><br>
+<br>
+<big><big>NSSOCSPCacheSize</big></big><br>
+<br>
+Configures the maximum number of entries in the OCSP cache. A value of
+-1 will disable the cache completely. A value of 0 configures an unlimited
+number of cache entries. The default is 1000.
+<br>
+<br><span style="font-weight: bold;">
+Example</span><br>
+<br>
+<code>NSSOCSPCacheSize 300</code><br>
+<br>
+<big><big>NSSOCSPMinCacheEntryDuration</big></big><br>
+<br>
+Configure the minimum amount of time an OCSP response is cached in seconds.
+The default is 3600 seconds (1 hour).
+<br>
+<br><span style="font-weight: bold;">
+Example</span><br>
+<br>
+<code>NSSOCSPMinCacheEntryDuration 30</code><br>
+<br>
+<big><big>NSSOCSPMaxCacheEntryDuration</big></big><br>
+<br>
+Configure the maximum amount of time an OCSP response is cached in seconds
+before being updated. The default is 86400 seconds (24 hours).
+<br>
+<br><span style="font-weight: bold;">
+Example</span><br>
+<br>
+<code>NSSOCSPMaxCacheEntryDuration 300</code><br>
+<br>
 <big><big>NSSCipherSuite<br>
 </big></big><br>
 There are two options for configuring the available ciphers. mod_nss

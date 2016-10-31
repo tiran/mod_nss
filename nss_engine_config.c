@@ -129,22 +129,26 @@ static SSLSrvConfigRec *nss_config_server_new(apr_pool_t *p)
 {
     SSLSrvConfigRec *sc = apr_palloc(p, sizeof(*sc));
 
-    sc->mc                          = NULL;
-    sc->ocsp                        = UNSET;
-    sc->ocsp_default                = UNSET;
-    sc->ocsp_url                    = NULL;
-    sc->ocsp_name                   = NULL;
-    sc->fips                        = UNSET;
-    sc->enabled                     = UNSET;
-    sc->sni                         = TRUE;
-    sc->strict_sni_vhost_check      = TRUE;
-    sc->proxy_enabled               = UNSET;
-    sc->vhost_id                    = NULL;  /* set during module init */
-    sc->vhost_id_len                = 0;     /* set during module init */
-    sc->proxy                       = NULL;
-    sc->server                      = NULL;
-    sc->proxy_ssl_check_peer_cn     = TRUE;
-    sc->session_tickets             = FALSE;
+    sc->mc                            = NULL;
+    sc->ocsp                          = UNSET;
+    sc->ocsp_timeout                  = 60;
+    sc->ocsp_cache_size               = 1000;
+    sc->ocsp_min_cache_entry_duration = 1*60*60L;
+    sc->ocsp_max_cache_entry_duration = 24*60*60L;
+    sc->ocsp_default                  = UNSET;
+    sc->ocsp_url                      = NULL;
+    sc->ocsp_name                     = NULL;
+    sc->fips                          = UNSET;
+    sc->enabled                       = UNSET;
+    sc->sni                           = TRUE;
+    sc->strict_sni_vhost_check        = TRUE;
+    sc->proxy_enabled                 = UNSET;
+    sc->vhost_id                      = NULL;  /* set during module init */
+    sc->vhost_id_len                  = 0;     /* set during module init */
+    sc->proxy                         = NULL;
+    sc->server                        = NULL;
+    sc->proxy_ssl_check_peer_cn       = TRUE;
+    sc->session_tickets               = FALSE;
 
     modnss_ctx_init_proxy(sc, p);
 
@@ -213,6 +217,10 @@ void *nss_config_server_merge(apr_pool_t *p, void *basev, void *addv) {
 
     cfgMerge(mc, NULL);
     cfgMergeBool(ocsp);
+    cfgMergeInt(ocsp_timeout);
+    cfgMergeInt(ocsp_cache_size);
+    cfgMergeInt(ocsp_min_cache_entry_duration);
+    cfgMergeInt(ocsp_max_cache_entry_duration);
     cfgMergeBool(ocsp_default);
     cfgMerge(ocsp_url, NULL);
     cfgMerge(ocsp_name, NULL);
@@ -372,6 +380,52 @@ const char *nss_cmd_NSSOCSP(cmd_parms *cmd, void *dcfg, int flag)
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
 
     sc->ocsp = flag ? TRUE : FALSE;
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSOCSPTimeout(cmd_parms *cmd, void *dcfg, const char *arg)
+{
+
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->ocsp_timeout = atoi(arg);
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSOCSPCacheSize(cmd_parms *cmd, void *dcfg, const char *arg)
+{
+
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->ocsp_cache_size = atoi(arg);
+
+    if (sc->ocsp_cache_size < -1) {
+        return "NSSOCSPCacheSize: must be >= -1";
+    }
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSOCSPMinCacheEntryDuration(cmd_parms *cmd, void *dcfg,
+                                                 const char *arg)
+{
+
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->ocsp_min_cache_entry_duration = atoi(arg);
+
+    return NULL;
+}
+
+const char *nss_cmd_NSSOCSPMaxCacheEntryDuration(cmd_parms *cmd, void *dcfg,
+                                                 const char *arg)
+{
+
+    SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
+
+    sc->ocsp_max_cache_entry_duration = atoi(arg);
 
     return NULL;
 }

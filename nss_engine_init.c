@@ -157,6 +157,18 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
         }
     }
 
+    if (ocspenabled) {
+        if (sc->ocsp_min_cache_entry_duration > sc->ocsp_max_cache_entry_duration)  {
+            ap_log_error(APLOG_MARK,APLOG_ERR, 0, base_server,
+                "OCSP minimum cache duration must be less than the maximum.");
+
+            if (mc->nInitCount == 1)
+                nss_die();
+            else
+                return;
+        }
+    }
+
     if (strncasecmp(mc->pCertificateDatabase, "sql:", 4) == 0)
         dbdir = (char *)mc->pCertificateDatabase + 4;
     else
@@ -322,9 +334,44 @@ static void nss_init_SSLLibrary(server_rec *base_server, apr_pool_t *p)
     }
 
     if (ocspenabled) {
+        SECStatus rv;
+
         CERT_EnableOCSPChecking(CERT_GetDefaultCertDB());
         ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
             "OCSP is enabled.");
+
+        /* Set desired OCSP Cache Settings, values already checked. */
+        rv = CERT_OCSPCacheSettings((PRInt32)sc->ocsp_cache_size,
+                                    (PRUint32)sc->ocsp_min_cache_entry_duration,
+                                    (PRUint32)sc->ocsp_max_cache_entry_duration);
+
+        if (rv == SECFailure) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                        "Unable to set the OCSP cache settings.");
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
+            if (mc->nInitCount == 1)
+                nss_die();
+            else
+                return;
+        } else {
+            ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
+                         "OCSP cache size %d, duration %d - %d seconds.", sc->ocsp_cache_size, sc->ocsp_min_cache_entry_duration, sc->ocsp_max_cache_entry_duration);
+        }
+
+        /* Set OCSP timeout. */
+        rv = CERT_SetOCSPTimeout((PRUint32) sc->ocsp_timeout);
+        if (rv == SECFailure) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, base_server,
+                         "Unable to set the OCSP timeout. (this shouldn't happen.");
+            nss_log_nss_error(APLOG_MARK, APLOG_ERR, base_server);
+            if (mc->nInitCount == 1)
+                nss_die();
+            else
+                return;
+        } else {
+            ap_log_error(APLOG_MARK, APLOG_INFO, 0, base_server,
+                         "OCSP timeout set to %d.", sc->ocsp_timeout);
+        }
 
         /* We ensure that ocspname and ocspurl are not NULL above. */
         if (ocspdefault) {

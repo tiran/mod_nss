@@ -66,6 +66,18 @@ static const command_rec nss_config_cmds[] = {
     SSL_CMD_SRV(OCSP, FLAG,
                 "OCSP (Online Certificate Status Protocol)"
                 "(`on', `off')")
+    SSL_CMD_SRV(OCSPTimeout, TAKE1,
+                "OCSP Timeout"
+                "(`N' - Max number of seconds to wait for an OCSP response.)")
+    SSL_CMD_SRV(OCSPCacheSize, TAKE1,
+                "OCSP Cache size"
+                "(`N' - number of entries -1 for no cache)")
+    SSL_CMD_SRV(OCSPMinCacheEntryDuration, TAKE1,
+                "OCSP Minimum time until next fetch attempt"
+                "(`N' - Time in seconds)")
+    SSL_CMD_SRV(OCSPMaxCacheEntryDuration, TAKE1,
+                "OCSP Maximum time until next fetch attempt"
+                "(`N' - Time in seconds)")
     SSL_CMD_SRV(OCSPDefaultResponder, FLAG,
                 "Use a default OCSP Responder"
                 "(`on', `off')")

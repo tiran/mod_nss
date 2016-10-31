@@ -1,3 +1,6 @@
+2016-10-31  Rob Crittenden <rcritten@redhat.com>
+    * Add OCSP caching and timeout tuning knobs
+
 2016-09-21  Rob Crittenden <rcritten@redhat.com>
     * Check the NSS database directory permissions as well as the files
       inside it for read access on startup.
