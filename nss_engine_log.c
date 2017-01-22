@@ -27,7 +27,7 @@
 #define LIBSEC_ERROR_BASE		(-8192)
 #define LIBSEC_MAX_ERROR		(LIBSEC_ERROR_BASE + 155)
 #define LIBSSL_ERROR_BASE		(-12288)
-#define LIBSSL_MAX_ERROR		(LIBSSL_ERROR_BASE + 114)
+#define LIBSSL_MAX_ERROR		(LIBSSL_ERROR_BASE + 159)
 
 typedef struct l_error_t {
     int errorNumber;
@@ -309,6 +309,51 @@ l_error_t libnss_errors[] = {
     { 112, "Renegotiation not allowed" },
     { 113, "Safe negotiation required but not provided by client" },
     { 114, "Unexpected uncompressed record" },
+    { 115, "Weak server ephemeral dh key" },
+    { 116, "Next protocol data invalid" },
+    { 117, "Feature not supported for ssl2" },
+    { 118, "Feature not supported for servers" },
+    { 119, "Feature not supported for clients" },
+    { 120, "Invalid version range" },
+    { 121, "Cipher disallowed for version" },
+    { 122, "Rx malformed hello verify request" },
+    { 123, "Rx unexpected hello verify request" },
+    { 124, "Feature not supported for version" },
+    { 125, "Rx unexpected cert status" },
+    { 126, "Unsupported hash algorithm" },
+    { 127, "Digest failure" },
+    { 128, "Incorrect signature algorithm" },
+    { 129, "Next protocol no callback" },
+    { 130, "Next protocol no protocol" },
+    { 131, "Inappropriate fallback alert" },
+    { 132, "Weak server cert key" },
+    { 133, "Rx short dtls read" },
+    { 134, "No supported signature algorithm" },
+    { 135, "Unsupported signature algorithm" },
+    { 136, "Missing extended master secret" },
+    { 137, "Unexpected extended master secret" },
+    { 138, "Rx malformed key share" },
+    { 139, "Missing key share" },
+    { 140, "Rx malformed ecdhe key share" },
+    { 141, "Rx malformed dhe key share" },
+    { 142, "Rx unexpected encrypted extensions" },
+    { 143, "Missing extension alert" },
+    { 144, "Key exchange failure" },
+    { 145, "Extension disallowed for version" },
+    { 146, "Rx malformed encrypted extensions" },
+    { 147, "Malformed pre shared key" },
+    { 148, "Malformed early data" },
+    { 149, "End of early data alert" },
+    { 150, "Missing alpn extension" },
+    { 151, "Rx unexpected extension" },
+    { 152, "Missing supported groups extension" },
+    { 153, "Too many records" },
+    { 154, "Rx unexpected hello retry request" },
+    { 155, "Rx malformed hello retry request" },
+    { 156, "Bad 2nd client hello" },
+    { 157, "Missing signature algorithms extension" },
+    { 158, "Malformed psk key exchange modes" },
+    { 159, "Missing psk key exchange modes" },
 };
 
 void nss_die(void)
