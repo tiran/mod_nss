@@ -989,6 +989,9 @@ static void nss_init_ctx_protocol(server_rec *s,
         ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
                 "%s:  SSL/TLS protocol initialization failed.",
                 protocol_marker);
+        ap_log_error(APLOG_MARK, APLOG_ERR, 0, s,
+                "Enabled versions: min 0x%04x, max 0x%04x",
+                enabledVersions.min, enabledVersions.max);
         nss_log_nss_error(APLOG_MARK, APLOG_ERR, s);
         nss_die();
     }
